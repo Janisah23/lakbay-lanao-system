@@ -59,6 +59,23 @@
   cursor: pointer;
 }
 
+.signup-text {
+  font-size: 14px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.signup-link {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
+
+
 
 
 
