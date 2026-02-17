@@ -25,6 +25,13 @@ function Home() {
           <input type="password" placeholder="Password" />
 
           <button className="login-btn">Log in</button>
+          {/* NEW SIGN UP LINK */}
+
+          <p className="signup-text">
+            Don’t have an account? 
+            <span className="signup-link"> Sign up</span>
+          </p>
+
 
           <div className="divider">
             <span>or continue with</span>
@@ -32,7 +39,7 @@ function Home() {
 
           <button className="google-btn">
             <img src="/google-icon.png" alt="Google" />
-            Continue with Google
+            Google
           </button>
         </div>
       </section>
@@ -84,47 +91,47 @@ function Home() {
         </div>
       </section>
 
-      {/* FEATURES SECTION */}
-<section className="features">
-  <h2>Features</h2>
-  <p className="subtitle">
-    Everything you need for the perfect journey
-  </p>
+              {/* FEATURES SECTION */}
+        <section className="features">
+          <h2>Features</h2>
+          <p className="subtitle">
+            Everything you need for the perfect journey
+          </p>
 
-  <div className="features-grid">
-    <div className="feature-card">
-      <img src="/feature-map.png" alt="Interactive Map" />
-      <h3>Interactive Map</h3>
-      <p>
-        Navigate tourist spots with our detailed interactive mapping system.
-      </p>
-    </div>
+          <div className="features-grid">
+            <div className="feature-card">
+              <img src="/feature-map.png" alt="Interactive Map" />
+              <h3>Interactive Map</h3>
+              <p>
+                Navigate tourist spots with our detailed interactive mapping system.
+              </p>
+            </div>
 
-    <div className="feature-card">
-      <img src="/feature-chatbot.png" alt="AI Chatbot" />
-      <h3>AI Chatbot</h3>
-      <p>
-        Get instant answers and personalized recommendations.
-      </p>
-    </div>
+            <div className="feature-card">
+              <img src="/feature-chatbot.png" alt="AI Chatbot" />
+              <h3>AI Chatbot</h3>
+              <p>
+                Get instant answers and personalized recommendations.
+              </p>
+            </div>
 
-    <div className="feature-card">
-      <img src="/feature-itinerary.png" alt="Itinerary Builder" />
-      <h3>Itinerary Builder</h3>
-      <p>
-        Plan your perfect trip with our smart itinerary tools.
-      </p>
-    </div>
+            <div className="feature-card">
+              <img src="/feature-itinerary.png" alt="Itinerary Builder" />
+              <h3>Itinerary Builder</h3>
+              <p>
+                Plan your perfect trip with our smart itinerary tools.
+              </p>
+            </div>
 
-    <div className="feature-card">
-      <img src="/feature-events.png" alt="Events Calendar" />
-      <h3>Events Calendar</h3>
-      <p>
-        Stay updated with festivals and cultural events.
-      </p>
-    </div>
-  </div>
-</section>
+            <div className="feature-card">
+              <img src="/feature-events.png" alt="Events Calendar" />
+              <h3>Events Calendar</h3>
+              <p>
+                Stay updated with festivals and cultural events.
+              </p>
+            </div>
+          </div>
+        </section>
 
 
       
