@@ -5,6 +5,8 @@ import Events from "../Pages/public/Events";
 import Destinations from "../Pages/public/Destinations";
 import MapView from "../Pages/public/MapView";
 import Gallery from "../Pages/public/Gallery";
+import TouristDashboard from "../pages/tourist/TouristDashboard";
+
 
 function AppRoutes() {
   return (
@@ -15,6 +17,8 @@ function AppRoutes() {
         <Route path="/destinations" element={<Destinations />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/gallery" element={<Gallery />} />
+        <Route path="/dashboard" element={<TouristDashboard />} />
+
       </Routes>
     </BrowserRouter>
   );
