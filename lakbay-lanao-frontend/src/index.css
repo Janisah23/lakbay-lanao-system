@@ -1,3 +1,12 @@
+@font-face {
+  font-family: "Barbara";
+  src: url("./assets/BARABARA.otf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+
 * {
   margin: 0;
   padding: 0;
