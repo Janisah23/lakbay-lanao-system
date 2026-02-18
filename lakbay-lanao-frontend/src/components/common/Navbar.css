@@ -1,0 +1,75 @@
+.navbar {
+  position: relative;
+  background: rgb(255, 255, 255);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 4cm;
+  z-index: 1000;
+}
+
+.nav-center {
+  display: flex;
+  gap: 50px;
+  letter-spacing: 0.5px;
+}
+
+.nav-item {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mega-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.91);
+  padding: 40px 80px;
+  display: flex;
+  justify-content: space-between;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  border-radius: 0 0 20px 20px;
+}
+
+.mega-left {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  width: 70%;
+}
+
+.mega-column h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #2563eb;
+}
+
+.mega-column p {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.mega-right {
+  width: 25%;
+  text-align: center;
+}
+
+.mega-right img {
+  width: 100%;
+  border-radius: 16px;
+}
+
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.nav-logo {
+  height: 40px;
+  width: auto;
+}
