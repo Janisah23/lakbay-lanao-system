@@ -1,13 +1,16 @@
 .hero {
   min-height: 100vh;
-  background-image: url("/Public/hero-bg.jpg");
+  background-image: url("/Public/hero-bg.png");
   background-size: cover;
   background-position: center;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 80px;
-  color: white;
+  padding-top: 120px;
+  padding: 0 110px;
+  color: #ffffff;
+  
+  
 }
 
 .hero-content {
@@ -15,64 +18,26 @@
 }
 
 .hero-content h1 {
-  font-size: 48px;
-  margin-bottom: 20px;
+  font-size: 65px;
+  margin-bottom: 15px;
 }
 
 .hero-content p {
-  line-height: 1.6;
+  line-height: 1.5;
   margin-bottom: 30px;
 }
 
 .explore-btn {
+   background: rgba(121, 176, 239, 0);
+  backdrop-filter: blur(10px);
   padding: 12px 24px;
   border-radius: 30px;
-  border: 2px solid white;
-  background: transparent;
+  border: 1px solid white;
+ 
   color: white;
   cursor: pointer;
-}
-
-.login-card {
-  background: white;
-  color: #333;
-  padding: 30px;
-  border-radius: 16px;
-  width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.login-card input {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-.login-card button {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #1e40af;
-  color: white;
-  cursor: pointer;
-}
-
-.signup-text {
-  font-size: 14px;
-  text-align: center;
-  color: #6b7280;
-}
-
-.signup-link {
-  color: #2563eb;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.signup-link:hover {
-  text-decoration: underline;
+  font-size: larger;
+ 
 }
 
 
@@ -139,41 +104,9 @@
 
 
 
-.login-btn {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #1e40af;
-  color: white;
-  cursor: pointer;
-}
-
-.divider {
-  text-align: center;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.google-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: white;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.google-btn img {
-  width: 18px;
-  height: 18px;
-}
 
 
-{/* FEATURES SECTION */}
+
 .features {
   padding: 80px 60px;
   background: #2563eb;
@@ -225,3 +158,48 @@
   font-size: 14px;
   color: #6b7280;
 }
+
+
+
+
+
+
+.navbar {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 20px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  z-index: 1000;
+}
+
+.nav-left {
+  font-weight: 600;
+}
+
+.nav-center span {
+  margin: 0 15px;
+  cursor: pointer;
+}
+
+.nav-right button {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  background: white;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.profile-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  
+}
+
+

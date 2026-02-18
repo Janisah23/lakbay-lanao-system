@@ -16,32 +16,6 @@ function Home() {
 
           <button className="explore-btn">Explore Now →</button>
         </div>
-
-        {/* LOGIN CARD */}
-        <div className="login-card">
-          <h2>Sign in</h2>
-
-          <input type="email" placeholder="Email" />
-          <input type="password" placeholder="Password" />
-
-          <button className="login-btn">Log in</button>
-          {/* NEW SIGN UP LINK */}
-
-          <p className="signup-text">
-            Don’t have an account? 
-            <span className="signup-link"> Sign up</span>
-          </p>
-
-
-          <div className="divider">
-            <span>or continue with</span>
-          </div>
-
-          <button className="google-btn">
-            <img src="/google-icon.png" alt="Google" />
-            Google
-          </button>
-        </div>
       </section>
       
 
@@ -90,6 +64,9 @@ function Home() {
           </div>
         </div>
       </section>
+
+
+      
 
               {/* FEATURES SECTION */}
         <section className="features">
