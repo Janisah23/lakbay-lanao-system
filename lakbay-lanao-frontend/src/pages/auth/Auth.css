@@ -1,0 +1,111 @@
+
+.auth-page {
+  min-height: 100vh;
+  background-image: url("Public/auth.png");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 15px;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.712);
+  backdrop-filter: blur(30px);
+  color: #2563eb;
+  text-align: center;
+  padding: 40px;
+  border-radius: 30px;
+  width: 380px;
+  min-height: 300px; /* lock height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+  gap: 15px;
+  box-shadow: 0 20px 40px rgba(72, 64, 64, 0.409);
+}
+
+.login-card input {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: 0.2s;
+}
+
+.login-card input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.login-card button {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.signup-text {
+  font-size: 14px;
+  color: hwb(0 30% 70%);
+}
+
+.signup-link {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.login-btn {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.divider {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.google-btn img {
+  width: 18px;
+  height: 18px;
+}
+
