@@ -75,6 +75,11 @@ function Navbar() {
         >
           <span>Upcoming Events</span>
         </div>
+
+         {/* NORMAL ROUTE */}
+        <span onClick={() => navigate("/about")}>
+          About Us
+        </span>
           
 
       </div>

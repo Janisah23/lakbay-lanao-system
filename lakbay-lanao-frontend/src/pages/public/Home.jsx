@@ -1,5 +1,6 @@
 import Navbar from "../../components/common/Navbar";
 import "./Home.css";
+import LanaoMap from "../../components/map/LanaoMap";
 
 function Home() {
   return (
@@ -14,16 +15,28 @@ function Home() {
             the rich cultural heritage and breathtaking destinations of Lanao del Sur.
           </p>
 
-          <button className="explore-btn">Explore Now →</button>
+          <button className="explore-btn">Explore Now  →</button>
         </div>
       </section>
       
 
+      {/* MAP*/}
+      <section className="map-section">
+        <h2>Explore Lanao del Sur</h2>
+        <p className="subtitle">
+          Discover tourist spots using our interactive map.
+        </p>Microsoft.QuickAction.WiFi
+
+        <div className="map-container">
+          
+          <LanaoMap />
+        </div>
+      </section>
 
 
 
 
-      {/* DESTINATIONS SECTION */}
+      {/* DESTINATIONS*/}
       <section className="destinations">
         <h2>Most visited tourist destinations</h2>
         <p className="subtitle">
@@ -68,7 +81,7 @@ function Home() {
 
       
 
-              {/* FEATURES SECTION */}
+              {/* FEATURES*/}
         <section className="features">
           <h2>Features</h2>
           <p className="subtitle">
