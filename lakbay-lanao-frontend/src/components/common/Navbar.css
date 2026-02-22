@@ -1,22 +1,30 @@
 .navbar {
   position: relative;
-  background: rgb(255, 255, 255);
-  display: flex;
+ 
+  background: rgba(146, 191, 243, 0.16);
+  backdrop-filter: blur(10px);
+  display: inline;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 4cm;
+  padding: 10px 4cm;
+  border: 0.3px solid rgba(255, 196, 196, 0.64);
   z-index: 1000;
+  margin-top: 5px;
+  margin-left: 14px; 
 }
 
 .nav-center {
   display: flex;
   gap: 50px;
   letter-spacing: 0.5px;
+
+ 
 }
 
 .nav-item {
   cursor: pointer;
   font-weight: 500;
+  
 }
 
 .mega-menu {
