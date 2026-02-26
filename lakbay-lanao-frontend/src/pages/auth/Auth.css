@@ -18,8 +18,8 @@
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.712);
-  backdrop-filter: blur(30px);
+  background: rgba(255, 255, 255, 0.502);
+  backdrop-filter: blur(40px);
   color: #2563eb;
   text-align: center;
   padding: 40px;
@@ -50,9 +50,11 @@
   padding: 12px;
   border-radius: 8px;
   border: none;
-  background: #2563eb;
+  background: #2c68ea;
   color: white;
   cursor: pointer;
+  letter-spacing: 0.5px;
+  
 }
 
 .signup-text {

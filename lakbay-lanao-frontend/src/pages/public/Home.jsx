@@ -1,8 +1,48 @@
 import Navbar from "../../components/common/Navbar";
+import { useState } from "react";
 import "./Home.css";
 import LanaoMap from "../../components/map/LanaoMap";
 
 function Home() {
+
+   const [favorites, setFavorites] = useState([]);
+
+  const events = [
+    {
+      title: "Araw ng Marawi",
+      category: "Culture",
+      date: "March 12 – 15",
+      image: "/event1.jpg"
+    },
+    {
+      title: "Freedom Run",
+      category: "Sports",
+      date: "April 5",
+      image: "/event2.png"
+    },
+    {
+      title: "Kambatalo Fun Run",
+      category: "Live Show",
+      date: "April 20",
+      image: "/event3.jpg"
+    },
+
+    {
+      title: "Tourism Festival",
+      category: "Live Show",
+      date: "February 29",
+      image: "/event4.jpg"
+    }
+  ];
+
+  const toggleFavorite = (index) => {
+    if (favorites.includes(index)) {
+      setFavorites(favorites.filter(i => i !== index));
+    } else {
+      setFavorites([...favorites, index]);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -15,6 +55,8 @@ function Home() {
             the rich cultural heritage and breathtaking destinations of Lanao del Sur.
           </p>
 
+      
+          
           <button className="explore-btn">Explore Now  →</button>
         </div>
       </section>
@@ -25,8 +67,7 @@ function Home() {
         <h2>Explore Lanao del Sur</h2>
         <p className="subtitle">
           Discover tourist spots using our interactive map.
-        </p>Microsoft.QuickAction.WiFi
-
+        </p>
         <div className="map-container">
           
           <LanaoMap />
@@ -78,50 +119,41 @@ function Home() {
         </div>
       </section>
 
-
-      
-
-              {/* FEATURES*/}
-        <section className="features">
-          <h2>Features</h2>
+              {/* UPCOMING EVENTS */}
+        <section className="events-section">
+          <h2>Upcoming Events</h2>
           <p className="subtitle">
-            Everything you need for the perfect journey
+            Discover festivals and celebrations in Lanao del Sur
           </p>
 
-          <div className="features-grid">
-            <div className="feature-card">
-              <img src="/feature-map.png" alt="Interactive Map" />
-              <h3>Interactive Map</h3>
-              <p>
-                Navigate tourist spots with our detailed interactive mapping system.
-              </p>
-            </div>
+          <div className="events-grid">
+            {events.map((event, index) => (
+              <div key={index} className="event-card">
+                <img src={event.image} alt={event.title} />
 
-            <div className="feature-card">
-              <img src="/feature-chatbot.png" alt="AI Chatbot" />
-              <h3>AI Chatbot</h3>
-              <p>
-                Get instant answers and personalized recommendations.
-              </p>
-            </div>
+                <div className="event-info">
+                  <span className="event-category">{event.category}</span>
+                  <h3>{event.title}</h3>
+                  <p>{event.date}</p>
+                </div>
 
-            <div className="feature-card">
-              <img src="/feature-itinerary.png" alt="Itinerary Builder" />
-              <h3>Itinerary Builder</h3>
-              <p>
-                Plan your perfect trip with our smart itinerary tools.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <img src="/feature-events.png" alt="Events Calendar" />
-              <h3>Events Calendar</h3>
-              <p>
-                Stay updated with festivals and cultural events.
-              </p>
-            </div>
+                <button
+                  className="heart-btn"
+                  onClick={() => toggleFavorite(index)}
+                >
+                  {favorites.includes(index) ? "❤️" : "🤍"}
+                </button>
+              </div>
+            ))}
           </div>
-        </section>
+
+  <button className="see-more-btn">
+    See more events →
+  </button>
+</section>
+
+
+      
 
 
       
