@@ -4,6 +4,7 @@ import { auth, db } from "../../firebase/config";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import "./Auth.css";
+import { logAction } from "../../utils/logAction";
 
 
 function Login() {
@@ -13,23 +14,29 @@ function Login() {
 
   const provider = new GoogleAuthProvider();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
-      redirectUser(userCredential.user);
+    const user = userCredential.user;
 
-    } catch (error) {
-      alert(error.message);
-    }
-  };
+    await user.getIdToken(true);
 
+    console.log("LOGIN SUCCESS:", user.uid);
+
+    // 🔥 CALL THIS
+    await redirectUser(user);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -54,17 +61,27 @@ function Login() {
   };
 
   const redirectUser = async (user) => {
-    const docRef = doc(db, "users", user.uid);
-    const docSnap = await getDoc(docRef);
+  const docRef = doc(db, "users", user.uid);
+  const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      const role = docSnap.data().role;
+  if (docSnap.exists()) {
+    const userData = docSnap.data();
 
-      if (role === "admin") navigate("/admin");
-      else if (role === "staff") navigate("/staff");
-      else navigate("/tourist");
-    }
-  };
+    const role = userData.role;
+    const name = userData.name;
+
+    if (role === "admin") navigate("/admin");
+    else if (role === "staff") navigate("/staff");
+    else navigate("/tourist");
+
+    await logAction({
+     action: "Login",
+      userName: name,
+      performedBy: name,
+      role: role,
+    });
+  }
+};
 
   return (
   <div className="auth-page">

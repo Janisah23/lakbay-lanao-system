@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase/config";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { FiSearch, FiPlus, FiEye, FiEyeOff, FiKey,
         FiEdit2, FiToggleLeft, FiToggleRight } from "react-icons/fi";
+        import { logAction } from "../../utils/logAction";
+
+
+
 
 function AccountManagement() {
   const [staffCount, setStaffCount] = useState(0);
@@ -101,23 +105,50 @@ function AccountManagement() {
     };
 
       const handleConfirmAction = async () => {
-    try {
-      if (confirmAction === "reset") {
-        await sendPasswordResetEmail(auth, targetUser.email);
-        alert("Password reset email sent.");
-      }
+  try {
+    const currentUser = auth.currentUser;
 
-      if (confirmAction === "deactivate") {
-        await updateDoc(doc(db, "users", targetUser.id), {
-          status: "inactive",
-        });
-      }
-
-      setConfirmModal(false);
-    } catch (error) {
-      alert(error.message);
+    if (!currentUser) {
+      alert("No authenticated admin found.");
+      return;
     }
-  };
+
+    // 🔹 Get admin data from Firestore
+    const adminSnap = await getDoc(doc(db, "users", currentUser.uid));
+    const adminData = adminSnap.exists() ? adminSnap.data() : null;
+
+    if (confirmAction === "reset") {
+      await sendPasswordResetEmail(auth, targetUser.email);
+
+      await logAction({
+        action: "Password Reset",
+        userName: targetUser.name,
+        performedBy: adminData?.name || "Unknown",
+        role: adminData?.role || "admin",
+      });
+
+      alert("Password reset email sent.");
+    }
+
+    if (confirmAction === "deactivate") {
+      await updateDoc(doc(db, "users", targetUser.id), {
+        status: "inactive",
+      });
+
+      await logAction({
+        action: "Staff Deactivated",
+        userName: targetUser.name,
+        performedBy: adminData?.name || "Unknown",
+        role: adminData?.role || "admin",
+      });
+    }
+
+    setConfirmModal(false);
+
+  } catch (error) {
+    alert(error.message);
+  }
+};
 
   // CREATE STAFF (Backend API)
   const handleCreateStaff = async () => {
@@ -165,6 +196,7 @@ function AccountManagement() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border">
           <p className="text-sm text-gray-500">ACTIVE ACCOUNTS</p>
           <h3 className="text-3xl font-semibold mt-2">{activeCount}</h3>
+          
         </div>
       </div>
 
