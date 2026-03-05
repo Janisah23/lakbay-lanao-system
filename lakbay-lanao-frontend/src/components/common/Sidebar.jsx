@@ -51,7 +51,7 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
             <img
               src={lakbayLogo}
               alt=""
-              className="h-8 object-contain"
+              className="h-9 object-contain"
             />
           )}
 

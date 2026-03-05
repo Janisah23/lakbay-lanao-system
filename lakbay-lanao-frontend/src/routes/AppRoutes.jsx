@@ -20,6 +20,7 @@ import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 
 import AdminRoute from "../components/common/AdminRoute";
+import ProtectedRoute from "../components/common/ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -57,6 +58,14 @@ function AppRoutes() {
           <Route path="ratings" element={<RatingsSummary />} />
           <Route path="logs" element={<SystemLogs />} />
         </Route>
+         <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminLayout/>
+              </ProtectedRoute>
+            }
+          />
 
       </Routes>
     </BrowserRouter>
