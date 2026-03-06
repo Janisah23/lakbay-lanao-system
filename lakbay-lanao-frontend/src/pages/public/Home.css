@@ -14,18 +14,18 @@
 }
 
 .hero-content {
-  max-width: 600px;
+  max-width: 700px;
 }
 
 .hero-content h1 {
   font-family: "Barbara", sans-serif;
-  font-size: 65px;
+  font-size: 60px;
   margin-bottom: 20px;
   letter-spacing: 3px;
 }
 
 .hero-content p {
-  line-height: 1.5;
+  line-height: 1.3;
   font-size: 25px;
   margin-bottom: 30px;
   letter-spacing: 0.5px;
@@ -56,6 +56,18 @@
   
 }
 
+.hero-logo
+{
+  width: 100px;
+  height: 100px;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+}
+.hero-title{
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
 
 
 .hero-search {
@@ -194,7 +206,6 @@
 
 
 
-
 .destinations {
   padding: 80px 60px;
   background: #f9fafb;
@@ -212,47 +223,66 @@
   margin-bottom: 50px;
 }
 
+/* GRID */
+
 .destination-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 30px;
 }
 
+/* CARD */
+
 .destination-card {
-  background: rgba(255, 255, 255, 0.907);
-  border-radius: 25px;
+  position: relative;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
 }
 
 .destination-card:hover {
   transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.15);
 }
+
+/* IMAGE */
 
 .destination-card img {
   width: 100%;
-  height: px;
+  height: 380px;
   object-fit: cover;
-  border-radius: 30px;
-  padding: 10px;
 }
 
-.card-info {
-  padding: 16px;
+/* TEXT OVERLAY */
+
+.destination-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  padding: 18px;
+
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,0.75),
+    rgba(0,0,0,0)
+  );
+
   text-align: left;
-  color: #2563eb;
+  color: white;
 }
 
-.card-info h3 {
-  font-size: 18px;
-  margin-bottom: 6px;
+.destination-overlay h3 {
+  font-size: 20px;
+  margin-bottom: 2px;
 }
 
-.card-info span {
+.destination-overlay span {
   font-size: 14px;
-  color: #6b7280;
+  opacity: 0.9;
 }
 
 
@@ -314,158 +344,3 @@
 
 
 
-
-
-
-.navbar {
-  position: absolute;
-  top: 0;
-  width: 98%;
-  height: 8%;
-  border-radius: 20px 20px 20px 20px;
-  padding: 20px 60px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #ffffff;
-  z-index: 1000;
- 
- 
-}
-
-.nav-left {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.nav-center span {
-  margin: 0 15px;
-  cursor: pointer;
-}
-
-.nav-right button {
-  padding: 6px 16px;
-  border-radius: 5px;
-  border: none;
-  background: #2563eb;
-  color: #ffffff;
-  cursor: pointer;
- 
-  letter-spacing: 0.5px;
-  
-}
-
-.profile-avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  object-fit: cover;
-  
-}
-
-
-
-.events-section {
-  padding: 80px 60px;
-  background: #f3f4f6;
-  text-align: center;
-  
-}
-
-.events-section h2{
-  
-  color: #2563eb;
-  text-align: center;
-  text-spacing-trim: normal;
-}
-
-.event-card h2 {
-  font-size: 32px;
-  color: #2563eb;
-  margin-bottom: 10px;
-}
-.events-grid {
-  margin-top: 40px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
-}
-
-
-.event-card {
-  position: relative;
-  background: white;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-  transition: 0.3s ease;
-}
-
-.event-card:hover {
-  transform: translateY(-8px);
-}
-
-.event-card img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-}
-
-
-.destinations .subtitle {
-  color: #6b7280;
-  margin-bottom: 50px;
-}
-.event-info {
-  padding: 20px;
-  text-align: left;
-
-  color: #2563eb;
-  margin-bottom: 10px;
-}
-
-.event-info {
-  padding: 20px;
-  text-align: left;
-
-  color: #2563eb;
-  margin-bottom: 10px;
-}
-
-.event-info p {
- 
-  text-align: left;
-  padding: 1px;
-  color: #6b7280;
-  
-}
-
-.event-category {
-  font-size: 12px;
-  color: #6b7280;
-  letter-spacing: 1px;
-}
-
-.heart-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  font-size: 18px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.see-more-btn {
-  margin-top: 40px;
-  padding: 12px 28px;
-  border-radius: 30px;
-  border: 1px solid #2563eb;
-  background: transparent;
-  color: #2563eb;
-  cursor: pointer;
-}
