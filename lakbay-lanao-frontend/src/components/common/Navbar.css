@@ -50,7 +50,7 @@
 
 .nav-center {
   display: flex;
-  gap: 35px;
+  gap: 30px;
   font-size: 15px;
   letter-spacing: 0.5px;
 }
@@ -60,6 +60,7 @@
   transition: 0.2s;
   font-weight: 530;
   color: #2563eb;
+
 }
 
 .nav-center span:hover {

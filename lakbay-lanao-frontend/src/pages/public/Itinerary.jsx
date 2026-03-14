@@ -35,11 +35,35 @@ function Itinerary() {
     }
   ]);
 
-  const [days, setDays] = useState({
-    day1: [],
-    day2: [],
-    day3: []
-  });
+  const [dayCount, setDayCount] = useState(3);
+
+  const createDays = (count) => {
+    const newDays = {};
+    for (let i = 1; i <= count; i++) {
+      newDays[`day${i}`] = [];
+    }
+    return newDays;
+  };
+
+  const [days, setDays] = useState(createDays(3));
+  const [notes, setNotes] = useState({});
+
+  const handleDayChange = (value) => {
+
+    const count = Number(value);
+    setDayCount(count);
+
+    const newDays = createDays(count);
+
+    Object.keys(days).forEach(day => {
+      if (newDays[day]) {
+        newDays[day] = days[day];
+      }
+    });
+
+    setDays(newDays);
+
+  };
 
   const handleDragEnd = (result) => {
 
@@ -71,6 +95,7 @@ function Itinerary() {
       });
 
     }
+
   };
 
   const removePlace = (day, index) => {
@@ -110,8 +135,31 @@ function Itinerary() {
           </h1>
 
           <p className="text-gray-500 mt-2">
-            Drag destinations to organize your travel plan.
+            Plan your travel in Lanao del Sur.
           </p>
+
+          {/* TRIP DAYS SELECTOR */}
+
+          <div className="mt-6 flex items-center gap-3">
+
+            <label className="text-sm text-gray-600">
+              Trip Duration:
+            </label>
+
+            <input
+              type="number"
+              min="1"
+              max="10"
+              value={dayCount}
+              onChange={(e) => handleDayChange(e.target.value)}
+              className="border rounded-md px-3 py-1 w-20"
+            />
+
+            <span className="text-sm text-gray-500">
+              days
+            </span>
+
+          </div>
 
           <DragDropContext onDragEnd={handleDragEnd}>
 
@@ -203,14 +251,12 @@ function Itinerary() {
                           {day.toUpperCase()}
                         </h3>
 
-                        <div className="relative pl-6 border-l-2 border-blue-200 space-y-6">
+                        <div className="space-y-4">
 
                           {days[day].length === 0 && (
-
-                            <div className="text-gray-400 text-sm">
+                            <p className="text-gray-400 text-sm">
                               Drag destinations here
-                            </div>
-
+                            </p>
                           )}
 
                           {days[day].map((place, index) => (
@@ -248,7 +294,6 @@ function Itinerary() {
                                       <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
                                         {place.type}
                                       </span>
-
                                     </div>
 
                                   </div>
@@ -283,6 +328,20 @@ function Itinerary() {
                           {provided.placeholder}
 
                         </div>
+
+                        {/* NOTES */}
+
+                        <textarea
+                          placeholder="Add notes for this day..."
+                          value={notes[day] || ""}
+                          onChange={(e) =>
+                            setNotes({
+                              ...notes,
+                              [day]: e.target.value
+                            })
+                          }
+                          className="w-full mt-6 border rounded-lg p-3 text-sm"
+                        />
 
                       </div>
 

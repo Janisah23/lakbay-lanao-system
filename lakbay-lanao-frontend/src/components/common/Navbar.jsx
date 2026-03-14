@@ -102,6 +102,8 @@ setShowEvents(false);
 }}
 >
 
+{/* LEFT LOGO */}
+
 <div
 className="nav-left"
 onClick={()=>navigate("/")}>
@@ -109,9 +111,24 @@ onClick={()=>navigate("/")}>
 <span>Provincial Tourism Office</span>
 </div>
 
-<div className="nav-center">
 
-<span onClick={()=>navigate("/")}>Home</span>
+{/* CENTER NAVIGATION */}
+
+<div className="nav-center flex items-center gap-5">
+
+<span onClick={()=>navigate("/")}>
+Home
+</span>
+
+<span onClick={()=>navigate("/gallery")}>
+Gallery
+</span>
+
+<span onClick={()=>navigate("/itinerary")}>
+Itinerary Builder
+</span>
+
+{/* FEATURES DROPDOWN */}
 
 <div
 className="nav-item"
@@ -123,13 +140,13 @@ setShowEvents(false);
 <span>Features</span>
 </div>
 
-<span onClick={()=>navigate("/itinerary")}>
-Itinerary Builder
-</span>
 
 <span onClick={()=>navigate("/map")}>
 Map
 </span>
+
+
+{/* EVENTS DROPDOWN */}
 
 <div
 className="nav-item"
@@ -140,6 +157,7 @@ setShowFeatures(false);
 >
 <span>Upcoming Events</span>
 </div>
+
 
 <span onClick={()=>navigate("/establishment")}>
 Establishments

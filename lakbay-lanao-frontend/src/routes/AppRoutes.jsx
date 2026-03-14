@@ -22,6 +22,7 @@ import Signup from "../pages/auth/Signup";
 import AdminRoute from "../components/common/AdminRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 
+
 import Itinerary from "../pages/public/Itinerary";
 
 function AppRoutes() {
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/itinerary" element={<Itinerary />} />
+        <Route path="/gallery" element={<Gallery/>} />
 
         {/* Staff Routes */}
         <Route path="/staff" element={<StaffLayout />}>
