@@ -120,12 +120,18 @@ setShowFeatures(true);
 setShowEvents(false);
 }}
 >
-<span>Features</span>
-</div>
+
+<span onClick={()=>navigate("/gallery")}>
+Gallery 
+</span>
 
 <span onClick={()=>navigate("/itinerary")}>
 Itinerary Builder
 </span>
+
+<span>Features</span>
+</div>
+
 
 <span onClick={()=>navigate("/map")}>
 Map
