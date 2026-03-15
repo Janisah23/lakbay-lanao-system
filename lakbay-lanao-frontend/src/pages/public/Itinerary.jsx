@@ -138,7 +138,7 @@ function Itinerary() {
             Plan your travel in Lanao del Sur.
           </p>
 
-          {/* TRIP DAYS SELECTOR */}
+         
 
           <div className="mt-6 flex items-center gap-3">
 
@@ -165,7 +165,7 @@ function Itinerary() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-10">
 
-              {/* SAVED DESTINATIONS */}
+              
 
               <Droppable droppableId="places">
                 {(provided) => (
@@ -232,7 +232,7 @@ function Itinerary() {
                 )}
               </Droppable>
 
-              {/* ITINERARY DAYS */}
+             
 
               <div className="md:col-span-3 space-y-8">
 
@@ -329,7 +329,7 @@ function Itinerary() {
 
                         </div>
 
-                        {/* NOTES */}
+                       
 
                         <textarea
                           placeholder="Add notes for this day..."

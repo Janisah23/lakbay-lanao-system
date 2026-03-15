@@ -95,43 +95,62 @@ return(
 {/* NAVBAR */}
 
 <nav
-className="navbar"
-onMouseLeave={()=>{
-setShowFeatures(false);
-setShowEvents(false);
-}}
+className="fixed top-4 left-0 w-full z-[1000] flex justify-center"
+
 >
+
+<div className="w-[95%] max-w-7xl bg-white border border-gray-200 rounded-full shadow-md px-6 py-3 flex items-center justify-between">
+
 
 {/* LEFT LOGO */}
 
 <div
-className="nav-left"
-onClick={()=>navigate("/")}>
-<img src="/pto.png" alt="logo" className="nav-logo"/>
-<span>Provincial Tourism Office</span>
+onClick={()=>navigate("/")}
+className="flex items-center gap-3 cursor-pointer"
+>
+
+<img
+src="/pto.png"
+alt="logo"
+className="w-9 h-9 object-contain"
+/>
+
+<span className="font-semibold text-blue-600 text-sm whitespace-nowrap">
+Provincial Tourism Office
+</span>
+
 </div>
 
 
 {/* CENTER NAVIGATION */}
 
-<div className="nav-center flex items-center gap-5">
+<div className="hidden lg:flex items-center gap-6 text-blue-600 text-sm font-medium">
 
-<span onClick={()=>navigate("/")}>
+<span
+onClick={()=>navigate("/")}
+className="cursor-pointer hover:text-blue-800 transition"
+>
 Home
 </span>
 
-<span onClick={()=>navigate("/gallery")}>
+<span
+onClick={()=>navigate("/gallery")}
+className="cursor-pointer hover:text-blue-800 transition"
+>
 Gallery
 </span>
 
-<span onClick={()=>navigate("/itinerary")}>
+<span
+onClick={()=>navigate("/itinerary")}
+className="cursor-pointer hover:text-blue-800 transition"
+>
 Itinerary Builder
 </span>
 
-{/* FEATURES DROPDOWN */}
+{/* FEATURES */}
 
 <div
-className="nav-item"
+className="cursor-pointer hover:text-blue-800 transition"
 onMouseEnter={()=>{
 setShowFeatures(true);
 setShowEvents(false);
@@ -140,16 +159,19 @@ setShowEvents(false);
 <span>Features</span>
 </div>
 
-
-<span onClick={()=>navigate("/map")}>
+<span
+onClick={()=>navigate("/map")}
+className="cursor-pointer hover:text-blue-800 transition"
+>
 Map
 </span>
 
 
-{/* EVENTS DROPDOWN */}
+
+{/* EVENTS */}
 
 <div
-className="nav-item"
+className="cursor-pointer hover:text-blue-800 transition"
 onMouseEnter={()=>{
 setShowEvents(true);
 setShowFeatures(false);
@@ -159,44 +181,61 @@ setShowFeatures(false);
 </div>
 
 
-<span onClick={()=>navigate("/establishment")}>
+
+<span
+onClick={()=>navigate("/establishment")}
+className="cursor-pointer hover:text-blue-800 transition"
+
+>
 Establishments
 </span>
 
 </div>
 
-<div className="nav-right flex items-center gap-4">
+
+{/* RIGHT SIDE */}
+
+<div className="flex items-center gap-4">
 
 <button
 onClick={()=>setShowSearch(!showSearch)}
-className="text-blue-600 hover:text-blue-50 transition"
+className="text-blue-600 hover:text-blue-800 transition"
 >
-<FiSearch size={23}/>
+<FiSearch size={24}/>
 </button>
+
 
 {!user ? (
 
-<button onClick={()=>navigate("/login")}>
+<button
+onClick={()=>navigate("/login")}
+className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700 transition shadow-sm"
+>
 Sign In
 </button>
 
 ) : (
 
-<div className="profile-section">
+<div className="flex items-center gap-3">
 
 <img
 src={user.photoURL || "/default-avatar.png"}
 alt="profile"
-className="profile-avatar"
+className="w-9 h-9 rounded-full object-cover"
 />
 
-<button onClick={handleLogout}>
+<button
+onClick={handleLogout}
+className="text-sm text-red-500 hover:text-red-700"
+>
 Logout
 </button>
 
 </div>
 
 )}
+
+</div>
 
 </div>
 
@@ -311,38 +350,52 @@ className="w-20 h-20 object-cover rounded-lg"
 )}
 
 {/* FEATURES PANEL */}
-
 {showFeatures && (
 
-<div className="mega-menu">
+<div
+className="absolute top-[80px] left-0 w-full z-[999] flex justify-center"
+onMouseLeave={()=>setShowFeatures(false)}
+>
 
-<div className="mega-left">
+<div className="w-[95%] max-w-7xl bg-white shadow-xl border rounded-2xl p-8 grid grid-cols-2 gap-8">
 
-<div className="mega-column">
-<h4>Interactive Map</h4>
-<p>Explore destinations visually</p>
+<div className="grid grid-cols-2 gap-6">
+
+<div>
+<h4 className="font-semibold text-blue-600">Interactive Map</h4>
+<p className="text-sm text-gray-500">Explore destinations visually</p>
 </div>
 
-<div className="mega-column">
-<h4>AI Chatbot</h4>
-<p>Instant travel assistance</p>
+<div>
+<h4 className="font-semibold text-blue-600">AI Chatbot</h4>
+<p className="text-sm text-gray-500">Instant travel assistance</p>
 </div>
 
-<div className="mega-column">
-<h4>Itinerary Builder</h4>
-<p>Plan your trip smartly</p>
+<div>
+<h4 className="font-semibold text-blue-600">Itinerary Builder</h4>
+<p className="text-sm text-gray-500">Plan your trip smartly</p>
 </div>
 
-<div className="mega-column">
-<h4>Events Calendar</h4>
-<p>Stay updated with festivals</p>
+<div>
+<h4 className="font-semibold text-blue-600">Events Calendar</h4>
+<p className="text-sm text-gray-500">Stay updated with festivals</p>
 </div>
 
 </div>
 
-<div className="mega-right">
-<img src="/feature-preview.png" alt="preview"/>
-<span>Explore smarter with Lakbay Lanao</span>
+<div className="flex flex-col items-center justify-center text-center">
+
+<img
+src="/feature-preview.png"
+className="w-64 rounded-xl shadow"
+/>
+
+<span className="text-sm text-gray-500 mt-4">
+Explore smarter with Lakbay Lanao
+</span>
+
+</div>
+
 </div>
 
 </div>
@@ -350,43 +403,58 @@ className="w-20 h-20 object-cover rounded-lg"
 )}
 
 {/* EVENTS PANEL */}
-
 {showEvents && (
 
-<div className="mega-menu">
+<div
+className="absolute top-[80px] left-0 w-full z-[999] flex justify-center"
+onMouseLeave={()=>setShowEvents(false)}
+>
 
-<div className="mega-left">
+<div className="w-[95%] max-w-7xl bg-white shadow-xl border rounded-2xl p-8 grid grid-cols-2 gap-8">
 
-<div className="mega-column">
-<h4>Araw ng Marawi</h4>
-<p>Annual cultural celebration</p>
+<div className="grid grid-cols-2 gap-6">
+
+<div>
+<h4 className="font-semibold text-blue-600">Araw ng Marawi</h4>
+<p className="text-sm text-gray-500">Annual cultural celebration</p>
 </div>
 
-<div className="mega-column">
-<h4>Kambalato Fun Run</h4>
-<p>Community sports event</p>
+<div>
+<h4 className="font-semibold text-blue-600">Kambalato Fun Run</h4>
+<p className="text-sm text-gray-500">Community sports event</p>
 </div>
 
-<div className="mega-column">
-<h4>Freedom Run</h4>
-<p>Solidarity marathon</p>
+<div>
+<h4 className="font-semibold text-blue-600">Freedom Run</h4>
+<p className="text-sm text-gray-500">Solidarity marathon</p>
 </div>
 
-<div className="mega-column">
-<h4>Seasonal Festivals</h4>
-<p>Celebrate Lanao traditions</p>
+<div>
+<h4 className="font-semibold text-blue-600">Seasonal Festivals</h4>
+<p className="text-sm text-gray-500">Celebrate Lanao traditions</p>
 </div>
 
 </div>
 
-<div className="mega-right">
-<img src="/event-preview.png" alt="event"/>
-<span>Discover upcoming celebrations</span>
+<div className="flex flex-col items-center justify-center text-center">
+
+<img
+src="/event-preview.png"
+className="w-64 rounded-xl shadow"
+/>
+
+<span className="text-sm text-gray-500 mt-4">
+Discover upcoming celebrations
+</span>
+
+</div>
+
 </div>
 
 </div>
 
 )}
+
 
 </>
 
