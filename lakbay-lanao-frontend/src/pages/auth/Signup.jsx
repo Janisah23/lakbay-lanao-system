@@ -28,7 +28,7 @@ function Signup() {
         role: "tourist"
       });
 
-      navigate("/tourist");
+      navigate("/home");
 
     } catch (error) {
       alert(error.message);
@@ -48,6 +48,7 @@ function Signup() {
           required
         />
 
+        
         <input
           type="password"
           placeholder="Password"
