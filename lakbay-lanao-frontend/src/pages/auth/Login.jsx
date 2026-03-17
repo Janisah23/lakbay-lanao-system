@@ -72,7 +72,7 @@ const handleLogin = async (e) => {
 
     if (role === "admin") navigate("/admin");
     else if (role === "staff") navigate("/staff");
-    else navigate("/tourist");
+    else navigate("/home");
 
     await logAction({
      action: "Login",

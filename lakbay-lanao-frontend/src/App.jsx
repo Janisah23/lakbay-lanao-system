@@ -4,6 +4,7 @@ import { auth } from "./firebase/config";
 import AppRoutes from "./routes/AppRoutes";
 import { Toaster } from "react-hot-toast";
 
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);

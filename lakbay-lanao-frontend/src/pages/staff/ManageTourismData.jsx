@@ -27,10 +27,12 @@ function ManageTourismData() {
     category: "",
     type: "",
     description: "",
-    province: "Lanao del Sur", // default since scope fixed
+    province: "Lanao del Sur",
     municipality: "",
-    barangay: "",
+    latitude: "",
+    longitude: ""
   });
+
 
 const handleArchive = async () => {
   if (!selectedId) return;
@@ -154,16 +156,20 @@ const handleSubmit = async (e) => {
         if (editingId) {
           // UPDATE
           await updateDoc(doc(db, "tourismData", editingId), {
-            name: formData.name,
-            category: formData.category,
-            type: formData.type,
-            description: formData.description,
-            location: {
-              province: "Lanao del Sur",
-              municipality: formData.municipality,
-            },
-            ...(imageURL && { imageURL }), // only update if new image
-          });
+              name: formData.name,
+              category: formData.category,
+              type: formData.type,
+              description: formData.description,
+              location: {
+                province: "Lanao del Sur",
+                municipality: formData.municipality,
+              },
+              coordinates: {
+                lat: Number(formData.latitude),
+                lng: Number(formData.longitude)
+              },
+              ...(imageURL && { imageURL }),
+            });
 
           setToast("Entry updated successfully!");
         } else {
@@ -174,19 +180,26 @@ const handleSubmit = async (e) => {
             return;
           }
 
-          await addDoc(collection(db, "tourismData"), {
-            name: formData.name,
-            category: formData.category,
-            type: formData.type,
-            description: formData.description,
-            location: {
-              province: "Lanao del Sur",
-              municipality: formData.municipality,
-            },
-            imageURL,
-            status: "active",
-            createdAt: serverTimestamp(),
-          });
+         await addDoc(collection(db, "tourismData"), {
+          name: formData.name,
+          category: formData.category,
+          type: formData.type,
+          description: formData.description,
+
+          location: {
+            province: "Lanao del Sur",
+            municipality: formData.municipality,
+          },
+
+          coordinates: {
+            lat: Number(formData.latitude),
+            lng: Number(formData.longitude)
+          },
+
+          imageURL,
+          status: "active",
+          createdAt: serverTimestamp(),
+        });
 
           setToast("Entry added successfully!");
         }
@@ -472,6 +485,30 @@ const handleSubmit = async (e) => {
                   ))}
                 </select>
 
+                {/* Latitude */}
+                <input
+                  type="number"
+                  step="any"
+                  name="latitude"
+                  placeholder="Latitude"
+                  value={formData.latitude}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded-lg px-4 py-3"
+                />
+
+                {/* Longitude */}
+                <input
+                  type="number"
+                  step="any"
+                  name="longitude"
+                  placeholder="Longitude"
+                  value={formData.longitude}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded-lg px-4 py-3"
+                />
+                
                 {/* Location - Province */}
                 <input
                   type="text"
