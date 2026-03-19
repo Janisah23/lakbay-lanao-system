@@ -1,12 +1,64 @@
 import Navbar from "../../components/common/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LanaoMap from "../../components/map/LanaoMap";
 import TourismChatbot from "../../components/chatbot/TourismChatbot";
+import Footer from "../../components/common/Footer";
+
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination,Navigation } from "swiper/modules";
+
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
 import "./Home.css";
 
 function Home() {
 
 const [favorites, setFavorites] = useState([]);
+
+/* STATIC CONTENT TEMPORARILY */
+const featured = [
+{
+title: "Ramadan Night Market",
+summary: "Experience the vibrant night market during Ramadan.",
+image: "/event1.jpg"
+},
+{
+title: "Lake Lanao Sunset",
+summary: "Witness the breathtaking sunset by the lake.",
+image: "/event2.png"
+}
+
+];
+
+const highlights = [
+{
+title: "Maranao Cultural Dance",
+image: "/event3.jpg"
+},
+{
+title: "Traditional Cuisine",
+image: "/event4.jpg"
+}
+];
+
+const articles = [
+{
+title: "Top 10 Places to Visit in Lanao del Sur",
+summary: "Discover waterfalls, mountains, and cultural heritage.",
+image: "/mt-matampor.jpg"
+},
+{
+title: "Exploring Maranao Culture",
+summary: "Learn about traditions, music, and crafts.",
+image: "/sumpitan-falls.jpg"
+},
+{
+title: "Hidden Waterfalls of Lanao",
+summary: "Adventure through nature and scenic landscapes.",
+image: "/slangan-island.png"
+}
+];
 
 const events = [
 {
@@ -51,34 +103,108 @@ return (
 {/* HERO */}
 <section className="hero">
 
-  <div className="hero-content">
+<div className="hero-content">
 
-    <div className="hero-title">
-      <img
-        src="/lakbay-logo.png"
-        alt="Lakbay Lanao Logo"
-        className="hero-logo"
-      />
+<div className="hero-title">
 
-      <h1>LAKBAY LANAO</h1>
-    </div>
+<img
+src="/lakbay-logo.png"
+alt="Lakbay Lanao Logo"
+className="hero-logo"
+/>
 
-    <p>
-      Lakbay Lanao is your comprehensive digital companion for exploring
-      the rich cultural heritage and breathtaking destinations of
-      Lanao del Sur.
-    </p>
+<h1>LAKBAY LANAO</h1>
 
-    <button className="explore-btn">
-      Explore Now →
-    </button>
+</div>
 
-  </div>
+<p>
+Lakbay Lanao is your digital companion for exploring the rich
+culture and breathtaking destinations of Lanao del Sur.
+</p>
+
+<button className="explore-btn">
+Explore Now →
+</button>
+
+</div>
 
 </section>
 
 
+{/* FEATURED HIGHLIGHTS */}
+
+<section className="py-24 bg-gray-50">
+
+<div className="max-w-7xl mx-auto px-6 text-center">
+
+<h2 className="text-3xl font-semibold text-blue-600">
+Featured Tourism Highlights
+</h2>
+
+<p className="text-gray-500 mt-2">
+Content managed by Tourism Office CMS
+</p>
+
+<Swiper
+modules={[Autoplay, Pagination, Navigation]}
+autoplay={{ delay: 5000 }}
+pagination={{ clickable: true }}
+navigation={true}
+loop={true}
+slidesPerView={1}
+className="mt-12"
+>
+
+{featured.map((item, index) => (
+
+<SwiperSlide key={index}>
+
+<div className="relative rounded-2xl overflow-hidden shadow-xl">
+
+<img
+src={item.image}
+alt={item.title}
+className="w-full h-[620px] object-cover"
+/>
+
+{/* TYPE LABEL */}
+
+<span className="absolute top-6 left-6 bg-blue-600 text-white
+px-4 py-1 rounded-full text-xs font-semibold shadow">
+FEATURED
+</span>
+
+<div className="absolute bottom-0 left-0 right-0
+flex flex-col items-center text-center
+bg-gradient-to-t from-black/70 via-black/40 to-transparent
+text-white pb-14 pt-24 px-6">
+
+<h3 className="text-4xl font-bold">
+{item.title}
+</h3>
+
+<p className="text-lg mt-3 max-w-2xl">
+{item.summary}
+</p>
+
+</div>
+
+</div>
+
+</SwiperSlide>
+
+))}
+
+</Swiper>
+
+</div>
+
+</section>
+
+
+
 {/* MAP */}
+
 <section className="map-section">
 
 <h2>Explore Lanao del Sur</h2>
@@ -93,65 +219,93 @@ Discover tourist spots using our interactive map.
 
 </section>
 
+{/* TOURISM CONTENT */}
 
-{/* DESTINATIONS */}
-<section className="destinations">
+<section className="py-24 px-6 bg-white">
 
-<h2>Most visited tourist destinations</h2>
+<div className="max-w-7xl mx-auto">
 
-<p className="subtitle">
-Explore the most popular destinations in Lanao del Sur
+<h2 className="text-3xl font-semibold text-blue-600 text-center">
+Tourism Content
+</h2>
+
+<p className="text-gray-500 mt-2 text-center">
+Stories, highlights, and announcements from Lanao del Sur
 </p>
 
-<div className="destination-grid">
 
-<div className="destination-card">
-<img src="/misty-cottage.jpg" alt="Misty Cottage" />
-<div className="destination-overlay">
-<h3>Misty Cottage</h3>
-<span>Wato Balindong, Lanao del Sur</span>
-</div>
+<div className="grid md:grid-cols-3 gap-6 mt-14">
+
+{articles.map((article, index) => (
+
+<div
+key={index}
+className="relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition cursor-pointer group"
+>
+
+{/* IMAGE */}
+<img
+src={article.image}
+alt={article.title}
+className="w-full h-[370px] object-cover group-hover:scale-105 transition duration-500"
+/>
+
+
+{/* LABEL */}
+<span className={`absolute top-5 left-5 bg-blue-600 text-white text-xs font-semibold px-4 py-1 rounded-full shadow-md
+
+${article.type === "Article" ? "bg-blue-600" : ""}
+${article.type === "Highlight" ? "bg-green-600" : ""}
+${article.type === "Featured" ? "bg-purple-600" : ""}
+${article.type === "Announcement" ? "bg-red-600" : ""}
+
+`}>
+{article.type || "ARTICLE"}
+</span>
+
+
+{/* GRADIENT */}
+<div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+
+
+{/* TEXT */}
+<div className="absolute bottom-0 left-0 right-0 p-6 text-white text-left">
+
+<h3 className="text-xl font-semibold">
+{article.title}
+</h3>
+
+<p className="text-sm opacity-90 mt-1">
+{article.summary}
+</p>
+
+<button className="mt-3 text-sm font-medium underline hover:text-gray-200">
+Read More →
+</button>
+
 </div>
 
-<div className="destination-card">
-<img src="/mt-matampor.jpg" alt="Mt. Matampor" />
-<div className="destination-overlay">
-<h3>Mt. Matampor</h3>
-<span>Wato Balindong, Lanao del Sur</span>
-</div>
 </div>
 
-<div className="destination-card">
-<img src="/sumpitan-falls.jpg" alt="Sumpitan Falls" />
-<div className="destination-overlay">
-<h3>Sumpitan Falls</h3>
-<span>Wato Balindong, Lanao del Sur</span>
-</div>
-</div>
+))}
 
-<div className="destination-card">
-<img src="/slangan-island.png" alt="Slangan Island" />
-<div className="destination-overlay">
-<h3>Slangan Island</h3>
-<span>Wato Balindong, Lanao del Sur</span>
-</div>
 </div>
 
 </div>
 
 </section>
 
-
 {/* UPCOMING EVENTS */}
-<section className="py-20 px-6 bg-blue-600">
+
+<section className="py-20 px-6 bg-white-600">
 
 <div className="max-w-7xl mx-auto text-center">
 
-<h2 className="text-3xl font-semibold text-white">
+<h2 className="text-3xl font-semibold text-blue-600">
 Upcoming Events
 </h2>
 
-<p className="text-blue-100 mt-2">
+<p className="text-blue-600 mt-2">
 Discover festivals and celebrations in Lanao del Sur
 </p>
 
@@ -172,7 +326,7 @@ className="w-full h-52 object-cover"
 
 <button
 onClick={() => toggleFavorite(index)}
-className="absolute top-4 right-4 bg-white p-2 rounded-full shadow hover:scale-110 transition"
+className="absolute top-4 right-4 bg-white p-2 rounded-full shadow"
 >
 {favorites.includes(index) ? "❤️" : "🤍"}
 </button>
@@ -199,24 +353,13 @@ className="absolute top-4 right-4 bg-white p-2 rounded-full shadow hover:scale-1
 
 </div>
 
-<div className="mt-14">
-
-<button
-className="inline-flex items-center gap-2 bg-white text-blue-600
-px-8 py-3 rounded-full font-medium
-shadow-md hover:bg-gray-100 transition"
->
-See more events →
-</button>
-
-</div>
-
 </div>
 
 </section>
 
-{/* CHATBOT */}
+
 <TourismChatbot />
+<Footer />
 
 </>
 );

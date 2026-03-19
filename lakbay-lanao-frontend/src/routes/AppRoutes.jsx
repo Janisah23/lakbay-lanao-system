@@ -6,6 +6,8 @@ import Destinations from "../pages/public/Destinations";
 import MapView from "../pages/public/MapView";
 import Gallery from "../pages/public/Gallery";
 import PlaceDetails from "../pages/public/PlaceDetails";
+import TourismBlog from "../pages/public/TourismBlog";
+import ArticleDetails from "../pages/public/ArticleDetails";
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -41,7 +43,9 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/itinerary" element={<Itinerary />} />
         <Route path="/gallery" element={<Gallery/>} />
-        <Route path="/place/:id" element={<PlaceDetails />} />  
+        <Route path="/place/:id" element={<PlaceDetails />} />
+        <Route path="/article/:id" element={<ArticleDetails />} />
+        <Route path="/blog" element={<TourismBlog />} />  
 
         {/* Staff Routes */}
         <Route path="/staff" element={<StaffLayout />}>
