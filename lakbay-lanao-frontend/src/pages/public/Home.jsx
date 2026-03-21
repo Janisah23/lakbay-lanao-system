@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import LanaoMap from "../../components/map/LanaoMap";
 import TourismChatbot from "../../components/chatbot/TourismChatbot";
 import Footer from "../../components/common/Footer";
+import { useNavigate } from "react-router-dom";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination,Navigation } from "swiper/modules";
@@ -15,8 +16,14 @@ import "./Home.css";
 function Home() {
 
 const [favorites, setFavorites] = useState([]);
+const navigate = useNavigate();
 
-/* STATIC CONTENT TEMPORARILY */
+const heroImages = [
+"/hero1.png",
+"/hero2.png",
+"/hero3.png"
+];
+
 const featured = [
 {
 title: "Ramadan Night Market",
@@ -101,103 +108,52 @@ return (
 <Navbar />
 
 {/* HERO */}
+{/* HERO */}
 <section className="hero">
 
-<div className="hero-content">
+  {/* BACKGROUND SLIDER */}
+  <Swiper
+    modules={[Autoplay]}
+    autoplay={{ delay: 4000, disableOnInteraction: false }}
+    loop={true}
+    className="hero-swiper"
+  >
+    {heroImages.map((img, index) => (
+      <SwiperSlide key={index}>
+        <div
+          className="hero-slide"
+          style={{ backgroundImage: `url(${img})` }}
+        />
+      </SwiperSlide>
+    ))}
+  </Swiper>
 
-<div className="hero-title">
+  {/* CONTENT */}
+  <div className="hero-content">
 
-<img
-src="/lakbay-logo.png"
-alt="Lakbay Lanao Logo"
-className="hero-logo"
-/>
+    <div className="hero-title">
+      <img
+        src="/lakbay-logo.png"
+        alt="Lakbay Lanao Logo"
+        className="hero-logo"
+      />
 
-<h1>LAKBAY LANAO</h1>
+      <h1>LAKBAY LANAO</h1>
+    </div>
 
-</div>
+    <p>
+      Lakbay Lanao is your digital companion for exploring the rich
+      culture and breathtaking destinations of Lanao del Sur.
+    </p>
 
-<p>
-Lakbay Lanao is your digital companion for exploring the rich
-culture and breathtaking destinations of Lanao del Sur.
-</p>
+    <button
+      className="explore-btn"
+      onClick={() => window.location.href = "/login"}
+    >
+      Explore Now →
+    </button>
 
-<button className="explore-btn">
-Explore Now →
-</button>
-
-</div>
-
-</section>
-
-
-{/* FEATURED HIGHLIGHTS */}
-
-<section className="py-24 bg-gray-50">
-
-<div className="max-w-7xl mx-auto px-6 text-center">
-
-<h2 className="text-3xl font-semibold text-blue-600">
-Featured Tourism Highlights
-</h2>
-
-<p className="text-gray-500 mt-2">
-Content managed by Tourism Office CMS
-</p>
-
-<Swiper
-modules={[Autoplay, Pagination, Navigation]}
-autoplay={{ delay: 5000 }}
-pagination={{ clickable: true }}
-navigation={true}
-loop={true}
-slidesPerView={1}
-className="mt-12"
->
-
-{featured.map((item, index) => (
-
-<SwiperSlide key={index}>
-
-<div className="relative rounded-2xl overflow-hidden shadow-xl">
-
-<img
-src={item.image}
-alt={item.title}
-className="w-full h-[620px] object-cover"
-/>
-
-{/* TYPE LABEL */}
-
-<span className="absolute top-6 left-6 bg-blue-600 text-white
-px-4 py-1 rounded-full text-xs font-semibold shadow">
-FEATURED
-</span>
-
-<div className="absolute bottom-0 left-0 right-0
-flex flex-col items-center text-center
-bg-gradient-to-t from-black/70 via-black/40 to-transparent
-text-white pb-14 pt-24 px-6">
-
-<h3 className="text-4xl font-bold">
-{item.title}
-</h3>
-
-<p className="text-lg mt-3 max-w-2xl">
-{item.summary}
-</p>
-
-</div>
-
-</div>
-
-</SwiperSlide>
-
-))}
-
-</Swiper>
-
-</div>
+  </div>
 
 </section>
 
