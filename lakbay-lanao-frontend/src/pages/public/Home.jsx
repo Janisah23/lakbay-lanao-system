@@ -4,6 +4,8 @@ import LanaoMap from "../../components/map/LanaoMap";
 import TourismChatbot from "../../components/chatbot/TourismChatbot";
 import Footer from "../../components/common/Footer";
 import { useNavigate } from "react-router-dom";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination,Navigation } from "swiper/modules";
@@ -12,6 +14,8 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "./Home.css";
+
+
 
 function Home() {
 
@@ -24,75 +28,54 @@ const heroImages = [
 "/hero3.png"
 ];
 
-const featured = [
-{
-title: "Ramadan Night Market",
-summary: "Experience the vibrant night market during Ramadan.",
-image: "/event1.jpg"
-},
-{
-title: "Lake Lanao Sunset",
-summary: "Witness the breathtaking sunset by the lake.",
-image: "/event2.png"
-}
+const [content, setContent] = useState([]);
 
-];
+useEffect(() => {
 
-const highlights = [
-{
-title: "Maranao Cultural Dance",
-image: "/event3.jpg"
-},
-{
-title: "Traditional Cuisine",
-image: "/event4.jpg"
-}
-];
+  const unsubscribe = onSnapshot(
+    collection(db, "tourismContent"),
+    (snapshot) => {
 
-const articles = [
-{
-title: "Top 10 Places to Visit in Lanao del Sur",
-summary: "Discover waterfalls, mountains, and cultural heritage.",
-image: "/mt-matampor.jpg"
-},
-{
-title: "Exploring Maranao Culture",
-summary: "Learn about traditions, music, and crafts.",
-image: "/sumpitan-falls.jpg"
-},
-{
-title: "Hidden Waterfalls of Lanao",
-summary: "Adventure through nature and scenic landscapes.",
-image: "/slangan-island.png"
-}
-];
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-const events = [
-{
-title: "Araw ng Marawi",
-category: "Culture",
-date: "March 12 – 15",
-image: "/event1.jpg"
-},
-{
-title: "Freedom Run",
-category: "Sports",
-date: "April 5",
-image: "/event2.png"
-},
-{
-title: "Kambatalo Fun Run",
-category: "Live Show",
-date: "April 20",
-image: "/event3.jpg"
-},
-{
-title: "Tourism Festival",
-category: "Live Show",
-date: "February 29",
-image: "/event4.jpg"
-}
-];
+      setContent(data);
+
+    },
+    (error) => {
+      console.error("Error fetching data:", error);
+    }
+  );
+
+  return () => unsubscribe();
+
+}, []);
+
+const articles = content.filter(
+  item =>
+    item.contentType?.toLowerCase() === "article" &&
+    item.status?.toLowerCase() === "published"
+);
+
+const highlights = content.filter(
+  item =>
+    item.contentType?.toLowerCase() === "highlight" &&
+    item.status?.toLowerCase() === "published"
+);
+
+const events = content.filter(
+  item =>
+    item.contentType?.toLowerCase() === "event" &&
+    item.status?.toLowerCase() === "published"
+);
+
+const featured = content.filter(
+  item =>
+    item.contentType?.toLowerCase() === "featured" &&
+    item.status?.toLowerCase() === "published"
+);
 
 const toggleFavorite = (index) => {
 if (favorites.includes(index)) {
@@ -201,7 +184,7 @@ className="relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl trans
 
 {/* IMAGE */}
 <img
-src={article.image}
+src={article.imageURL || "/default.jpg"}
 alt={article.title}
 className="w-full h-[370px] object-cover group-hover:scale-105 transition duration-500"
 />
@@ -213,10 +196,9 @@ className="w-full h-[370px] object-cover group-hover:scale-105 transition durati
 ${article.type === "Article" ? "bg-blue-600" : ""}
 ${article.type === "Highlight" ? "bg-green-600" : ""}
 ${article.type === "Featured" ? "bg-purple-600" : ""}
-${article.type === "Announcement" ? "bg-red-600" : ""}
 
 `}>
-{article.type || "ARTICLE"}
+{article.contentType || "ARTICLE"}
 </span>
 
 
@@ -275,8 +257,7 @@ className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-
 >
 
 <img
-src={event.image}
-alt={event.title}
+src={event.imageURL || "/default-event.jpg"}alt={event.title}
 className="w-full h-52 object-cover"
 />
 
@@ -298,9 +279,14 @@ className="absolute top-4 right-4 bg-white p-2 rounded-full shadow"
 </h3>
 
 <p className="text-gray-400 text-sm mt-1">
-{event.date}
+  {event.eventDate
+    ? new Date(event.eventDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "No date"}
 </p>
-
 </div>
 
 </div>
