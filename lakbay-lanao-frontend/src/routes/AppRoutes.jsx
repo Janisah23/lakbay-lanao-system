@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Navbar from "../components/common/Navbar";
 
 import Home from "../pages/public/Home";
 import Events from "../pages/public/Events";
@@ -8,6 +9,8 @@ import Gallery from "../pages/public/Gallery";
 import PlaceDetails from "../pages/public/PlaceDetails";
 import TourismBlog from "../pages/public/TourismBlog";
 import ArticleDetails from "../pages/public/ArticleDetails";
+import EventDetails from "../pages/public/EventDetails";
+
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -27,25 +30,33 @@ import ProtectedRoute from "../components/common/ProtectedRoute";
 
 
 import Itinerary from "../pages/public/Itinerary";
+import TourismChatbot from "../components/chatbot/TourismChatbot";
+import Favorites from "../pages/public/Favorites";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
+     <Navbar />
       <Routes>
 
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/destinations" element={<Destinations />} />
+      <Route path="/destinations" element={<Destinations />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/itinerary" element={<Itinerary />} />
-        <Route path="/gallery" element={<Gallery/>} />
         <Route path="/place/:id" element={<PlaceDetails />} />
         <Route path="/article/:id" element={<ArticleDetails />} />
         <Route path="/blog" element={<TourismBlog />} />  
+        <Route path="/home" element={<Home />} />
+        <Route path="/chatbot" element={<TourismChatbot />} />
+        <Route path="/itinerary" element={<ProtectedRoute><Itinerary /></ProtectedRoute>}/>
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/event/:id" element={<EventDetails />} />
+
+        
 
         {/* Staff Routes */}
         <Route path="/staff" element={<StaffLayout />}>

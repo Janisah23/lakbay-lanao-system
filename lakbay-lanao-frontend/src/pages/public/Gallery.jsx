@@ -1,50 +1,37 @@
 import Navbar from "../../components/common/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 function Gallery() {
 
 const [selected, setSelected] = useState(null);
 const [currentIndex, setCurrentIndex] = useState(0);
 const [filter, setFilter] = useState("all");
+const [media, setMedia] = useState([]);
 
-const media = [
+useEffect(() => {
 
-{
-type: "image",
-src: "/misty-cottage.jpg",
-title: "Misty Cottage",
-category: "destination"
-},
+  const unsubscribe = onSnapshot(
+    collection(db, "gallery"),
+    (snapshot) => {
 
-{
-type: "image",
-src: "/mt-matampor.jpg",
-title: "Mt. Matampor",
-category: "destination"
-},
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-{
-type: "image",
-src: "/sumpitan-falls.jpg",
-title: "Sumpitan Falls",
-category: "waterfall"
-},
+      setMedia(data);
 
-{
-type: "image",
-src: "/torogan.jpg",
-title: "Torogan House",
-category: "cultural"
-},
+    },
+    (error) => {
+      console.error("Error fetching gallery:", error);
+    }
+  );
 
-{
-type: "video",
-src: "/tourism-video.mp4",
-title: "Explore Lanao del Sur",
-category: "tourism"
-}
+  return () => unsubscribe();
 
-];
+}, []);
 
 const categories = ["all","destination","waterfall","cultural","tourism"];
 
@@ -126,15 +113,15 @@ className="relative rounded-2xl overflow-hidden bg-white border shadow-sm hover:
 {item.type === "image" ? (
 
 <img
-src={item.src}
-className="w-full h-72 object-cover group-hover:scale-105 transition duration-300"
+  src={item.src || "/default.jpg"}
+  className="w-full h-72 object-cover group-hover:scale-105 transition duration-300"
 />
 
 ) : (
 
 <video
-src={item.src}
-className="w-full h-72 object-cover"
+  src={item.src || "/default-video.mp4"}
+  className="w-full h-72 object-cover"
 />
 
 )}

@@ -14,8 +14,13 @@ function Login() {
 
   const provider = new GoogleAuthProvider();
 
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
 const handleLogin = async (e) => {
   e.preventDefault();
+
+  setLoading(true); // START LOADING
 
   try {
     const userCredential = await signInWithEmailAndPassword(
@@ -28,15 +33,24 @@ const handleLogin = async (e) => {
 
     await user.getIdToken(true);
 
-    console.log("LOGIN SUCCESS:", user.uid);
-
-    // 🔥 CALL THIS
     await redirectUser(user);
 
   } catch (error) {
     console.error(error);
+
+    if (error.code === "auth/user-not-found") {
+      setErrorMsg("No account found with this email.");
+    } else if (error.code === "auth/wrong-password") {
+      setErrorMsg("Incorrect password.");
+    } else {
+      setErrorMsg("Login failed.");
+    }
+
+  } finally {
+    setLoading(false); 
   }
 };
+
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -54,10 +68,10 @@ const handleLogin = async (e) => {
       }
 
       redirectUser(user);
+      } catch (error) {
+        console.error(error);
+      }
 
-    } catch (error) {
-      alert(error.message);
-    }
   };
 
   const redirectUser = async (user) => {
@@ -92,20 +106,29 @@ const handleLogin = async (e) => {
       <input
         type="email"
         placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          setErrorMsg(""); 
+        }}
         required
       />
 
       <input
         type="password"
         placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          setErrorMsg(""); 
+        }}
         required
       />
+      {errorMsg && (
+        <p className="error-text">{errorMsg}</p>
+        )}
 
-      <button type="submit" className="login-btn">
-        Log in
-      </button>
+        <button type="submit" className="login-btn" disabled={loading}>
+          {loading ? <div className="spinner"></div> : "Log in"}
+        </button>
     </form>
 
 

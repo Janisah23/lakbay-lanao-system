@@ -1,9 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../../firebase/config";
+import { auth,db } from "../../firebase/config";
 import { FiSearch } from "react-icons/fi";
 import "./Navbar.css";
+import { collection, onSnapshot } from "firebase/firestore";
+import { FiHeart, FiMap, FiLogOut } from "react-icons/fi";
+
+
 
 function Navbar() {
 
@@ -16,50 +20,55 @@ const [showEvents, setShowEvents] = useState(false);
 const [showSearch, setShowSearch] = useState(false);
 const [searchTerm, setSearchTerm] = useState("");
 const [activeFilter, setActiveFilter] = useState("all");
+const [showExplore, setShowExplore] = useState(false);
+const [eventsData, setEventsData] = useState([]);
+const [openMenu, setOpenMenu] = useState(false);
 
-const searchData = [
+const recentEvents = eventsData
+  .filter(item => item.contentType === "Event") 
+  .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)) 
+  .slice(0, 4); 
 
-{
-title:"Misty Cottage",
-type:"destination",
-description:"Scenic mountain cottage in Balindong",
-image:"/misty-cottage.jpg"
-},
+const filteredResults = eventsData.filter((item) => {
 
-{
-title:"Mt. Matampor",
-type:"destination",
-description:"Popular hiking destination",
-image:"/mt-matampor.jpg"
-},
+  const matchSearch =
+    item.title?.toLowerCase().includes(searchTerm.toLowerCase());
 
-{
-title:"Freedom Run",
-type:"event",
-description:"Annual solidarity marathon",
-image:"/event2.png"
-},
+  const matchFilter =
+    activeFilter === "all" ||
+    item.contentType?.toLowerCase() === activeFilter.toLowerCase();
 
-{
-title:"Slangan Island",
-type:"destination",
-description:"Beautiful island destination",
-image:"/slangan-island.png"
-}
-
-];
-
-const filteredResults = searchData.filter((item)=>{
-
-const matchSearch =
-item.title.toLowerCase().includes(searchTerm.toLowerCase());
-
-const matchFilter =
-activeFilter === "all" || item.type === activeFilter;
-
-return matchSearch && matchFilter;
+  return matchSearch && matchFilter;
 
 });
+
+useEffect(() => {
+  const handleClickOutside = () => setOpenMenu(false);
+
+  document.addEventListener("click", handleClickOutside);
+
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
+
+useEffect(() => {
+
+  const unsubscribe = onSnapshot(
+    collection(db, "tourismContent"),
+    (snapshot) => {
+
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setEventsData(data);
+    }
+  );
+
+  return () => unsubscribe();
+
+}, []);
+
 
 useEffect(()=>{
 
@@ -95,10 +104,7 @@ return(
 {/* NAVBAR */}
 
 <nav
-className="fixed top-4 left-0 w-full z-[1000] flex justify-center"
-
->
-
+className="fixed top-4 left-0 w-full z-[1000] flex justify-center">
 <div className="w-[95%] max-w-7xl bg-white border border-gray-200 rounded-full shadow-md px-6 py-3 flex items-center justify-between">
 
 
@@ -133,6 +139,31 @@ className="cursor-pointer hover:text-blue-800 transition"
 Home
 </span>
 
+{/* EXPLORE */}
+<div
+className="cursor-pointer hover:text-blue-800 transition"
+onMouseEnter={()=>{
+setShowExplore(true);
+setShowFeatures(false);
+setShowEvents(false);
+}}
+>
+<span>Explore</span>
+</div>
+
+{/* FEATURES */}
+<div
+className="cursor-pointer hover:text-blue-800 transition"
+onMouseEnter={()=>{
+setShowFeatures(true);
+setShowExplore(false);
+setShowEvents(false);
+}}
+>
+<span>Features</span>
+</div>
+
+{/* GALLERY */}
 <span
 onClick={()=>navigate("/gallery")}
 className="cursor-pointer hover:text-blue-800 transition"
@@ -140,103 +171,103 @@ className="cursor-pointer hover:text-blue-800 transition"
 Gallery
 </span>
 
-<span
-onClick={()=>navigate("/itinerary")}
-className="cursor-pointer hover:text-blue-800 transition"
->
-Itinerary Builder
-</span>
-
-{/* FEATURES */}
-
-<div
-className="cursor-pointer hover:text-blue-800 transition"
-onMouseEnter={()=>{
-setShowFeatures(true);
-setShowEvents(false);
-}}
->
-<span>Features</span>
-</div>
-
-<span
-onClick={()=>navigate("/map")}
-className="cursor-pointer hover:text-blue-800 transition"
->
-Map
-</span>
-
-
-
 {/* EVENTS */}
-
 <div
 className="cursor-pointer hover:text-blue-800 transition"
 onMouseEnter={()=>{
 setShowEvents(true);
+setShowExplore(false);
 setShowFeatures(false);
 }}
 >
-<span>Upcoming Events</span>
+<span>Events</span>
 </div>
 
-
-
-<span
-onClick={()=>navigate("/establishment")}
-className="cursor-pointer hover:text-blue-800 transition"
-
->
-Establishments
-</span>
-
 </div>
+
 
 
 {/* RIGHT SIDE */}
 
 <div className="flex items-center gap-4">
 
-<button
-onClick={()=>setShowSearch(!showSearch)}
-className="text-blue-600 hover:text-blue-800 transition"
->
-<FiSearch size={24}/>
-</button>
+  {/* SEARCH */}
+  <button
+    onClick={()=>setShowSearch(!showSearch)}
+    className="text-blue-600 hover:text-blue-800 transition"
+  >
+    <FiSearch size={24}/>
+  </button>
 
+  {!user ? (
 
-{!user ? (
+    // NOT LOGGED IN
+    <button
+      onClick={()=>navigate("/login")}
+      className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700 transition shadow-sm"
+    >
+      Sign In
+    </button>
 
-<button
-onClick={()=>navigate("/login")}
-className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700 transition shadow-sm"
->
-Sign In
-</button>
+  ) : (
 
-) : (
+    // LOGGED IN
+    <div className="relative">
 
-<div className="flex items-center gap-3">
+      <img
+        src={user.photoURL || "/default-avatar.png"}
+        alt="profile"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenMenu(!openMenu);
+          }}        
+      className="w-9 h-9 rounded-full cursor-pointer"
+      />
+      {openMenu && (
+          <div className="absolute right-0 mt-3 w-52 bg-white rounded-xl shadow-lg py-2 z-50 border animate-dropdown">
+          <button
+            onClick={() => {
+              navigate("/favorites");
+              setOpenMenu(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            <FiHeart className="text-blue-600 text-lg" />
+            Top Picks
+          </button>
 
-<img
-src={user.photoURL || "/default-avatar.png"}
-alt="profile"
-className="w-9 h-9 rounded-full object-cover"
-/>
+          <button
+            onClick={() => {
+              navigate("/itinerary");
+              setOpenMenu(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            <FiMap className="text-blue-600 text-lg" />
+            Itineraries
+          </button>
 
-<button
-onClick={handleLogout}
-className="text-sm text-red-500 hover:text-red-700"
->
-Logout
-</button>
+          <div className="border-t my-2"></div>
+
+          <button
+            onClick={() => {
+              handleLogout();
+              setOpenMenu(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+          >
+            <FiLogOut className="text-red-500 text-lg" />
+            Logout
+          </button>
+
+        </div>
+      )}
+
+    </div>
+
+  )}
 
 </div>
-
-)}
-
-</div>
-
 </div>
 
 </nav>
@@ -245,28 +276,25 @@ Logout
 
 {showSearch && (
 
-<div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex justify-center items-start pt-32">
-
-<div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl p-8 border">
-
+<div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex justify-center items-start pt-28 animate-fadeIn">
+<div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-6 border">
+    
 {/* SEARCH INPUT */}
 
-<div className="flex items-center gap-4 border rounded-full px-6 py-4 shadow-sm">
+<div className="flex items-center gap-3 border rounded-full px-4 py-2.5 shadow-sm">
 
-<FiSearch className="text-gray-400 text-xl"/>
+<FiSearch className="text-gray-400 text-lg"/>
 
 <input
 type="text"
 placeholder="Search destinations, events, establishments..."
 value={searchTerm}
 onChange={(e)=>setSearchTerm(e.target.value)}
-className="flex-1 outline-none text-base"
-/>
+className="flex-1 outline-none text-sm"/>
 
 <button
 onClick={()=>setShowSearch(false)}
-className="text-gray-400 hover:text-red-500 text-lg"
->
+className="text-gray-400 hover:text-red-500 text-base">
 ✕
 </button>
 
@@ -274,21 +302,28 @@ className="text-gray-400 hover:text-red-500 text-lg"
 
 {/* FILTERS */}
 
-<div className="flex gap-3 mt-6 flex-wrap">
+<div className="flex gap-2 mt-6 flex-wrap">
 
-{["All","Destination","Event","Establishment"].map((filter)=>(
+{[
+  { label: "All", value: "all" },
+  { label: "Destination", value: "destination" },
+  { label: "Event", value: "event" },
+  { label: "Establishment", value: "establishment" },
+  { label: "Cultural & Heritage", value: "cultural" },
+  { label: "Landmarks", value: "landmark" }
+].map((filter)=>(
 
 <button
-key={filter}
-onClick={()=>setActiveFilter(filter)}
-className={`px-4 py-2 rounded-full text-sm border transition
-${activeFilter===filter
+key={filter.value}
+onClick={()=>setActiveFilter(filter.value)}
+className={`px-3 py-1.5 rounded-full text-xs border transition
+${activeFilter===filter.value
 ? "bg-blue-600 text-white"
 : "bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white"
 }`}
 >
 
-{filter}
+{filter.label}
 
 </button>
 
@@ -296,13 +331,11 @@ ${activeFilter===filter
 
 </div>
 
-{/* RESULTS */}
-
-<div className="space-y-4 mt-8 max-h-[350px] overflow-y-auto pr-2">
+<div className="space-y-3 mt-6 max-h-[280px] overflow-y-auto pr-1">
 
 {searchTerm === "" && (
 
-<p className="text-gray-400 text-sm">
+<p className="text-gray-400 text-xs">
 Start typing to search destinations
 </p>
 
@@ -312,27 +345,27 @@ Start typing to search destinations
 
 <div
 key={index}
-className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition cursor-pointer"
+className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition cursor-pointer"
 >
 
 <img
-src={item.image}
+src={item.imageURL || "/default-image.png"}
 alt={item.title}
-className="w-20 h-20 object-cover rounded-lg"
+className="w-16 h-16 object-cover rounded-lg"
 />
 
 <div>
 
-<p className="text-xs text-blue-600 uppercase">
-{item.type}
+<p className="text-[10px] text-blue-600 uppercase">
+{item.contentType}
 </p>
 
-<h3 className="font-semibold text-gray-800">
+<h3 className="font-semibold text-sm text-gray-800">
 {item.title}
 </h3>
 
-<p className="text-sm text-gray-400">
-{item.description}
+<p className="text-xs text-gray-400">
+{item.summary || "No description"}
 </p>
 
 </div>
@@ -340,6 +373,79 @@ className="w-20 h-20 object-cover rounded-lg"
 </div>
 
 ))}
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
+{/* EXPLORE PANEL */}
+{showExplore && (
+
+<div
+className="absolute top-[80px] left-0 w-full z-[999] flex justify-center"
+onMouseLeave={()=>setShowExplore(false)}
+>
+
+<div className="w-[95%] max-w-7xl bg-white shadow-xl border rounded-2xl p-8 grid grid-cols-2 gap-8">
+
+<div className="grid grid-cols-2 gap-6">
+
+<div
+onClick={()=>{
+  navigate("/destinations");
+  setShowExplore(false);
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
+<h4 className="font-semibold text-blue-600">Destinations</h4>
+<p className="text-sm text-gray-500">Tourist spots</p>
+</div>
+
+<div
+onClick={()=>{
+  navigate("/cultural");
+  setShowExplore(false);
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
+<h4 className="font-semibold text-blue-600">Cultural & Heritage</h4>
+<p className="text-sm text-gray-500">Traditions & culture</p>
+</div>
+
+<div
+onClick={()=>{
+  navigate("/establishment");
+  setShowExplore(false);
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
+<h4 className="font-semibold text-blue-600">Establishments</h4>
+<p className="text-sm text-gray-500">Hotels & restaurants</p>
+</div>
+
+<div
+onClick={()=>{
+  navigate("/landmarks");
+  setShowExplore(false);
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
+<h4 className="font-semibold text-blue-600">Landmarks</h4>
+<p className="text-sm text-gray-500">Famous places</p>
+</div>
+
+</div>
+
+<div className="flex flex-col items-center justify-center text-center">
+
+<img src="/explore-preview.png"  className="w-60 h-24 object-cover rounded-xl shadow" />
+<span className="text-sm text-gray-500 mt-4">
+Explore Lanao
+</span>
 
 </div>
 
@@ -361,22 +467,56 @@ onMouseLeave={()=>setShowFeatures(false)}
 
 <div className="grid grid-cols-2 gap-6">
 
-<div>
+{/* INTERACTIVE MAP */}
+<div
+onClick={()=>{
+  navigate("/map");
+  setShowFeatures(false);
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
 <h4 className="font-semibold text-blue-600">Interactive Map</h4>
 <p className="text-sm text-gray-500">Explore destinations visually</p>
 </div>
 
-<div>
+{/* AI CHATBOT */}
+<div
+onClick={()=>{
+  if(!user){
+    navigate("/login");
+  } else {
+    navigate("/chatbot");
+  }
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
 <h4 className="font-semibold text-blue-600">AI Chatbot</h4>
 <p className="text-sm text-gray-500">Instant travel assistance</p>
 </div>
 
-<div>
+{/* ITINERARY */}
+<div
+onClick={()=>{
+  if(!user){
+    navigate("/login");
+  } else {
+    navigate("/itinerary");
+  }
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
 <h4 className="font-semibold text-blue-600">Itinerary Builder</h4>
 <p className="text-sm text-gray-500">Plan your trip smartly</p>
 </div>
 
-<div>
+{/* EVENTS */}
+<div
+onClick={()=>{
+  navigate("/events");
+  setShowFeatures(false);
+}}
+className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+>
 <h4 className="font-semibold text-blue-600">Events Calendar</h4>
 <p className="text-sm text-gray-500">Stay updated with festivals</p>
 </div>
@@ -412,30 +552,38 @@ onMouseLeave={()=>setShowEvents(false)}
 
 <div className="w-[95%] max-w-7xl bg-white shadow-xl border rounded-2xl p-8 grid grid-cols-2 gap-8">
 
+{/* LEFT SIDE (EVENT LIST) */}
 <div className="grid grid-cols-2 gap-6">
 
-<div>
-<h4 className="font-semibold text-blue-600">Araw ng Marawi</h4>
-<p className="text-sm text-gray-500">Annual cultural celebration</p>
+{recentEvents.length === 0 ? (
+
+<p className="text-gray-400 text-sm">
+No events available
+</p>
+
+) : (
+
+recentEvents.map((event) => (
+
+<div key={event.id}>
+
+<h4 className="font-semibold text-blue-600">
+{event.title}
+</h4>
+
+<p className="text-sm text-gray-500">
+{event.summary || "No description"}
+</p>
+
 </div>
 
-<div>
-<h4 className="font-semibold text-blue-600">Kambalato Fun Run</h4>
-<p className="text-sm text-gray-500">Community sports event</p>
-</div>
+))
 
-<div>
-<h4 className="font-semibold text-blue-600">Freedom Run</h4>
-<p className="text-sm text-gray-500">Solidarity marathon</p>
-</div>
-
-<div>
-<h4 className="font-semibold text-blue-600">Seasonal Festivals</h4>
-<p className="text-sm text-gray-500">Celebrate Lanao traditions</p>
-</div>
+)}
 
 </div>
 
+{/* RIGHT SIDE (IMAGE PREVIEW - SAME DESIGN) */}
 <div className="flex flex-col items-center justify-center text-center">
 
 <img
@@ -444,7 +592,7 @@ className="w-64 rounded-xl shadow"
 />
 
 <span className="text-sm text-gray-500 mt-4">
-Discover upcoming celebrations
+Discover recent events
 </span>
 
 </div>
@@ -454,7 +602,6 @@ Discover upcoming celebrations
 </div>
 
 )}
-
 
 </>
 

@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase/config";
 import AppRoutes from "./routes/AppRoutes";
-import { Toaster } from "react-hot-toast";
-
+import FavoritesProvider from "./components/context/FavoritesProvider";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -17,13 +16,14 @@ function App() {
 
     return () => unsubscribe();
   }, []);
-  
-    <Toaster position="top-right" />
-
 
   if (loading) return <div>Loading...</div>;
 
-  return <AppRoutes currentUser={user} />;
+  return (
+    <FavoritesProvider>
+      <AppRoutes currentUser={user} />
+    </FavoritesProvider>
+  );
 }
 
 export default App;
