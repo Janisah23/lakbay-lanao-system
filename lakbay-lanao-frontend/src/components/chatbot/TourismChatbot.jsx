@@ -1,40 +1,43 @@
 import { useState, useEffect } from "react";
+import { auth } from "../../firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+
 
 function TourismChatbot() {
 
 const [open, setOpen] = useState(false);
-const [messages, setMessages] = useState([]);
+
 const [typing, setTyping] = useState(false);
 const [input, setInput] = useState("");
+const [user, setUser] = useState(null);
+const navigate = useNavigate();
 
-const suggestions = [
-"What is Lakbay Lanao?",
-"Top tourist destinations in Lanao del Sur",
-"Where can I find hotels in Marawi?",
-"Upcoming events in Lanao del Sur",
-"Help me plan my itinerary"
-];
 
 useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+  });
 
-if(open && messages.length === 0){
+  return () => unsubscribe();
+}, []);
 
-setMessages([
+const [messages, setMessages] = useState([
 {
-sender:"bot",
-text:"👋 Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur."
+  sender:"bot",
+  text:"👋 Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur."
 },
 {
-sender:"suggestions",
-options:suggestions
+  sender:"suggestions",
+  options:[
+    "What is Lakbay Lanao?",
+    "Top tourist destinations in Lanao del Sur",
+    "Where can I find hotels in Marawi?",
+    "Upcoming events in Lanao del Sur",
+    "Help me plan my itinerary"
+  ]
 }
 ]);
-
-}
-
-},[open]);
-
-
 
 const sendMessage = (text) => {
 
@@ -70,15 +73,40 @@ return (
 
 {/* CHATBOT BUTTON */}
 
+<div className="fixed bottom-6 right-6 z-[9999] group">
+
 <button
-onClick={()=>setOpen(!open)}
-className="fixed bottom-6 right-6 z-[9999] hover:scale-110 transition"
+onClick={()=>{
+  if(!user){
+    navigate("/login");
+    return;
+  }
+  setOpen(!open);
+}}
+className="cursor-pointer"
 >
+
 <img
-src="/chatbot-icon.png"
-className="w-20 h-20 drop-shadow-2xl"
+  src="/chatbot-icon.png"
+  alt="Chatbot"
+  className="w-20 h-20 drop-shadow-2xl transition duration-300 
+  group-hover:scale-110 group-hover:rotate-3"
 />
+
 </button>
+
+{/* TOOLTIP */}
+{!user && (
+  <div className="absolute bottom-24 left-1/2 -translate-x-1/2
+  bg-gray-900/90 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-md
+  opacity-0 group-hover:opacity-100
+  translate-y-2 group-hover:translate-y-0
+  transition duration-200 whitespace-nowrap shadow-lg">
+    Login to access
+  </div>
+)}
+
+</div>
 
 
 

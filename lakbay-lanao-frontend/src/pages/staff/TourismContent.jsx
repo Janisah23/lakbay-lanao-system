@@ -192,7 +192,6 @@ return (
               <option value="Article">Article</option>
               <option value="Highlight">Highlight</option>
               <option value="Featured">Featured</option>
-              <option value="Announcement">Announcement</option>
             </select>
 
             {/* Animated SVG Arrow */}
@@ -356,7 +355,6 @@ return (
                 <option value="Article">Article</option>
                 <option value="Highlight">Highlight</option>
                 <option value="Featured">Featured</option>
-                <option value="Announcement">Announcement</option>
               </select>
 
               <textarea

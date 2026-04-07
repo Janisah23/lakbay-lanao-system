@@ -3,20 +3,19 @@ import Navbar from "../../components/common/Navbar";
 import Footer from "../../components/common/Footer";
 import TourismChatbot from "../../components/chatbot/TourismChatbot";
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { FiClock, FiCalendar, FiUser, FiInfo, FiHeart, FiTag } from "react-icons/fi";
+import { FiClock, FiMapPin, FiCalendar, FiUser, FiInfo, FiHeart } from "react-icons/fi";
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md"; 
 import { FaHeart } from "react-icons/fa";
 
 import { db, auth } from "../../firebase/config";
-import { doc, getDoc, setDoc, deleteDoc, getDocs, collection, query, where, limit, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, getDocs, collection, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
-const ArticleDetails = () => {
+const EventDetails = () => {
   const [morePlaces, setMorePlaces] = useState([]);
-  const [moreArticles, setMoreArticles] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
-  const [articleDetail, setArticleDetail] = useState(null);
+  const [eventDetail, setEventDetail] = useState(null);
   
   // Rating States
   const [userRating, setUserRating] = useState(0);
@@ -26,37 +25,39 @@ const ArticleDetails = () => {
   const { favorites } = useFavorites();
   const isFav = favorites.some(fav => String(fav.id) === String(id));
 
-  // 1. Fetch Article Detail
+  // 1. Fetch Event Detail
   useEffect(() => {
-    const fetchArticle = async () => {
+    const fetchEvent = async () => {
       try {
-        let docRef = doc(db, "tourismContent", id);
+        let docRef = doc(db, "tourismData", id);
         let snap = await getDoc(docRef);
 
         if (snap.exists()) {
-          setArticleDetail({ id: snap.id, ...snap.data() });
+          setEventDetail({ id: snap.id, ...snap.data() });
           return;
         }
 
-        // Fallback to tourismContent
+        // Fallback to tourismContent if not in tourismData
         docRef = doc(db, "tourismContent", id);
         snap = await getDoc(docRef);
 
         if (snap.exists()) {
-          setArticleDetail({ id: snap.id, ...snap.data() });
+          setEventDetail({ id: snap.id, ...snap.data() });
         } else {
-          console.log("No such article found!");
+          console.log("No such document in both collections!");
         }
       } catch (error) {
-        console.error("Error fetching article:", error);
+        console.error("Error fetching:", error);
       }
     };
 
-    if (id) fetchArticle();
+    if (id) fetchEvent();
   }, [id]);
 
-  // 2. Fetch Places to Explore
+  // 2. Fetch More Places
   useEffect(() => {
+    if (!eventDetail) return;
+
     const fetchMorePlaces = async () => {
       try {
         const snap = await getDocs(collection(db, "tourismContent"));
@@ -65,8 +66,12 @@ const ArticleDetails = () => {
           ...doc.data()
         }));
 
-        // Filter out articles to only show destinations/events
-        const filtered = items.filter(item => item.contentType !== "Article");
+        const filtered = items.filter(
+          item =>
+            item.id !== id &&
+            item.contentType === eventDetail.contentType
+        );
+
         setMorePlaces(filtered);
       } catch (error) {
         console.error("Error fetching places:", error);
@@ -74,35 +79,7 @@ const ArticleDetails = () => {
     };
 
     fetchMorePlaces();
-  }, []); 
-
-  // 3. Fetch More Articles (Excluding current one)
-  useEffect(() => {
-    if (!articleDetail) return;
-
-    const fetchOtherArticles = async () => {
-      try {
-        const q = query(
-          collection(db, "tourismContent"),
-          where("contentType", "==", "Article"),
-          limit(4) // Fetch 4 in case one is the current article
-        );
-        const snap = await getDocs(q);
-        const items = snap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        // Filter out the current article and limit to 3
-        const filteredArticles = items.filter(item => item.id !== articleDetail.id).slice(0, 3);
-        setMoreArticles(filteredArticles); 
-      } catch (error) {
-        console.error("Error fetching other articles:", error);
-      }
-    };
-
-    fetchOtherArticles();
-  }, [articleDetail]);
+  }, [eventDetail, id]); 
 
   const toggleFavorite = async (item) => {
     const user = auth.currentUser;
@@ -124,7 +101,7 @@ const ArticleDetails = () => {
     if (!user) return alert("Please login first to submit a rating.");
 
     try {
-      const reviewRef = doc(db, "tourismData", articleDetail.id, "reviews", user.uid);
+      const reviewRef = doc(db, "tourismContent", eventDetail.id, "reviews", user.uid);
 
       await setDoc(reviewRef, {
         userId: user.uid,
@@ -132,15 +109,15 @@ const ArticleDetails = () => {
         createdAt: serverTimestamp()
       });
 
-      const currentRating = articleDetail.rating || 0;
-      const currentCount = articleDetail.reviewsCount || 0;
+      const currentRating = eventDetail.rating || 0;
+      const currentCount = eventDetail.reviewsCount || 0;
 
       const newCount = currentCount + 1;
       const newAverage = ((currentRating * currentCount) + userRating) / newCount;
 
-      const articleRef = doc(db, "tourismContent", articleDetail.id);
+      const placeRef = doc(db, "tourismContent", eventDetail.id);
 
-      await updateDoc(articleRef, {
+      await updateDoc(placeRef, {
         rating: newAverage,
         reviewsCount: newCount,
         isTopDestination: newAverage >= 4.5 && newCount >= 5
@@ -149,26 +126,30 @@ const ArticleDetails = () => {
       // Trigger success UI
       setIsSubmitted(true);
       setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 3000);
+      setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
     } catch (error) {
       console.error("Error submitting rating:", error);
     }
   };
 
-  if (!articleDetail) {
+  if (!eventDetail) {
     return (
       <div className="font-sans text-gray-900 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading article...</p>
+          <p className="mt-4 text-gray-600 font-medium">Loading details...</p>
         </div>
       </div>
     );
   }
 
-  const formattedDate = articleDetail.publishDate || articleDetail.createdAt
-    ? new Date(articleDetail.publishDate || articleDetail.createdAt).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    : new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const formattedDate = eventDetail.eventDate 
+    ? new Date(eventDetail.eventDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : "TBA";
+
+  const locationStr = eventDetail.location
+    ? `${eventDetail.location.municipality}, ${eventDetail.location.province}`
+    : "Lanao del Sur";
 
   return (
     <div className="font-sans text-gray-900 bg-white min-h-screen">
@@ -177,34 +158,38 @@ const ArticleDetails = () => {
       {/* 1. HEADER SECTION */}
       <section className="pt-32 pb-8 px-8 md:px-16 lg:px-24 max-w-[1400px] mx-auto">
         <p className="text-sm text-gray-500 font-semibold mb-1 uppercase tracking-wide">
-          {articleDetail.category || "Travel Guide"}
+          {eventDetail.location?.province || "Lanao del Sur"}
         </p>
         
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-4 tracking-tight leading-tight">
-          {articleDetail.title}
+          {eventDetail.title}
         </h1>
         
         <p className="text-xl text-gray-500 mb-6 font-light max-w-4xl">
-          {articleDetail.summary || "Discover the cultural heritage and beauty of Lanao del Sur."}
+          {eventDetail.summary || "Discover the cultural heritage and beauty of Lanao."}
         </p>
 
-        {/* Rating and Meta Row */}
+        {/* Rating and Ranking Row */}
         <div className="flex flex-wrap items-center gap-5 text-sm font-medium text-gray-700">
-          <div className="flex items-center gap-1.5 font-bold text-blue-600">
-            <FiTag className="text-lg" />
-            Editor's Pick
+          <div className="flex items-center gap-1.5 font-bold text-red-600">
+            <div className="flex gap-0.5">
+              <span className="w-2 h-2 rounded-full bg-red-600"></span>
+              <span className="w-2 h-2 rounded-full bg-red-600"></span>
+              <span className="w-2 h-2 rounded-full bg-red-600"></span>
+            </div>
+            Top Destination
           </div>
           
           <div className="flex items-center gap-1">
             <span className="text-yellow-500 text-lg tracking-widest">
               ★★★★<span className="text-yellow-200">★</span>
             </span>
-            <span className="font-bold text-gray-900 ml-1">{articleDetail.rating ? articleDetail.rating.toFixed(1) : "4.8"}</span>
-            <span className="text-gray-500">({articleDetail.reviewsCount || "1,250"})</span>
+            <span className="font-bold text-gray-900 ml-1">{eventDetail.rating ? eventDetail.rating.toFixed(1) : "4.8"}</span>
+            <span className="text-gray-500">({eventDetail.reviewsCount || "1,250"})</span>
           </div>
           
           <div className="text-gray-600">
-            <span className="font-bold text-gray-900">{articleDetail.readTime || "5 Min"}</span> Read
+            <span className="font-bold text-gray-900">#1</span> of 50 most visited in Lanao
           </div>
         </div>
       </section>
@@ -213,18 +198,18 @@ const ArticleDetails = () => {
       <section className="w-full relative">
         <div className="max-w-[1400px] mx-auto w-full relative">
           <button
-            onClick={() => toggleFavorite(articleDetail)}
+            onClick={() => toggleFavorite(eventDetail)}
             className="absolute -top-6 right-6 md:right-12 z-20 bg-white px-5 py-2.5 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex items-center gap-2 font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors border border-gray-100"
           >
             {isFav ? (
               <>
                 <MdBookmarkAdded className="text-[22px] text-blue-600" /> 
-                Saved to list
+                Added to list
               </>
             ) : (
               <>
                 <MdOutlineBookmarkAdd className="text-[22px] text-gray-700" /> 
-                Save Article
+                Add to list
               </>
             )}
           </button>
@@ -232,8 +217,8 @@ const ArticleDetails = () => {
 
         <div className="w-full h-[200px] md:h-[300px] lg:h-[400px]">
           <img
-            src={articleDetail.imageURL || "/default.jpg"}
-            alt={articleDetail.title}
+            src={eventDetail.imageURL || "/default.jpg"}
+            alt={eventDetail.title}
             className="w-full h-full object-cover"
           />
         </div>
@@ -243,24 +228,24 @@ const ArticleDetails = () => {
       <section className="py-20 px-8 md:px-16 lg:px-24 bg-white">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-16 items-start">
 
-          {/* LEFT: Article Content */}
+          {/* LEFT: Description */}
           <div className="lg:col-span-2 space-y-10">
             <h2 className="text-3xl font-bold text-gray-900 border-b border-gray-200 pb-4">
-                Read Article
+                About this Experience
             </h2>
 
             <div className="text-lg text-gray-700 leading-loose space-y-6">
-                {articleDetail.description || articleDetail.content ? (articleDetail.description || articleDetail.content).split('\n').map((str, idx) => (
+                {eventDetail.description ? eventDetail.description.split('\n').map((str, idx) => (
                     <p key={idx}>{str}</p>
-                )) : <p>The full content of this article is currently being updated. Check back soon for an insightful read on Lanao del Sur.</p>}
+                )) : <p>Detailed description is being finalized. Prepare for an unforgettable adventure celebrating Meranao culture and hospitality.</p>}
             </div>
 
-            {/* Editor's Note */}
-            <div className="mt-8 flex items-start gap-4 bg-blue-50 border border-blue-100 p-6 rounded-lg text-gray-800">
+            {/* Admission Info */}
+            <div className="mt-8 flex items-start gap-4 bg-gray-50 border border-gray-200 p-6 rounded-lg text-gray-800">
                 <FiInfo className="text-2xl text-blue-700 flex-shrink-0 mt-0.5"/>
                 <div>
-                  <p className="font-bold mb-1 text-blue-900">Editor's Note</p>
-                  <p className="text-sm text-blue-800">Information in this article was verified at the time of publishing. Opening hours, prices, and availability of attractions may change, so we recommend checking official local sources before planning your trip.</p>
+                  <p className="font-bold mb-1">Admission Details</p>
+                  <p className="text-sm">{eventDetail.price || "This experience is open to the public free of charge."}</p>
                 </div>
             </div>
           </div>
@@ -268,7 +253,7 @@ const ArticleDetails = () => {
           {/* RIGHT: Sidebar Info */}
           <div className="space-y-10 lg:sticky lg:top-24">
             
-            {/* RATING CARD */}
+            {/* RATING CARD (New professional layout with popup) */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm relative">
                 
                 {/* Success Popup Notification */}
@@ -278,8 +263,8 @@ const ArticleDetails = () => {
                     </div>
                 )}
 
-                <h3 className="font-bold text-gray-900 mb-2">Rate this article</h3>
-                <p className="text-sm text-gray-500 mb-5">Did you find this guide helpful?</p>
+                <h3 className="font-bold text-gray-900 mb-2">Rate your experience</h3>
+                <p className="text-sm text-gray-500 mb-5">Share your thoughts with other travelers.</p>
                 
                 {/* Interactive Stars Container */}
                 <div className="flex flex-col items-center bg-gray-50 rounded-xl p-5 border border-gray-100">
@@ -288,7 +273,7 @@ const ArticleDetails = () => {
                             <span
                                 key={star}
                                 onClick={() => {
-                                    if (!isSubmitted) setUserRating(star);
+                                    if (!isSubmitted) setUserRating(star); // Only allow clicking if not submitted
                                 }}
                                 className={`transition-colors duration-200 ${
                                     star <= userRating 
@@ -300,6 +285,7 @@ const ArticleDetails = () => {
                             </span>
                         ))}
                     </div>
+                    {/* Dynamic Label */}
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         {userRating > 0 ? `${userRating} out of 5 Stars` : "Select a rating"}
                     </p>
@@ -327,41 +313,25 @@ const ArticleDetails = () => {
                 </button>
             </div>
 
-            {/* Key Details Box (Adapted for Article) */}
+            {/* Key Details Box */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <h3 className="font-bold text-gray-900 mb-6">Article Details</h3>
+                <h3 className="font-bold text-gray-900 mb-6">Key Details</h3>
                 
                 <div className="space-y-5">
-                    {/* Date Published */}
+                    {/* Date */}
                     <div className="flex gap-4">
                         <FiCalendar className="text-xl text-gray-400 mt-0.5" />
                         <div>
-                            <p className="text-sm font-semibold text-gray-900">Published On</p>
+                            <p className="text-sm font-semibold text-gray-900">Date</p>
                             <p className="text-sm text-gray-500 mt-1">{formattedDate}</p>
                         </div>
                     </div>
-                    {/* Read Time */}
+                    {/* Location */}
                     <div className="flex gap-4">
-                        <FiClock className="text-xl text-gray-400 mt-0.5" />
+                        <FiMapPin className="text-xl text-gray-400 mt-0.5" />
                         <div>
-                            <p className="text-sm font-semibold text-gray-900">Read Time</p>
-                            <p className="text-sm text-gray-500 mt-1">{articleDetail.readTime || "5 Minutes"}</p>
-                        </div>
-                    </div>
-                    {/* Category */}
-                    <div className="flex gap-4">
-                        <FiTag className="text-xl text-gray-400 mt-0.5" />
-                        <div>
-                            <p className="text-sm font-semibold text-gray-900">Category</p>
-                            <p className="text-sm text-gray-500 mt-1">{articleDetail.category || "Travel Guide"}</p>
-                        </div>
-                    </div>
-                    {/* Author */}
-                    <div className="flex gap-4">
-                        <FiUser className="text-xl text-gray-400 mt-0.5" />
-                        <div>
-                            <p className="text-sm font-semibold text-gray-900">Written By</p>
-                            <p className="text-sm text-gray-500 mt-1">{articleDetail.author || "Lakbay Lanao Editorial"}</p>
+                            <p className="text-sm font-semibold text-gray-900">Location</p>
+                            <p className="text-sm text-gray-500 mt-1">{locationStr}</p>
                         </div>
                     </div>
                 </div>
@@ -371,14 +341,14 @@ const ArticleDetails = () => {
         </div>
       </section>
 
-      {/* 4. MORE TO EXPLORE */}
-      <section className="py-24 px-8 md:px-16 lg:px-24 bg-gray-50 border-t border-gray-100">
+      {/* 5. MORE TO EXPLORE */}
+      <section className="py-24 px-8 md:px-16 lg:px-24 bg-white border-t border-gray-100">
         <div className="max-w-[1400px] mx-auto">
           <div className="mb-10">
           <h3 className="text-3xl font-bold text-blue-900 mb-2">
-            Explore Destinations
+            More {eventDetail?.type || "Places"} to Explore
           </h3>            
-          <p className="text-gray-600">Discover stunning places mentioned in our guides.</p>
+          <p className="text-gray-600">Discover other stunning destinations nearby.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -422,6 +392,7 @@ const ArticleDetails = () => {
             ))}
           </div>
 
+          {/* See More Places Button */}
           {morePlaces.length > 4 && (
             <div className="mt-12 text-center md:text-left">
               <button 
@@ -434,80 +405,10 @@ const ArticleDetails = () => {
           )}
         </div>
       </section>
-
-      {/* 5. ARTICLES (Limited to 3) */}
-      <section className="py-24 px-8 md:px-16 lg:px-24 bg-white border-t border-gray-100">
-        <div className="max-w-[800px] mx-auto">
-          
-          <div className="mb-8">
-            <p className="text-gray-500 text-sm mb-1 font-medium">More Reading</p>
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
-              Related travel news
-            </h3>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden mb-10">
-            {moreArticles.length > 0 ? (
-              moreArticles.map((article, index) => {
-                const isSponsored = article.category?.toLowerCase().includes("sponsored");
-                const isFeatured = article.category?.toLowerCase().includes("featured");
-                let tagColor = "bg-red-600";
-                if (isSponsored) tagColor = "bg-green-600";
-                else if (isFeatured) tagColor = "bg-blue-600";
-
-                return (
-                  <div 
-                    key={article.id}
-                    onClick={() => navigate(`/article/${article.id}`)}
-                    className={`flex items-center justify-between p-4 md:p-5 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      index !== moreArticles.length - 1 ? 'border-b border-gray-200' : ''
-                    }`}
-                  >
-                    <div className="pr-4 flex-1">
-                      <h4 className="text-[15px] md:text-base font-medium text-gray-900 mb-2 leading-snug line-clamp-2">
-                        {article.title}
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-1 h-3 ${tagColor} rounded-full`}></div>
-                        <span className="text-[11px] font-semibold text-gray-500 tracking-wide">
-                          {article.category || article.type || "Travel News"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex-shrink-0">
-                      <img 
-                        src={article.imageURL || "/default.jpg"} 
-                        alt={article.title}
-                        className="w-[90px] h-[60px] md:w-[110px] md:h-[75px] object-cover rounded-md border border-gray-200"
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="p-6 text-center text-sm text-gray-500 font-medium">
-                No related articles available at the moment.
-              </div>
-            )}
-          </div>
-
-          <div className="text-center md:text-left">
-            <button 
-              onClick={() => navigate('/articles')}
-              className="border border-blue-900 text-blue-900 font-semibold px-6 py-2.5 text-sm hover:bg-blue-50 transition-colors rounded-sm"
-            >
-              See more articles
-            </button>
-          </div>
-
-        </div>
-      </section>
-
       <TourismChatbot />
       <Footer />
     </div>
   );
 };
 
-export default ArticleDetails;
+export default EventDetails;
