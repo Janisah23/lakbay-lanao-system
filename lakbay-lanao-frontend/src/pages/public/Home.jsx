@@ -427,33 +427,45 @@ function Home() {
                   )}
                 </div>
 
-                {/* Content */}
-                <div className="p-6 flex-1 flex flex-col">
-                  <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-3 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md self-start">
-                    {evt.category || "Event"}
-                  </span>
+                    {/* Content */}
+                  <div className="p-6 flex-1 flex flex-col">
+                    <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-3 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md self-start">
+                      {evt.category || "Event"}
+                    </span>
 
-                  <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-800 transition-colors line-clamp-2">
-                    {evt.title}
-                  </h3>
+                    <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-800 transition-colors line-clamp-2">
+                      {evt.title}
+                    </h3>
 
-                  {/* Date */}
-                  <div className="mt-auto pt-5 flex items-center text-[12px] font-semibold text-gray-500 uppercase tracking-wider">
-                    <svg className="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                      {evt.description || "No description available"}
+                    </p>
 
-                    <span>
-                      {evt.eventDate?.seconds
-                        ? new Date(evt.eventDate.seconds * 1000).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric"
-                          })
-                        : evt.eventDate
-                        ? new Date(evt.eventDate).toLocaleDateString()
-                        : "TBA"}
+                    <div className="mt-auto pt-5 flex items-center text-[12px] font-semibold text-gray-500 uppercase tracking-wider">
+                      <svg className="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+
+                      <span>
+                        {evt.eventDate?.seconds
+                          ? new Date(evt.eventDate.seconds * 1000)
+                              .toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                              .toUpperCase()
+                          : evt.eventDate
+                          ? new Date(evt.eventDate)
+                              .toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                              .toUpperCase()
+                          : "TBA"}
+  
                     </span>
                   </div>
                 </div>
