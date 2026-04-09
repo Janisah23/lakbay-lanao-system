@@ -113,7 +113,7 @@ function Navbar() {
               alt="logo"
               className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="font-bold text-blue-800 text-sm whitespace-nowrap tracking-tight">
+            <span className="font-bold text-blue-600 text-sm whitespace-nowrap tracking-tight">
               Provincial Tourism Office
             </span>
           </div>

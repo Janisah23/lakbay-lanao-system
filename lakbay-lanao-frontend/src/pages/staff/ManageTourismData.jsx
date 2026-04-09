@@ -119,7 +119,7 @@ const filteredTourism = tourismList.filter((item) => {
       setFormData({
         ...formData,
         category: value,
-        type: "", // reset type when category changes
+        type: "",
       });
     } else {
       setFormData({
@@ -128,6 +128,7 @@ const filteredTourism = tourismList.filter((item) => {
       });
     }
   };
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
@@ -135,7 +136,6 @@ const handleSubmit = async (e) => {
   try {
     let imageURL = null;
 
-    // Upload only if new image selected
     if (imageFile) {
       const formDataImage = new FormData();
       formDataImage.append("file", imageFile);
@@ -154,7 +154,6 @@ const handleSubmit = async (e) => {
     }
 
         if (editingId) {
-          // UPDATE
           await updateDoc(doc(db, "tourismData", editingId), {
               name: formData.name,
               category: formData.category,
@@ -173,7 +172,6 @@ const handleSubmit = async (e) => {
 
           setToast("Entry updated successfully!");
         } else {
-          // ADD
           if (!imageURL) {
             alert("Please upload an image");
             setLoading(false);
@@ -222,101 +220,101 @@ const handleSubmit = async (e) => {
       </h2>
 
       {/* Search + Filters + Button */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
-            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
 
-              {/* Search */}
-              <div className="relative flex items-center bg-white 
-              w-full md:w-[350px] px-5 py-3 rounded-full 
-              shadow-sm border border-gray-200">
+          {/* Search */}
+          <div className="relative flex items-center bg-white 
+          w-full md:w-[350px] px-5 py-3 rounded-full 
+          shadow-sm border border-gray-200">
 
-                <input
-                  type="text"
-                  placeholder="Search tourism..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 outline-none text-sm bg-transparent pr-8"
-                />
+            <input
+              type="text"
+              placeholder="Search tourism..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 outline-none text-sm bg-transparent pr-8"
+            />
 
-                {/* Clear Button */}
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-10 text-gray-400 hover:text-red-500"
-                  >
-                    ✕
-                  </button>
-                )}
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-10 text-gray-400 hover:text-red-500"
+              >
+                ✕
+              </button>
+            )}
 
-                <FiSearch className="text-gray-500" />
-              </div>
-
-              {/* Category Filter */}
-              <div className="relative group">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="appearance-none bg-white border border-gray-200
-                  px-5 py-3 pr-10 rounded-full text-sm shadow-sm
-                  focus:outline-none focus:ring-2 focus:ring-[#2563EB]
-                  h-[48px] cursor-pointer"
-                >
-                  <option value="">All Categories</option>
-                  <option value="Destination">Destination</option>
-                  <option value="Establishment">Establishment</option>
-                  <option value="Landmark">Landmark</option>
-                  <option value="Cultural Heritage Site">
-                    Cultural Heritage Site
-                  </option>
-                </select>
-
-                {/* Animated SVG Arrow */}
-                <svg
-                  className="pointer-events-none absolute right-4 top-1/2 
-                  -translate-y-1/2 w-4 h-4 text-gray-500 
-                  transition-transform duration-300 
-                  group-focus-within:rotate-180"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-
-              {/* Add Entry */}
-              <div className="flex items-center gap-3">
-                
-                {/* View Archived */}
-                <button
-                  onClick={() => setShowArchived(!showArchived)}
-                  className="px-5 py-3 rounded-full text-sm border border-gray-300 
-                  hover:bg-gray-100 transition hover:shadow-lg hover:bg-blue-700 transition"
-                >
-                  {showArchived ? "View Active" : "View Archived"}
-                </button>
-
-                {/* Add Entry */}
-                <button
-                  onClick={() => setOpenModal(true)}
-                  className="flex items-center gap-2 bg-[#2563EB]
-                  text-white px-6 py-3 rounded-full shadow-md
-                  hover:shadow-lg hover:bg-blue-700 transition duration-300">
-                  <FiPlus />
-                  <span className="text-sm font-medium">Add Entry</span>
-                </button>
-              </div>   
+            <FiSearch className="text-gray-500" />
           </div>
-        </div>     
+
+          {/* Category Filter */}
+          <div className="relative group">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="appearance-none bg-white border border-gray-200
+              px-5 py-3 pr-10 rounded-full text-sm shadow-sm
+              focus:outline-none focus:ring-2 focus:ring-[#2563EB]
+              h-[48px] cursor-pointer"
+            >
+              <option value="">All Categories</option>
+              <option value="Destination">Destination</option>
+              <option value="Establishment">Establishment</option>
+              <option value="Landmark">Landmark</option>
+              <option value="Cultural Heritage Site">
+                Cultural Heritage Site
+              </option>
+            </select>
+
+            <svg
+              className="pointer-events-none absolute right-4 top-1/2 
+              -translate-y-1/2 w-4 h-4 text-gray-500 
+              transition-transform duration-300 
+              group-focus-within:rotate-180"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-3">
+
+            {/* View Archived — FIXED: removed duplicate hover:bg and transition */}
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="px-5 py-3 rounded-full text-sm border border-gray-300
+              hover:bg-gray-100 hover:shadow-lg transition duration-300"
+            >
+              {showArchived ? "View Active" : "View Archived"}
+            </button>
+
+            {/* Add Entry */}
+            <button
+              onClick={() => setOpenModal(true)}
+              className="flex items-center gap-2 bg-[#2563EB]
+              text-white px-6 py-3 rounded-full shadow-md
+              hover:shadow-lg hover:bg-blue-700 transition duration-300"
+            >
+              <FiPlus />
+              <span className="text-sm font-medium">Add Entry</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* TABLE */}
-        <div className="mt-10 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="mt-10 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         {/* HEADER */}
         <div className="grid grid-cols-7 gap-4 px-6 py-4 text-sm text-gray-600 font-medium">
           <span>Image</span>
@@ -329,82 +327,97 @@ const handleSubmit = async (e) => {
         </div>
 
         {/* BODY */}
-        {filteredTourism.map((item) => (
-          <div
-            key={item.id}
-            className="grid grid-cols-7 gap-4 px-6 py-4 text-sm border-t items-center"
-          >
-          <img
-              src={item.imageURL}
-              alt={item.name}
-              className="w-16 h-16 object-cover rounded-lg"
-            />
-
-            <span className="font-medium">{item.name}</span>
-            <span>{item.category}</span>
-            <span>{item.type}</span>
-            <span> {item.location?.municipality}, {item.location?.province} </span>
-
-            <span className="truncate max-w-[200px]"> {item.description} </span>
-
-            <div className="flex flex-col items-center gap-2">
-              {!showArchived ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setEditingId(item.id);
-                      setFormData({
-                        name: item.name,
-                        category: item.category,
-                        type: item.type,
-                        description: item.description,
-                        municipality: item.location?.municipality || "",
-                        province: item.location?.province || "Lanao del Sur",
-                      });
-                      setOpenModal(true);
-                    }}
-                    className="w-20 px-3 py-1 text-xs rounded-md 
-                    bg-yellow-100 text-yellow-700 
-                    hover:bg-yellow-200 transition"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setSelectedId(item.id);
-                      setShowConfirm(true);
-                    }}
-                    className="w-20 px-3 py-1 text-xs rounded-md 
-                    bg-red-100 text-red-600 
-                    hover:bg-red-200 transition"
-                  >
-                    Archive
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => handleRestore(item.id)}
-                  className="w-20 px-3 py-1 text-xs rounded-md 
-                  bg-green-100 text-green-700 
-                  hover:bg-green-200 transition"
-                >
-                  Restore
-                </button>
-              )}
-            </div>
+        {filteredTourism.length === 0 ? (
+          <div className="px-6 py-16 text-center text-gray-400 text-sm">
+            No entries found.
           </div>
-        ))}
+        ) : (
+          filteredTourism.map((item) => (
+            <div
+              key={item.id}
+              className="grid grid-cols-7 gap-4 px-6 py-4 text-sm border-t items-center"
+            >
+              <img
+                src={item.imageURL}
+                alt={item.name}
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+
+              <span className="font-medium">{item.name}</span>
+              <span>{item.category}</span>
+              <span>{item.type}</span>
+              <span>{item.location?.municipality}, {item.location?.province}</span>
+              <span className="truncate max-w-[200px]">{item.description}</span>
+
+              <div className="flex flex-col items-center gap-2">
+                {!showArchived ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setEditingId(item.id);
+                        setFormData({
+                          name: item.name,
+                          category: item.category,
+                          type: item.type,
+                          description: item.description,
+                          municipality: item.location?.municipality || "",
+                          province: item.location?.province || "Lanao del Sur",
+                          latitude: item.coordinates?.lat || "",
+                          longitude: item.coordinates?.lng || "",
+                        });
+                        setOpenModal(true);
+                      }}
+                      className="w-20 px-3 py-1 text-xs rounded-md 
+                      bg-yellow-100 text-yellow-700 
+                      hover:bg-yellow-200 transition"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedId(item.id);
+                        setShowConfirm(true);
+                      }}
+                      className="w-20 px-3 py-1 text-xs rounded-md 
+                      bg-red-100 text-red-600 
+                      hover:bg-red-200 transition"
+                    >
+                      Archive
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => handleRestore(item.id)}
+                    className="w-20 px-3 py-1 text-xs rounded-md 
+                    bg-green-100 text-green-700 
+                    hover:bg-green-200 transition"
+                  >
+                    Restore
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* MODAL */}
       {openModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn">        
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white w-full max-w-2xl max-h-[90vh] 
           overflow-y-auto rounded-2xl shadow-xl p-6 relative 
-          transform transition-all duration-300 scale-100 opacity-100">          
-          <button
-              onClick={() => setOpenModal(false)}
+          transform transition-all duration-300 scale-100 opacity-100">
+            <button
+              onClick={() => {
+                setOpenModal(false);
+                setEditingId(null);
+                setImageFile(null);
+                setFormData({
+                  name: "", category: "", type: "", description: "",
+                  province: "Lanao del Sur", municipality: "", latitude: "", longitude: ""
+                });
+              }}
               className="absolute top-5 right-5 text-gray-500 hover:text-red-500"
             >
               <FiX />
@@ -413,22 +426,20 @@ const handleSubmit = async (e) => {
             <h3 className="text-xl font-semibold text-[#2563EB] mb-6">
               {editingId ? "Update Tourism Entry" : "Add Tourism Entry"}
             </h3>
-            
-              <form onSubmit={handleSubmit} className="space-y-4">
 
-                {/* Name */}
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-4 py-3"
-                />
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-                {/* Category Dropdown */}
-                <select
+              <input
+                type="text"
+                name="name"
+                placeholder="Name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-3"
+              />
+
+              <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
@@ -442,138 +453,130 @@ const handleSubmit = async (e) => {
                 <option value="Cultural Heritage Site">Cultural Heritage Site</option>
               </select>
 
-                {/* Type Dropdown */}
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-4 py-3"
-                >
-                  <option value="">Select Type</option>
-                  {formData.category &&
-                    typeOptions[formData.category]?.map((type, index) => (
-                      <option key={index} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                </select>
-
-                {/* Description */}
-                <textarea
-                  name="description"
-                  placeholder="Description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  rows="4"
-                  className="w-full border rounded-lg px-4 py-3 resize-none"
-                />
-
-                <select
-                  name="municipality"
-                  value={formData.municipality}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-4 py-3"
-                >
-                  <option value="">Select Municipality</option>
-                  {municipalities.map((mun, index) => (
-                    <option key={index} value={mun}>
-                      {mun}
-                    </option>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-3"
+              >
+                <option value="">Select Type</option>
+                {formData.category &&
+                  typeOptions[formData.category]?.map((type, index) => (
+                    <option key={index} value={type}>{type}</option>
                   ))}
-                </select>
+              </select>
 
-                {/* Latitude */}
-                <input
-                  type="number"
-                  step="any"
-                  name="latitude"
-                  placeholder="Latitude"
-                  value={formData.latitude}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-4 py-3"
-                />
+              <textarea
+                name="description"
+                placeholder="Description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+                rows="4"
+                className="w-full border rounded-lg px-4 py-3 resize-none"
+              />
 
-                {/* Longitude */}
-                <input
-                  type="number"
-                  step="any"
-                  name="longitude"
-                  placeholder="Longitude"
-                  value={formData.longitude}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-4 py-3"
-                />
-                
-                {/* Location - Province */}
-                <input
-                  type="text"
-                  value="Lanao del Sur"
-                  readOnly
-                  className="w-full border rounded-lg px-4 py-3 bg-gray-100"
-                />
+              <select
+                name="municipality"
+                value={formData.municipality}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-3"
+              >
+                <option value="">Select Municipality</option>
+                {municipalities.map((mun, index) => (
+                  <option key={index} value={mun}>{mun}</option>
+                ))}
+              </select>
 
-                {/* Image Upload */}
+              <input
+                type="number"
+                step="any"
+                name="latitude"
+                placeholder="Latitude"
+                value={formData.latitude}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-3"
+              />
+
+              <input
+                type="number"
+                step="any"
+                name="longitude"
+                placeholder="Longitude"
+                value={formData.longitude}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-3"
+              />
+
+              <input
+                type="text"
+                value="Lanao del Sur"
+                readOnly
+                className="w-full border rounded-lg px-4 py-3 bg-gray-100"
+              />
+
+              <div className="border rounded-lg px-4 py-3">
+                <label className="block text-sm text-gray-500 mb-1">
+                  {editingId ? "Replace Image (optional)" : "Upload Image"}
+                </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => setImageFile(e.target.files[0])}
-                  required
-                  className="w-full"
+                  {...(!editingId && { required: true })}
+                  className="w-full text-sm"
                 />
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#2563EB] text-white py-3 rounded-lg"
-                >
-                  {loading ? "Uploading..." : "Save Entry"}
-                </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#2563EB] text-white py-3 rounded-lg
+                hover:bg-blue-700 transition duration-300 font-medium"
+              >
+                {loading ? "Uploading..." : "Save Entry"}
+              </button>
             </form>
           </div>
         </div>
       )}
+
+      {/* CONFIRM ARCHIVE */}
       {showConfirm && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-[350px] shadow-lg text-center">
-              
-              <h3 className="text-lg font-semibold mb-4">
-                Archive this entry?
-              </h3>
-
-              <p className="text-sm text-gray-500 mb-6">
-                This entry will be hidden from the list but not permanently deleted.
-              </p>
-
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleArchive}
-                  className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600"
-                >
-                  Confirm
-                </button>
-              </div>
-
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[350px] shadow-lg text-center">
+            <h3 className="text-lg font-semibold mb-4">Archive this entry?</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              This entry will be hidden from the list but not permanently deleted.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchive}
+                className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600"
+              >
+                Confirm
+              </button>
             </div>
           </div>
-        )}
-        {/* Toast */}
-        {toast && (
-          <div className="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeIn">
-            {toast}
-          </div>
-        )}
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeIn">
+          {toast}
+        </div>
+      )}
     </>
   );
 }
