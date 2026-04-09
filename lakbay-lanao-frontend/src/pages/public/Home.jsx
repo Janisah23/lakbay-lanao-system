@@ -165,244 +165,277 @@ function Home() {
         </div>
       </section>
 
-      {/* ─── TRAVEL HIGHLIGHTS ────────────────────────────────────── */}
-      {/* CHANGED: removed Navigation module + navigation={true}, increased slide height */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="section-title">Travel Highlights</h2>
-          <p className="section-subtitle">Explore the beauty and culture of Lanao del Sur</p>
-
-          <Swiper
-            modules={[Autoplay, Pagination]}
-            autoplay={{ delay: 5000, disableOnInteraction: false }}
-            pagination={{ clickable: true }}
-            loop={true}
-            slidesPerView={1}
-            className="highlight-swiper mt-4 rounded-2xl overflow-hidden shadow-xl"
-          >
-            {highlights.map((item, index) => (
-              <SwiperSlide key={index}>
-                <div className="relative rounded-2xl overflow-hidden">
-                  <img
-                    src={item.imageURL || "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?q=80&w=1600&auto=format&fit=crop"}
-                    alt={item.title}
-                    className="w-full h-[680px]  object-cover"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center text-center bg-gradient-to-t from-black/75 via-black/40 to-transparent text-white pb-16 pt-24 px-6">
-                    <h3 className="text-4xl font-bold drop-shadow-lg">{item.title}</h3>
-                    {item.summary && (
-                      <p className="text-lg mt-3 max-w-2xl text-white/85">{item.summary}</p>
-                    )}
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-            {highlights.length === 0 && (
-              <SwiperSlide>
-                <div className="w-full h-[680px] bg-gray-200 flex items-center justify-center rounded-2xl">
-                  <p className="text-gray-400 text-lg">No highlights available yet.</p>
-                </div>
-              </SwiperSlide>
-            )}
-          </Swiper>
-        </div>
-      </section>
-
-
-      {/* ─── TOURISM CONTENT ──────────────────────────────────────── */}
-      {/* CHANGED: bg-[#f5f7fb] → bg-[#2563eb], text colors adjusted for contrast */}
-      <section className="py-20 px-6 md:px-12 lg:px-20 bg-[#2563eb]">
-        <div className="max-w-[1800px] mx-auto">
-
-          {/* Section header */}
+          {/* ─── TRAVEL HIGHLIGHTS ────────────────────────────────── */}
+      <section className="py-20 px-6"
+        style={{ background: 'linear-gradient(135deg, #fff 0%, #f8fbff 50%, #eef4ff 100%)' }}>
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-[32px] font-[550] text-white text-center mb-2.5">
-              Tourism Content
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
+              Travel Highlights
             </h2>
-            <p className="text-white/75 text-center mb-[50px]">
-              Stories, highlights, and announcements from Lanao del Sur
+            <p className="text-gray-500 mt-2 text-base">
+              Explore the beauty and culture of Lanao del Sur
             </p>
           </div>
 
-          {/* Cards grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-            {articles.slice(0, 3).map((article) => (
-              <div
-                key={article.id}
-                onDoubleClick={() => {
-                  toggleFavorite(article);
-                  setShowHeart(article.id);
-                  setTimeout(() => setShowHeart(null), 400);
-                }}
-                className="relative group rounded-3xl overflow-hidden shadow-md card-hover-lift cursor-pointer h-[420px] bg-gray-100"
+          <div className="relative rounded-[28px] overflow-hidden shadow-[0_4px_24px_rgba(37,99,235,0.08)]">
+            {highlights.length > 0 ? (
+              <Swiper
+                modules={[Autoplay, Pagination]}
+                autoplay={{ delay: 5000, disableOnInteraction: false }}
+                pagination={{ clickable: true }}
+                loop={true}
+                className="highlight-swiper"
               >
-                {/* Background image */}
-                <img
-                  src={article.imageURL || "/default.jpg"}
-                  alt={article.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
-
-                {/* Content type badge */}
-                <span className="absolute top-5 left-5 bg-white text-blue-600 text-xs font-bold px-4 py-1.5 rounded-full shadow z-10 uppercase tracking-wider">
-                  {article.contentType || "Article"}
-                </span>
-
-                {/* Favorite button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(article); }}
-                  className="absolute top-5 right-5 bg-white/95 p-2.5 rounded-full shadow z-20 hover:bg-gray-100 transition-colors"
-                >
-                  {favorites.some((fav) => String(fav.id) === String(article.id)) ? (
-                    <FaHeart className="text-blue-600 text-base" />
-                  ) : (
-                    <FiHeart className="text-blue-600 text-base" />
-                  )}
-                </button>
-
-                {/* Heart pop animation */}
-                {showHeart === article.id && (
-                  <FaHeart className="absolute inset-0 m-auto text-blue-500 text-6xl z-30 pointer-events-none drop-shadow-lg" style={{ animation: 'pop 0.4s ease' }} />
-                )}
-
-                {/* Text content */}
-                <div className="absolute bottom-0 left-0 right-0 p-7 z-10 text-white">
-                  <h3 className="text-2xl font-bold leading-tight mb-2 line-clamp-2">
-                    {article.title}
-                  </h3>
-                  <p className="text-white/80 text-sm leading-relaxed mb-4 line-clamp-2">
-                    {article.summary || "Discover more stories and tourism updates from Lanao del Sur."}
-                  </p>
-                  <button className="text-white text-sm font-semibold underline underline-offset-4 hover:text-blue-300 transition-colors">
-                    Read More →
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {articles.length === 0 && (
-              <div className="col-span-3 text-center py-16 text-white/60 text-base">
-                No articles available yet.
+                {highlights.map((item, index) => (
+                  <SwiperSlide key={index}>
+                    <div className="relative">
+                      <img
+                        src={item.imageURL || "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=1400&q=80"}
+                        alt={item.title}
+                        className="w-full h-[560px] object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 px-14 pb-16 text-center text-white">
+                        <span className="inline-block bg-white/15 border border-white/30 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+                          {item.category || "Highlight"}
+                        </span>
+                        <h3 className="text-4xl font-extrabold leading-tight tracking-tight drop-shadow">
+                          {item.title}
+                        </h3>
+                        {item.summary && (
+                          <p className="text-white/82 text-base mt-3 max-w-xl mx-auto leading-relaxed">
+                            {item.summary}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <div className="w-full h-[560px] bg-blue-50 flex items-center justify-center rounded-[28px]">
+                <p className="text-gray-400">No highlights available yet.</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-       {/* ─── MAP ──────────────────────────────────────────────────── */}
-      {/* CHANGED: replaced map-section CSS class with Tailwind */}
-      <section className="py-16 px-6">
-        <h2 className="text-3xl font-semibold text-[#2563eb] text-center mb-2.5">
-          Explore Lanao del Sur
-        </h2>
-        <p className="text-gray-500 text-center mb-12">
-          Discover tourist spots using our interactive map.
-        </p>
-        <div className="max-w-7xl mx-auto w-full rounded-2xl overflow-hidden shadow-lg">
-          <LanaoMap />
+
+        {/* ─── TOURISM CONTENT ──────────────────────────────────── */}
+    <section className="py-20 px-6 md:px-12 lg:px-20 bg-[#2563eb]">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+            Tourism Content
+          </h2>
+          <p className="text-white/70 mt-2 text-base">
+            Stories, highlights, and announcements from Lanao del Sur
+          </p>
         </div>
-      </section>
 
-      {/* ─── UPCOMING EVENTS ────────*/}
-      <section className="py-20 px-6 md:px-12 lg:px-20 bg-white">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {articles.slice(0, 3).map((article) => (
+            <div
+              key={article.id}
+              onDoubleClick={() => {
+                toggleFavorite(article);
+                setShowHeart(article.id);
+                setTimeout(() => setShowHeart(null), 400);
+              }}
+              className="relative group rounded-[28px] overflow-hidden cursor-pointer h-[400px] bg-blue-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.2)]"
+            >
+              <img
+                src={article.imageURL || "/default.jpg"}
+                alt={article.title}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/25 to-transparent" />
 
-          <div className="text-center mb-14">
-            <h2 className="section-title">Upcoming Events</h2>
-            <p className="section-subtitle">
-              Discover festivals and celebrations in Lanao del Sur
-            </p>
-          </div>
+              {/* Badge */}
+              <span className="absolute top-[18px] left-[18px] bg-white text-blue-700 text-[10px] font-bold uppercase tracking-widest px-[14px] py-[5px] rounded-full z-10">
+                {article.contentType || "Article"}
+              </span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {events.slice(0, 8).map((evt) => (
-              <div
-                key={evt.id}
-                onClick={() => navigate(`/event/${evt.id}`)}
-                onDoubleClick={() => {
-                  toggleFavorite(evt);
-                  setShowHeart(evt.id);
-                  setTimeout(() => setShowHeart(null), 400);
-                }}
-                className="group cursor-pointer bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm card-hover-lift"
+              {/* Fav button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleFavorite(article); }}
+                className="absolute top-[18px] right-[18px] bg-white/95 w-9 h-9 rounded-full flex items-center justify-center shadow z-20 hover:bg-blue-50 transition-colors"
               >
-                <div className="relative h-[210px] bg-gray-100 overflow-hidden">
-                  <img
-                    src={evt.imageURL || "/default-event.jpg"}
-                    alt={evt.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
+                {favorites.some((fav) => String(fav.id) === String(article.id)) ? (
+                  <FaHeart className="text-[#2563eb] text-sm" />
+                ) : (
+                  <FiHeart className="text-[#2563eb] text-sm" />
+                )}
+              </button>
 
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(evt); }}
-                    className="absolute top-4 right-4 bg-white/95 p-2.5 rounded-full shadow z-10 hover:bg-gray-50 transition-colors"
-                  >
-                    {favorites.some((fav) => String(fav.id) === String(evt.id)) ? (
-                      <FaHeart className="text-blue-600 text-sm" />
-                    ) : (
-                      <FiHeart className="text-blue-600 text-sm" />
+              {showHeart === article.id && (
+                <FaHeart
+                  className="absolute inset-0 m-auto text-blue-400 text-5xl z-30 pointer-events-none"
+                  style={{ animation: 'pop 0.4s ease' }}
+                />
+              )}
+
+              {/* Body */}
+              <div className="absolute bottom-0 left-0 right-0 p-[26px] z-10 text-white">
+                <h3 className="text-xl font-extrabold leading-snug line-clamp-2">
+                  {article.title}
+                </h3>
+                <p className="text-white/78 text-[13px] leading-relaxed mt-2 line-clamp-2">
+                  {article.summary || "Discover more stories from Lanao del Sur."}
+                </p>
+                <button className="mt-3.5 text-[12px] font-bold text-blue-300 underline underline-offset-4 hover:text-white transition-colors">
+                  Read more →
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {articles.length === 0 && (
+            <div className="col-span-3 text-center py-16 text-white/50 text-sm">
+              No articles available yet.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+
+        {/* ─── MAP ──────────────────────────────────────────────── */}
+        <section className="py-20 px-6 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
+                Explore Lanao del Sur
+              </h2>
+              <p className="text-gray-500 mt-2 text-base">
+                Discover tourist spots using our interactive map
+              </p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-[28px] overflow-hidden shadow-[0_4px_20px_rgba(37,99,235,0.07)]">
+              <LanaoMap />
+            </div>
+          </div>
+        </section>
+
+        {/* ─── UPCOMING EVENTS ──────────────────────────────────── */}
+        <section className="py-20 px-6 md:px-12 lg:px-20"
+          style={{ background: 'linear-gradient(135deg, #fff 0%, #f8fbff 50%, #eef4ff 100%)' }}>
+          <div className="max-w-7xl mx-auto">
+
+            {/* Header */}
+            <div className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
+                Upcoming Events
+              </h2>
+              <p className="text-gray-500 mt-2 text-base">
+                Discover festivals and celebrations in Lanao del Sur
+              </p>
+            </div>
+
+            {/* Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {events.slice(0, 8).map((evt) => (
+                <div
+                  key={evt.id}
+                  onClick={() => navigate(`/event/${evt.id}`)}
+                  onDoubleClick={() => {
+                    toggleFavorite(evt);
+                    setShowHeart(evt.id);
+                    setTimeout(() => setShowHeart(null), 400);
+                  }}
+                  className="group cursor-pointer bg-white border border-gray-200 rounded-[28px] overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(37,99,235,0.09)] hover:border-blue-200"
+                >
+                  {/* Image */}
+                  <div className="relative h-[200px] overflow-hidden bg-blue-50">
+                    <img
+                      src={evt.imageURL || "/default-event.jpg"}
+                      alt={evt.title}
+                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                    />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(evt); }}
+                      className="absolute top-3.5 right-3.5 bg-white/95 w-9 h-9 rounded-full flex items-center justify-center shadow-sm z-10 hover:bg-blue-50 transition-colors"
+                    >
+                      {favorites.some((fav) => String(fav.id) === String(evt.id)) ? (
+                        <FaHeart className="text-[#2563eb] text-sm" />
+                      ) : (
+                        <FiHeart className="text-[#2563eb] text-sm" />
+                      )}
+                    </button>
+                    {showHeart === evt.id && (
+                      <FaHeart
+                        className="absolute inset-0 m-auto text-[#2563eb] text-5xl z-20 pointer-events-none"
+                        style={{ animation: 'pop 0.4s ease' }}
+                      />
                     )}
-                  </button>
+                  </div>
 
-                  {showHeart === evt.id && (
-                    <FaHeart className="absolute inset-0 m-auto text-blue-500 text-5xl z-20 pointer-events-none drop-shadow-lg" style={{ animation: 'pop 0.4s ease' }} />
-                  )}
-                </div>
-
-                <div className="p-5 flex flex-col gap-2">
-                  <span className="self-start text-[11px] font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wide">
-                    {evt.category || "Event"}
-                  </span>
-
-                  <h3 className="text-base font-bold text-blue-600 line-clamp-2 group-hover:text-blue-700 transition-colors leading-snug">
-                    {evt.title}
-                  </h3>
-
-                  <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">
-                    {evt.description || "No description available"}
-                  </p>
-
-                  <div className="mt-3 flex items-center gap-1.5 text-gray-400 text-xs font-semibold uppercase tracking-wide">
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>
-                      {evt.eventDate?.seconds
-                        ? new Date(evt.eventDate.seconds * 1000)
-                            .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            .toUpperCase()
-                        : evt.eventDate
-                        ? new Date(evt.eventDate)
-                            .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            .toUpperCase()
-                        : "TBA"}
+                  {/* Body */}
+                  <div className="px-5 pt-4 pb-5 flex flex-col gap-2.5">
+                    {/* Category chip */}
+                    <span className="self-start bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                      {evt.category || "Event"}
                     </span>
+
+                    {/* Title */}
+                    <h3 className="text-sm font-bold text-[#1e3a8a] leading-snug line-clamp-2 group-hover:text-blue-700 transition-colors">
+                      {evt.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-[12.5px] text-gray-400 leading-relaxed line-clamp-2">
+                      {evt.description || "No description available."}
+                    </p>
+
+                    {/* Date */}
+                    <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold uppercase tracking-wide text-blue-300">
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"
+                          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                        <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                        <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                      <span>
+                        {evt.eventDate?.seconds
+                          ? new Date(evt.eventDate.seconds * 1000)
+                              .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                              .toUpperCase()
+                          : evt.eventDate
+                          ? new Date(evt.eventDate)
+                              .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                              .toUpperCase()
+                          : "TBA"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {events.length === 0 && (
-              <div className="col-span-4 text-center py-16 text-gray-400 text-base">
-                No upcoming events yet.
-              </div>
-            )}
-          </div>
+              {events.length === 0 && (
+                <div className="col-span-4 text-center py-20 text-gray-400 text-sm">
+                  No upcoming events yet.
+                </div>
+              )}
+            </div>
 
-          <div className="mt-12">
-            <button
-              onClick={() => (window.location.href = "/events")}
-              className="border-2 border-blue-600 text-blue-600 font-bold px-8 py-3.5 text-sm rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-200 tracking-wide uppercase"
-            >
-              See more events
-            </button>
+            {/* Footer row */}
+            <div className="mt-12 flex items-center justify-between flex-wrap gap-4">
+              <span className="text-sm text-gray-400">
+                Showing {Math.min(events.length, 8)} of {events.length} events
+              </span>
+              <button
+                onClick={() => (window.location.href = "/events")}
+                className="rounded-full bg-white border-2 border-[#2563eb] text-[#2563eb] font-bold text-xs uppercase tracking-widest px-7 py-3 transition-all duration-200 hover:bg-[#2563eb] hover:text-white hover:shadow-[0_4px_14px_rgba(37,99,235,0.2)]"
+              >
+                See more events →
+              </button>
+            </div>
+
           </div>
-        </div>
-      </section>
+        </section>
 
       <TourismChatbot />
       <Footer />
