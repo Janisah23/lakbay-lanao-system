@@ -6,6 +6,10 @@
   font-style: normal;
 }
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -21,12 +25,6 @@
   animation: fadeIn 0.2s ease-in-out;
 }
 
-
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 * {
   margin: 0;
   padding: 0;
@@ -38,14 +36,9 @@ body {
   background-color: #ffffff;
 }
 
-
-@keyframes fadeIn{
-from{
-opacity:0;
-transform:translateY(10px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
+@font-face {
+  font-family: "Barbara";
+  src: url("./assets/BARABARA.otf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
 }

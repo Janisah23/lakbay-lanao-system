@@ -192,6 +192,7 @@ return (
               <option value="Article">Article</option>
               <option value="Highlight">Highlight</option>
               <option value="Featured">Featured</option>
+              <option value="Announcement">Announcement</option>
             </select>
 
             {/* Animated SVG Arrow */}
@@ -217,8 +218,7 @@ return (
           {/* View Archived */}
           <button
             onClick={() => setShowArchived(!showArchived)}
-            className="px-5 py-3 rounded-full text-sm border border-gray-300
-            hover:bg-gray-100 transition hover:shadow-lg hover:bg-blue-700 transition"
+            className="px-5 py-3 rounded-full text-sm border border-gray-300 hover:bg-gray-100 hover:shadow-lg transition"
           >
             {showArchived ? "View Active" : "View Archived"}
           </button>
@@ -355,6 +355,7 @@ return (
                 <option value="Article">Article</option>
                 <option value="Highlight">Highlight</option>
                 <option value="Featured">Featured</option>
+                <option value="Announcement">Announcement</option>
               </select>
 
               <textarea
