@@ -7,8 +7,8 @@ import { FaHeart } from "react-icons/fa";
 import { FiHeart, FiSearch, FiChevronRight, FiMapPin, FiGrid, FiList } from "react-icons/fi";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
-// Strictly Hardcoded Categories for Tabs
-const CATEGORIES = ["All", "Beach", "Mountain", "Waterfall", "Island", "Cultural", "Historic"];
+// Reverted to your clean, predefined categories for the top filter tabs
+const CATEGORIES = ["All", "Hotel", "Restaurant", "Resort", "Cafe"];
 
 const normalize = (value) => String(value || "").trim().toLowerCase();
 
@@ -36,7 +36,7 @@ const StarRating = ({ rating }) => {
   );
 };
 
-function Destinations() {
+function HotelsAndRestaurants() {
   const [data, setData] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,65 +56,42 @@ function Destinations() {
         const tourismDataItems = tourismDataSnap.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data(),
-          _source: "tourismData",
         }));
 
         const tourismContentItems = tourismContentSnap.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data(),
-          _source: "tourismContent",
         }));
 
         const combined = [...tourismDataItems, ...tourismContentItems];
 
-        const destinationOnly = combined.filter((item) => {
+        const establishmentOnly = combined.filter((item) => {
           const contentType = normalize(item.contentType);
           const type = normalize(item.type);
           const category = normalize(item.category);
-          const title = normalize(item.title);
 
-          const isArticle =
-            contentType === "article" ||
-            contentType === "blog" ||
-            category === "news" ||
-            category === "article";
-
-          const isEvent =
-            contentType === "event" ||
-            category === "event" ||
-            title.includes("festival") ||
-            title.includes("celebration");
-
-          const isDestinationLike =
-            contentType === "destination" ||
-            contentType === "place" ||
+          const isEstablishmentLike =
             contentType === "establishment" ||
-            contentType === "cultural heritage" ||
-            contentType === "cultural-heritage" ||
-            type === "beach" ||
-            type === "mountain" ||
-            type === "waterfall" ||
-            type === "island" ||
-            type === "cultural" ||
-            type === "historic" ||
-            category === "beach" ||
-            category === "mountain" ||
-            category === "waterfall" ||
-            category === "island" ||
-            category === "cultural" ||
-            category === "historic";
+            contentType === "place" ||
+            type === "hotel" ||
+            type === "restaurant" ||
+            type === "resort" ||
+            type === "cafe" ||
+            category === "hotel" ||
+            category === "restaurant" ||
+            category === "resort" ||
+            category === "cafe";
 
-          return isDestinationLike && !isArticle && !isEvent;
+          return isEstablishmentLike;
         });
 
-        // Ensure unique items
         const uniqueById = Array.from(
-          new Map(destinationOnly.map((item) => [item.id, item])).values()
+          new Map(establishmentOnly.map((item) => [item.id, item])).values()
         );
 
         setData(uniqueById);
       } catch (error) {
-        console.error("Error fetching destinations:", error);
+        console.error("Error fetching establishments:", error);
       }
     };
 
@@ -139,9 +116,7 @@ function Destinations() {
         normalize(item.description).includes(query) ||
         normalize(item.summary).includes(query) ||
         normalize(item.location?.municipality).includes(query) ||
-        normalize(item.location?.province).includes(query) ||
-        normalize(item.type).includes(query) ||
-        normalize(item.category).includes(query);
+        normalize(item.location?.province).includes(query);
 
       return matchesCategory && matchesSearch;
     });
@@ -185,17 +160,13 @@ function Destinations() {
     <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] pb-24">
       <Navbar />
 
-      {/* Hero Section with reduced margins */}
-      <section className="pt-32 pb-10 px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 font-medium uppercase tracking-wider">
-          <span 
-            className="cursor-pointer hover:text-[#2563eb] transition" 
-            onClick={() => navigate("/")}
-          >
-            Visit Lanao
-          </span>
+          <span className="cursor-pointer hover:text-[#2563eb] transition">Visit Lanao</span>
           <span>/</span>
-          <span className="text-gray-500">Sights & Attractions</span>
+          <span className="cursor-pointer hover:text-[#2563eb] transition">Things to do</span>
+          <span>/</span>
+          <span className="text-gray-500">Hotels & Restaurants</span>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -204,10 +175,10 @@ function Destinations() {
               <FiMapPin className="text-xs" /> Lanao del Sur
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] leading-tight tracking-tight">
-              Sights &<br className="hidden md:block" /> Attractions
+              Hotels &<br className="hidden md:block" /> Restaurants
             </h1>
             <p className="mt-3 text-gray-500 max-w-md text-base font-light leading-relaxed">
-              Iconic landmarks, hidden gems, and record-breaking attractions across the Lake Lanao region.
+              Find the perfect place to stay and dine. Explore top-rated hotels, cozy resorts, and local culinary hotspots.
             </p>
           </div>
 
@@ -215,7 +186,7 @@ function Destinations() {
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
             <input
               type="text"
-              placeholder="Search destinations..."
+              placeholder="Search establishments..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-[12px] border border-gray-200 bg-white pl-10 pr-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 shadow-sm"
@@ -224,11 +195,10 @@ function Destinations() {
         </div>
       </section>
 
-      {/* Sticky Filters with reduced margins */}
       <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-3 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
           <div className="flex gap-2 overflow-x-auto pb-0.5 flex-1" style={{ scrollbarWidth: "none" }}>
-            {/* 🟢 Strictly Hardcoded Tabs */}
+            {/* Uses the clean, hardcoded CATEGORIES array again */}
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -273,11 +243,10 @@ function Destinations() {
         </div>
       </div>
 
-      {/* Main Content Grid with reduced margins */}
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 pt-10">
+      <main className="max-w-7xl mx-auto px-6 pt-10">
         {filteredData.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-[28px] border border-dashed border-gray-200">
-            <p className="text-gray-400 text-sm font-medium">No destinations found.</p>
+            <p className="text-gray-400 text-sm font-medium">No establishments found.</p>
             <button
               onClick={handleClearFilters}
               className="mt-4 text-sm text-[#2563eb] font-semibold hover:underline"
@@ -305,11 +274,11 @@ function Destinations() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    {/* Dynamic Solid Blue Badge (List View) */}
+                    {/* DYNAMIC SOLID BLUE BADGE (List View) */}
                     <span className="inline-block rounded-full bg-[#2563eb] px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm mb-1.5">
-                      {item.type || item.category || "Destination"}
+                      {item.type || item.category || "Establishment"}
                     </span>
-                    <h3 className="font-bold text-[#2563eb] text-base group-hover:text-blue-700 transition line-clamp-1">
+                    <h3 className="font-bold text-gray-900 text-base group-hover:text-blue-700 transition line-clamp-1">
                       {item.title}
                     </h3>
                     <p className="text-sm text-gray-400 mt-1 line-clamp-1 font-light">
@@ -349,10 +318,10 @@ function Destinations() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
-                  {/* Dynamic Solid Blue Badge (Featured Item) */}
+                  {/* DYNAMIC SOLID BLUE BADGE (Featured Item) */}
                   <div className="absolute top-5 left-5">
                     <span className="rounded-full bg-[#2563eb] px-3 py-1 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
-                      {featuredItem.type || featuredItem.category || "Destination"}
+                      {featuredItem.type || featuredItem.category || "Establishment"}
                     </span>
                   </div>
 
@@ -412,11 +381,11 @@ function Destinations() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-
-                          {/* Dynamic Solid Blue Badge (Side Grid Items) */}
+                          
+                          {/* DYNAMIC SOLID BLUE BADGE (Side Grid Items) */}
                           <div className="absolute top-3 left-3">
                             <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                              {item.type || item.category || "Destination"}
+                              {item.type || item.category || "Establishment"}
                             </span>
                           </div>
 
@@ -437,7 +406,7 @@ function Destinations() {
                         </div>
 
                         <div className="p-4">
-                          <h3 className="font-bold text-[#2563eb] text-[15px] group-hover:text-blue-700 transition line-clamp-1">
+                          <h3 className="font-bold text-gray-900 text-[15px] group-hover:text-blue-700 transition line-clamp-1">
                             {item.title}
                           </h3>
                           {item.rating && (
@@ -462,7 +431,7 @@ function Destinations() {
                   return (
                     <div
                       key={item.id}
-                      onClick={() => navigate(`/destination/${item.id}`)}
+                      onClick={() => navigate(`/place/${item.id}`)}
                       className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
                     >
                       <div className="relative h-[180px] overflow-hidden">
@@ -473,10 +442,10 @@ function Destinations() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
-                        {/* Dynamic Solid Blue Badge (Bottom Grid Items) */}
+                        {/* DYNAMIC SOLID BLUE BADGE (Bottom Grid Items) */}
                         <div className="absolute top-3 left-3">
                           <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                            {item.type || item.category || "Destination"}
+                            {item.type || item.category || "Establishment"}
                           </span>
                         </div>
 
@@ -497,7 +466,7 @@ function Destinations() {
                       </div>
 
                       <div className="p-4">
-                        <h3 className="font-bold text-[#2563eb] text-[15px] group-hover:text-blue-700 transition line-clamp-1">
+                        <h3 className="font-bold text-gray-900 text-[15px] group-hover:text-blue-700 transition line-clamp-1">
                           {item.title}
                         </h3>
                         <p className="text-xs text-gray-500 mt-1 line-clamp-2 font-light leading-relaxed">
@@ -519,8 +488,7 @@ function Destinations() {
         )}
       </main>
 
-      {/* Discover Lanao Section with reduced margins */}
-      <section className="mt-20 px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="mt-20 mx-6 max-w-7xl md:mx-auto">
         <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="p-10 md:p-14 flex flex-col justify-center">
@@ -528,17 +496,19 @@ function Destinations() {
                 Discover Lanao
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight leading-tight">
-                Find the best places<br className="hidden md:block" /> to visit in Lanao
+                Find the Top Destinations<br className="hidden md:block" /> to visit in Lanao
               </h2>
               <p className="mt-5 text-sm text-gray-500 leading-relaxed max-w-md">
                 Whether you want to treat the family to non-stop thrills, admire incomparable views, or experience the living culture of the Meranao people — there&apos;s always something spectacular to discover around Lake Lanao.
               </p>
+              
               <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => navigate("/destinations")} 
                 className="mt-8 rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition w-fit flex items-center gap-2"
               >
-                Discover all places <FiChevronRight />
+                View Top Destinations <FiChevronRight />
               </button>
+
             </div>
 
             <div className="relative h-[280px] lg:h-auto overflow-hidden">
@@ -562,4 +532,4 @@ function Destinations() {
   );
 }
 
-export default Destinations;
+export default HotelsAndRestaurants;

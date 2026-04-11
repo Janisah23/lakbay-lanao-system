@@ -10,6 +10,8 @@ import {
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md";
 import { FaHeart, FaTwitter, FaFacebookF, FaLink, FaDirections } from "react-icons/fa";
 
+// Add onAuthStateChanged to imports
+import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../../firebase/config";
 import {
   doc, getDoc, setDoc, deleteDoc, getDocs,
@@ -36,33 +38,44 @@ const EventDetails = () => {
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
 
-  const galleryImages = eventDetail
-    ? [eventDetail.imageURL, ...(eventDetail.galleryImages || [])].filter(Boolean)
-    : [];
+  // Check if the current user has already rated this event
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && id) {
+        try {
+          const reviewRef = doc(db, "tourismContent", id, "reviews", user.uid);
+          const reviewSnap = await getDoc(reviewRef);
+          
+          if (reviewSnap.exists()) {
+            setUserRating(reviewSnap.data().rating);
+            setIsSubmitted(true); // Locks the UI
+          }
+        } catch (error) {
+          console.error("Error checking user review:", error);
+        }
+      } else {
+        // Reset if logged out
+        setUserRating(0);
+        setIsSubmitted(false);
+      }
+    });
 
-  const mapQuery = eventDetail?.location
-    ? encodeURIComponent(`${eventDetail.location.municipality || ""}, ${eventDetail.location.province || "Lanao del Sur"}, Philippines`)
-    : encodeURIComponent("Lanao del Sur, Philippines");
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&output=embed`;
-  const mapDirectionsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+    return () => unsubscribe();
+  }, [id]);
 
-  // Fetch event + increment viewCount
+  // Fetch event strictly from tourismContent + increment viewCount
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        // Try tourismData first, then tourismContent
-       let docRef = doc(db, "tourismData", id);
-        let snap = await getDoc(docRef);
-
-        if (!snap.exists()) {
-          docRef = doc(db, "tourismContent", id);
-          snap = await getDoc(docRef);
-        }
+        const docRef = doc(db, "tourismContent", id);
+        const snap = await getDoc(docRef);
 
         if (snap.exists()) {
           setEventDetail({ id: snap.id, ...snap.data() });
           // Increment real viewCount on Firestore
           await updateDoc(docRef, { viewCount: increment(1) });
+        } else {
+          console.log("No such document in tourismContent!");
         }
       } catch (error) {
         console.error("Error fetching event:", error);
@@ -71,7 +84,7 @@ const EventDetails = () => {
     if (id) fetchEvent();
   }, [id]);
 
-  // Fetch more places
+  // Fetch more places strictly from tourismContent
   useEffect(() => {
     if (!eventDetail) return;
     const fetchMorePlaces = async () => {
@@ -94,7 +107,6 @@ const EventDetails = () => {
     const favRef = doc(db, "users", user.uid, "favorites", item.id);
     if (isFav) {
       await deleteDoc(favRef);
-      // Decrement saveCount
       await updateDoc(doc(db, "tourismContent", item.id), { saveCount: increment(-1) }).catch(() => {});
     } else {
       await setDoc(favRef, item);
@@ -105,6 +117,8 @@ const EventDetails = () => {
   const handleRating = async () => {
     const user = auth.currentUser;
     if (!user) return alert("Please login first to submit a rating.");
+    if (isSubmitted) return; // Double protection
+
     try {
       // Save rating to tourismContent/{id}/reviews/{uid}
       const reviewRef = doc(db, "tourismContent", eventDetail.id, "reviews", user.uid);
@@ -151,6 +165,16 @@ const EventDetails = () => {
       </div>
     );
   }
+
+  const galleryImages = eventDetail
+    ? [eventDetail.imageURL, ...(eventDetail.galleryImages || [])].filter(Boolean)
+    : [];
+
+  const mapQuery = eventDetail?.location
+    ? encodeURIComponent(`${eventDetail.location.municipality || ""}, ${eventDetail.location.province || "Lanao del Sur"}, Philippines`)
+    : encodeURIComponent("Lanao del Sur, Philippines");
+  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&output=embed`;
+  const mapDirectionsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
   const formattedDate = eventDetail.eventDate
     ? new Date(eventDetail.eventDate).toLocaleDateString(undefined, {
@@ -397,19 +421,21 @@ const EventDetails = () => {
 
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
-
-            {/* Stats */}
+            
+            {/* Key Details */}
             <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Destination Stats</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <h3 className="font-bold text-gray-900 mb-5">Key Details</h3>
+              <div className="space-y-4">
                 {[
-                  { value: saveCount.toLocaleString(), label: "Saves" },
-                  { value: eventDetail.reviewsCount || 0, label: "Ratings" },
-                  { value: eventDetail.rating ? eventDetail.rating.toFixed(1) : "—", label: "Avg Rating" },
-                ].map(({ value, label }) => (
-                  <div key={label} className="bg-gradient-to-br from-blue-50 to-[#eef4ff] rounded-[16px] p-4 text-center">
-                    <p className="text-2xl font-bold text-[#2563eb]">{value}</p>
-                    <p className="text-xs text-gray-500 mt-1 font-medium">{label}</p>
+                  { icon: <FiCalendar />, label: "Date", value: formattedDate },
+                  { icon: <FiMapPin />, label: "Location", value: locationStr },
+                ].map(({ icon, label, value }) => (
+                  <div key={label} className="flex gap-4 items-start">
+                    <span className="text-[#2563eb] text-lg mt-0.5 flex-shrink-0">{icon}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-900">{label}</p>
+                      <p className="text-sm text-gray-500 mt-0.5 leading-snug">{value}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -451,27 +477,8 @@ const EventDetails = () => {
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {isSubmitted ? <><span className="text-green-600 text-lg leading-none">✔</span> Submitted</> : "Submit Rating"}
+                {isSubmitted ? <><span className="text-green-600 text-lg leading-none">✔</span> Rating Submitted</> : "Submit Rating"}
               </button>
-            </div>
-
-            {/* Key Details */}
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-              <h3 className="font-bold text-gray-900 mb-5">Key Details</h3>
-              <div className="space-y-4">
-                {[
-                  { icon: <FiCalendar />, label: "Date", value: formattedDate },
-                  { icon: <FiMapPin />, label: "Location", value: locationStr },
-                ].map(({ icon, label, value }) => (
-                  <div key={label} className="flex gap-4 items-start">
-                    <span className="text-[#2563eb] text-lg mt-0.5 flex-shrink-0">{icon}</span>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-900">{label}</p>
-                      <p className="text-sm text-gray-500 mt-0.5 leading-snug">{value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Map (desktop) */}

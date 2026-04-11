@@ -239,7 +239,9 @@ function Home() {
           {articles.slice(0, 3).map((article) => (
             <div
               key={article.id}
-              onDoubleClick={() => {
+              onClick={() => navigate(`/article/${article.id}`)} 
+              onDoubleClick={(e) => {
+                e.stopPropagation(); // Prevents navigation when double-clicking to favorite
                 toggleFavorite(article);
                 setShowHeart(article.id);
                 setTimeout(() => setShowHeart(null), 400);
