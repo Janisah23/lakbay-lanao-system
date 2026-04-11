@@ -1,13 +1,34 @@
 import { useState, useEffect, useRef } from "react";
-import { auth } from "../../firebase/config";
+import { auth, db } from "../../firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { useNavigate, useLocation } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import { FiTrash2 } from "react-icons/fi";
+
+const DEFAULT_MESSAGES = [
+  {
+    sender: "bot",
+    text: "👋 Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur.",
+  },
+  {
+    sender: "suggestions",
+    options: [
+      "What is Lakbay Lanao?",
+      "Top tourist destinations in Lanao del Sur",
+      "Where can I find hotels in Marawi?",
+      "What are the cultural attractions in Lanao del Sur?",
+    ],
+  },
+];
 
 function TourismChatbot() {
   const [open, setOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState("");
   const [user, setUser] = useState(null);
+  const [suggestionsVisible, setSuggestionsVisible] = useState(true);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,39 +37,51 @@ function TourismChatbot() {
   const buttonRef = useRef(null);
   const messagesEndRef = useRef(null);
   const [manuallyOpen, setManuallyOpen] = useState(false);
-const [lastPath, setLastPath] = useState(location.pathname);
+  const [lastPath, setLastPath] = useState(location.pathname);
 
+  const [messages, setMessages] = useState(DEFAULT_MESSAGES);
 
-  const [messages, setMessages] = useState([
-    {
-      sender: "bot",
-      text: "👋 Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur.",
-    },
-    {
-      sender: "suggestions",
-      options: [
-        "What is Lakbay Lanao?",
-        "Top tourist destinations in Lanao del Sur",
-        "Where can I find hotels in Marawi?",
-        "Upcoming events in Lanao del Sur",
-      ],
-    },
-  ]);
+  // Sync to firestore whenever messages change
+  useEffect(() => {
+    if (!user) return;
+    // Skip saving if it's purely default
+    if (messages === DEFAULT_MESSAGES || (messages.length === 2 && messages[0].text.includes("Welcome"))) return;
+
+    setDoc(doc(db, "userChats", user.uid), { messages }).catch(console.error);
+  }, [messages, user]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+          const docRef = doc(db, "userChats", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().messages) {
+            setMessages(docSnap.data().messages);
+            setSuggestionsVisible(false); // Hide suggestions if history exists
+          } else {
+            setMessages(DEFAULT_MESSAGES);
+            setSuggestionsVisible(true);
+          }
+        } catch (err) {
+          console.error("Failed to recover chat:", err);
+        }
+      } else {
+        setMessages(DEFAULT_MESSAGES);
+        setSuggestionsVisible(true);
+      }
     });
 
     return () => unsubscribe();
   }, []);
 
-if (lastPath !== location.pathname) {
-  setLastPath(location.pathname);
-  if (manuallyOpen) {
-    setManuallyOpen(false);
+  if (lastPath !== location.pathname) {
+    setLastPath(location.pathname);
+    if (manuallyOpen) {
+      setManuallyOpen(false);
+    }
   }
-}
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -80,7 +113,19 @@ if (lastPath !== location.pathname) {
     }
   }, [messages, typing]);
 
-  const sendMessage = (text) => {
+  const clearChatHistory = async () => {
+    setMessages(DEFAULT_MESSAGES);
+    setSuggestionsVisible(true);
+    if (user) {
+      try {
+        await deleteDoc(doc(db, "userChats", user.uid));
+      } catch (err) {
+        console.error("Failed to delete chat history:", err);
+      }
+    }
+  };
+
+  const sendMessage = async (text) => {
     if (!text.trim()) return;
 
     const userMessage = {
@@ -89,18 +134,36 @@ if (lastPath !== location.pathname) {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setSuggestionsVisible(false);
     setInput("");
     setTyping(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await response.json();
+
       const botReply = {
         sender: "bot",
-        text: "Thanks for your question! Our AI tourism assistant will provide recommendations here once the knowledge system is integrated.",
+        text: data.reply || data.error || "Sorry, I couldn't get a response.",
       };
 
       setMessages((prev) => [...prev, botReply]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "⚠️ Could not reach the server. Please make sure the backend is running.",
+        },
+      ]);
+    } finally {
       setTyping(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -158,10 +221,9 @@ if (lastPath !== location.pathname) {
           bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.16)]
           backdrop-blur-md
           transition-all duration-300 ease-out
-          ${
-            open
-              ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-              : "pointer-events-none translate-y-4 scale-95 opacity-0"
+          ${open
+            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+            : "pointer-events-none translate-y-4 scale-95 opacity-0"
           }
         `}
         style={{ height: "500px" }}
@@ -196,21 +258,66 @@ if (lastPath !== location.pathname) {
             </div>
           </div>
 
-          <button
-            onClick={() => setOpen(false)}
-            className="
-              relative text-xl text-white/90
-              transition hover:scale-105 hover:text-white
-            "
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              title="Clear Chat History"
+              className="
+                relative text-[17px] text-white/80 p-1.5 rounded-lg
+                transition hover:bg-white/10 hover:text-white
+              "
+            >
+              <FiTrash2 />
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="
+                relative text-xl text-white/90 p-1.5 rounded-lg leading-none
+                transition hover:bg-white/10 hover:text-white
+              "
+            >
+              ✕
+            </button>
+          </div>
         </div>
+
+        {/* CUSTOM CONFIRMATION MODAL OVERLAY */}
+        {showClearConfirm && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm p-6 animate-fadeIn">
+            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 p-6 w-full max-w-[280px] text-center">
+              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiTrash2 className="text-2xl" />
+              </div>
+              <h3 className="text-[17px] font-bold text-gray-900 mb-1.5">Clear Chat?</h3>
+              <p className="text-[13px] text-gray-500 mb-6 leading-relaxed">
+                Are you sure you want to delete this conversation? This cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowClearConfirm(false);
+                    clearChatHistory();
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl shadow-[0_4px_12px_rgba(239,68,68,0.2)] transition-all duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CHAT BODY */}
         <div className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 space-y-4">
           {messages.map((msg, index) => {
             if (msg.sender === "suggestions") {
+              if (!suggestionsVisible) return null;
               return (
                 <div key={index} className="space-y-2">
                   {msg.options.map((q, i) => (
@@ -231,21 +338,81 @@ if (lastPath !== location.pathname) {
               );
             }
 
+            const isUser = msg.sender === "user";
             return (
               <div
                 key={index}
-                className={`flex ${
-                  msg.sender === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[86%] px-4 py-3 text-[15px] shadow-sm ${
-                    msg.sender === "user"
+                  className={`max-w-[86%] px-4 py-3 text-[15px] shadow-sm ${isUser
                       ? "rounded-[20px] rounded-br-md bg-[#2563eb] text-white leading-7"
-                      : "rounded-[20px] rounded-bl-md border border-gray-200 bg-white text-gray-800 leading-7"
-                  }`}
+                      : "rounded-[20px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
+                    }`}
                 >
-                  {msg.text}
+                  {isUser ? (
+                    msg.text
+                  ) : (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <p className="mb-2 last:mb-0 leading-7">{children}</p>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-gray-900">{children}</strong>
+                        ),
+                        em: ({ children }) => (
+                          <em className="italic text-gray-700">{children}</em>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="leading-6">{children}</li>
+                        ),
+                        h1: ({ children }) => (
+                          <h1 className="mb-2 text-base font-bold text-gray-900">{children}</h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="mb-1.5 text-[15px] font-bold text-gray-900">{children}</h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="mb-1 text-[14px] font-semibold text-gray-800">{children}</h3>
+                        ),
+                        code: ({ inline, children }) =>
+                          inline ? (
+                            <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[13px] text-blue-700">
+                              {children}
+                            </code>
+                          ) : (
+                            <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[13px] text-gray-800">
+                              <code>{children}</code>
+                            </pre>
+                          ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 text-gray-600 italic">
+                            {children}
+                          </blockquote>
+                        ),
+                        a: ({ href, children }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            {children}
+                          </a>
+                        ),
+                        hr: () => <hr className="my-2 border-gray-200" />,
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  )}
                 </div>
               </div>
             );
