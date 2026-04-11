@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { CloudClient } = require("chromadb");
 const knowledgeRouter = require("./routes/knowledge");
 
 const app = express();
@@ -39,7 +40,16 @@ app.get("/", (req, res) => {
   res.send("Node.js backend is running");
 });
 
-// Chat endpoint
+// Set up Chroma client connection helper for query
+function getChromaClient() {
+  return new CloudClient({
+    apiKey: process.env.CHROMA_API_KEY,
+    tenant: process.env.CHROMA_TENANT,
+    database: process.env.CHROMA_DATABASE,
+  });
+}
+
+// Chat endpoint with RAG (Retrieval-Augmented Generation)
 app.post("/api/chat", async (req, res) => {
   const { message } = req.body;
 
@@ -48,12 +58,49 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
+    // 1. Embed the user's query
+    const embedModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+    const embedResult = await embedModel.embedContent(message);
+    const queryEmbedding = embedResult.embedding?.values;
+
+    let contextStr = "";
+    
+    if (queryEmbedding) {
+      // 2. Search the ChromaDB knowledge base
+      const client = getChromaClient();
+      const collection = await client.getOrCreateCollection({
+        name: "lakbay_lanao_knowledge",
+        embeddingFunction: null,
+        metadata: { "hnsw:space": "cosine" },
+      });
+
+      // Note: Because we used HNSW in upload, we search to get the closest neighbors
+      const results = await collection.query({
+        queryEmbeddings: [queryEmbedding], // Must be array of arrays
+        nResults: 5, // Retrieve top 5 most relevant chunks
+      });
+
+      // 3. Compile the returned text chunks
+      if (results.documents && results.documents.length > 0 && results.documents[0].length > 0) {
+        contextStr = results.documents[0]
+          .map((chunk, i) => `[Source ${i + 1}]:\n${chunk}`)
+          .join("\n\n");
+      }
+    }
+
+    // 4. Augment the user's prompt with retrieved knowledge
+    const augmentedPrompt = contextStr
+      ? `Answer the user's question based primarily on the following local knowledge base context. If the context does not contain relevant info, use your general knowledge, but prioritize the provided context.\n\n### KNOWLEDGE BASE CONTEXT ###\n${contextStr}\n\n### USER QUESTION ###\n${message}`
+      : message;
+
+    // 5. Send to Gemini
     const chat = model.startChat();
-    const result = await chat.sendMessage(message);
+    const result = await chat.sendMessage(augmentedPrompt);
     const text = result.response.text();
+    
     res.json({ reply: text });
   } catch (err) {
-    console.error("Gemini error:", err.message);
+    console.error("Gemini/RAG error:", err);
     res.status(500).json({ error: "Failed to get a response from AI." });
   }
 });
