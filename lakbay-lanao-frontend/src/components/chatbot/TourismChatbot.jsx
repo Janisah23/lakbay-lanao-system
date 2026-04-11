@@ -8,6 +8,7 @@ function TourismChatbot() {
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState("");
   const [user, setUser] = useState(null);
+  const [suggestionsVisible, setSuggestionsVisible] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,6 +90,7 @@ if (lastPath !== location.pathname) {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setSuggestionsVisible(false);
     setInput("");
     setTyping(true);
 
@@ -228,6 +230,7 @@ if (lastPath !== location.pathname) {
         <div className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 space-y-4">
           {messages.map((msg, index) => {
             if (msg.sender === "suggestions") {
+              if (!suggestionsVisible) return null;
               return (
                 <div key={index} className="space-y-2">
                   {msg.options.map((q, i) => (
