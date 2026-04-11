@@ -1,0 +1,5 @@
+lakbay-lanao-frontend/node_modules
+backend/node_modules
+backend/.env
+lakbay-lanao-frontend/.env
+node_modules
