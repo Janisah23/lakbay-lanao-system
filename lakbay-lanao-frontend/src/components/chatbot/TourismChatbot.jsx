@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { auth } from "../../firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate, useLocation } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 function TourismChatbot() {
   const [open, setOpen] = useState(false);
@@ -251,21 +252,82 @@ if (lastPath !== location.pathname) {
               );
             }
 
+            const isUser = msg.sender === "user";
             return (
               <div
                 key={index}
-                className={`flex ${
-                  msg.sender === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[86%] px-4 py-3 text-[15px] shadow-sm ${
-                    msg.sender === "user"
+                    isUser
                       ? "rounded-[20px] rounded-br-md bg-[#2563eb] text-white leading-7"
-                      : "rounded-[20px] rounded-bl-md border border-gray-200 bg-white text-gray-800 leading-7"
+                      : "rounded-[20px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
-                  {msg.text}
+                  {isUser ? (
+                    msg.text
+                  ) : (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <p className="mb-2 last:mb-0 leading-7">{children}</p>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-gray-900">{children}</strong>
+                        ),
+                        em: ({ children }) => (
+                          <em className="italic text-gray-700">{children}</em>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="leading-6">{children}</li>
+                        ),
+                        h1: ({ children }) => (
+                          <h1 className="mb-2 text-base font-bold text-gray-900">{children}</h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="mb-1.5 text-[15px] font-bold text-gray-900">{children}</h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="mb-1 text-[14px] font-semibold text-gray-800">{children}</h3>
+                        ),
+                        code: ({ inline, children }) =>
+                          inline ? (
+                            <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[13px] text-blue-700">
+                              {children}
+                            </code>
+                          ) : (
+                            <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[13px] text-gray-800">
+                              <code>{children}</code>
+                            </pre>
+                          ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 text-gray-600 italic">
+                            {children}
+                          </blockquote>
+                        ),
+                        a: ({ href, children }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            {children}
+                          </a>
+                        ),
+                        hr: () => <hr className="my-2 border-gray-200" />,
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  )}
                 </div>
               </div>
             );
