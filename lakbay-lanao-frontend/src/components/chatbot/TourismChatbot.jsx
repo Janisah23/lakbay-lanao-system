@@ -80,7 +80,7 @@ if (lastPath !== location.pathname) {
     }
   }, [messages, typing]);
 
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     if (!text.trim()) return;
 
     const userMessage = {
@@ -92,15 +92,32 @@ if (lastPath !== location.pathname) {
     setInput("");
     setTyping(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await response.json();
+
       const botReply = {
         sender: "bot",
-        text: "Thanks for your question! Our AI tourism assistant will provide recommendations here once the knowledge system is integrated.",
+        text: data.reply || data.error || "Sorry, I couldn't get a response.",
       };
 
       setMessages((prev) => [...prev, botReply]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "⚠️ Could not reach the server. Please make sure the backend is running.",
+        },
+      ]);
+    } finally {
       setTyping(false);
-    }, 1200);
+    }
   };
 
   return (
