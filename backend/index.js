@@ -29,7 +29,8 @@ Guidelines:
 - Keep answers concise but informative. Use bullet points or numbered lists when listing multiple items.
 - If a question is outside your tourism scope (e.g., unrelated general knowledge), politely redirect the user back to tourism topics in Lanao del Sur.
 - Never make up specific facts you are unsure about — say so honestly and encourage the user to verify with local tourism offices.
-- Greet first-time questions warmly and encourage exploration.`;
+- Greet first-time questions warmly and encourage exploration.
+- Do NOT cite sources using brackets (e.g., [Source 1], [Source 3, 5]) in your responses. Always weave the information naturally into your answer as if it is your own built-in knowledge.`;
 
 const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
@@ -83,14 +84,14 @@ app.post("/api/chat", async (req, res) => {
       // 3. Compile the returned text chunks
       if (results.documents && results.documents.length > 0 && results.documents[0].length > 0) {
         contextStr = results.documents[0]
-          .map((chunk, i) => `[Source ${i + 1}]:\n${chunk}`)
+          .map((chunk, i) => `--- CHUNK ${i + 1} ---\n${chunk}`)
           .join("\n\n");
       }
     }
 
     // 4. Augment the user's prompt with retrieved knowledge
     const augmentedPrompt = contextStr
-      ? `Answer the user's question based primarily on the following local knowledge base context. If the context does not contain relevant info, use your general knowledge, but prioritize the provided context.\n\n### KNOWLEDGE BASE CONTEXT ###\n${contextStr}\n\n### USER QUESTION ###\n${message}`
+      ? `Answer the user's question based primarily on the following local knowledge base context. Do NOT cite the chunk numbers in your response. Present the information naturally as if it is your own local knowledge. If the context does not contain relevant info, use your general knowledge, but prioritize the provided context.\n\n### KNOWLEDGE BASE CONTEXT ###\n${contextStr}\n\n### USER QUESTION ###\n${message}`
       : message;
 
     // 5. Send to Gemini
