@@ -136,7 +136,7 @@ function Home() {
       <section className="hero">
         <Swiper
           modules={[Autoplay]}
-          autoplay={{ delay: 4000, disableOnInteraction: false }}
+          autoplay={{ delay: 1200, disableOnInteraction: false }}
           loop={true}
           className="hero-swiper"
         >
@@ -160,7 +160,7 @@ function Home() {
             className="explore-btn"
             onClick={() => window.location.href = "/login"}
           >
-            Explore Now →
+            Explore Now
           </button>
         </div>
       </section>

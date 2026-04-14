@@ -136,7 +136,7 @@ function Navbar() {
                 setShowEvents(false);
               }}
             >
-              <span>Explore</span>
+              <span>Discover</span>
             </div>
 
             {/* FEATURES */}

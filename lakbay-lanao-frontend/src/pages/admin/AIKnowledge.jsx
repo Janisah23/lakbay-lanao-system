@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { FiUploadCloud, FiTrash2, FiFileText, FiRefreshCw, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
 const API = "http://localhost:5000/api/knowledge";
@@ -20,23 +20,23 @@ function AIKnowledge() {
   };
 
   // ── Fetch documents ─────────────────────────────────────────────────────────
-  const fetchDocuments = async () => {
-    setLoadingDocs(true);
-    try {
-      const res = await fetch(`${API}/documents`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setDocuments(data.documents || []);
-    } catch (err) {
-      showToast("error", "Failed to load documents: " + err.message);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
+const fetchDocuments = useCallback(async () => {
+  setLoadingDocs(true);
+  try {
+    const res = await fetch(`${API}/documents`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    setDocuments(data.documents || []);
+  } catch (err) {
+    showToast("error", "Failed to load documents: " + err.message);
+  } finally {
+    setLoadingDocs(false);
+  }
+}, []);
 
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
+ useEffect(() => {
+  fetchDocuments();
+}, [fetchDocuments]);
 
   // ── Upload ──────────────────────────────────────────────────────────────────
   const handleFileSelect = (file) => {
