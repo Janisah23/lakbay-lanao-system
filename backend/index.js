@@ -14,6 +14,7 @@ app.use("/api/knowledge", knowledgeRouter);
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 const SYSTEM_PROMPT = `You are the Lakbay Lanao Assistant — a friendly, knowledgeable, and enthusiastic Smart Tourism Guide for Lanao del Sur, Philippines.
 
@@ -40,6 +41,7 @@ const model = genAI.getGenerativeModel({
 app.get("/", (req, res) => {
   res.send("Node.js backend is running");
 });
+console.log("API KEY:", process.env.GEMINI_API_KEY);
 
 // Set up Chroma client connection helper for query
 function getChromaClient() {
@@ -49,6 +51,46 @@ function getChromaClient() {
     database: process.env.CHROMA_DATABASE,
   });
 }
+
+app.get("/api/geocode", async (req, res) => {
+  const { place, province } = req.query;
+
+  console.log("PLACE:", place);
+  console.log("PROVINCE:", province);
+
+  if (!place || !province) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+
+  try {
+    const fullAddress = `${place}, ${province}, Philippines`;
+
+    console.log("FULL ADDRESS:", fullAddress);
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${process.env.GOOGLE_MAPS_API_KEY}`
+    );
+
+    const data = await response.json();
+
+    console.log("GOOGLE RESPONSE:", data);
+
+    if (data.status !== "OK") {
+      return res.status(400).json({ error: data.status });
+    }
+
+    const location = data.results[0].geometry.location;
+
+    res.json({
+      lat: location.lat,
+      lng: location.lng,
+    });
+  } catch (error) {
+    console.error("SERVER ERROR:", error);
+    res.status(500).json({ error: "Geocoding failed" });
+  }
+});
+
 
 // Chat endpoint with RAG (Retrieval-Augmented Generation)
 app.post("/api/chat", async (req, res) => {
@@ -110,3 +152,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+

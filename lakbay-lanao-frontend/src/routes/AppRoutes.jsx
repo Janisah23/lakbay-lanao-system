@@ -19,6 +19,7 @@ import AccountManagement from "../pages/admin/AccountManagement";
 import RatingsSummary from "../pages/admin/RatingsSummary";
 import SystemLogs from "../pages/admin/SystemLogs";
 import AIKnowledge from "../pages/admin/AIKnowledge";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 
 import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
@@ -85,6 +86,7 @@ function AppRoutes() {
           <Route path="ratings" element={<RatingsSummary />} />
           <Route path="logs" element={<SystemLogs />} />
           <Route path="knowledge" element={<AIKnowledge />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </BrowserRouter>
