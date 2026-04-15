@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { FiTrash2 } from "react-icons/fi";
 
+
 const DEFAULT_MESSAGES = [
   {
     sender: "bot",

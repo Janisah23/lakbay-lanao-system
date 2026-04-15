@@ -4,25 +4,25 @@ import Footer from "../../components/common/Footer";
 import TourismChatbot from "../../components/chatbot/TourismChatbot";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  FiClock, FiCalendar, FiUser, FiInfo, FiHeart, FiTag,
-  FiShare2, FiBookmark, FiChevronLeft, FiChevronRight, FiX,
+  FiMapPin, FiCalendar, FiInfo, FiHeart, FiShare2,
+  FiBookmark, FiChevronLeft, FiChevronRight, FiX, FiTag, FiSun
 } from "react-icons/fi";
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md";
-import { FaHeart, FaTwitter, FaFacebookF, FaLink } from "react-icons/fa";
+import { FaHeart, FaTwitter, FaFacebookF, FaLink, FaDirections } from "react-icons/fa";
 
+import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../../firebase/config";
 import {
-  doc, getDoc, setDoc, deleteDoc, getDocs, collection,
-  query, where, limit, updateDoc, serverTimestamp, increment,
+  doc, getDoc, setDoc, deleteDoc, getDocs,
+  collection, updateDoc, serverTimestamp, increment, query, where, limit
 } from "firebase/firestore";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
-const ArticleDetails = () => {
+const DestinationDetails = () => {
   const [morePlaces, setMorePlaces] = useState([]);
-  const [moreArticles, setMoreArticles] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
-  const [articleDetail, setArticleDetail] = useState(null);
+  const [destinationDetail, setDestinationDetail] = useState(null);
 
   const [userRating, setUserRating] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -37,94 +37,140 @@ const ArticleDetails = () => {
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
 
-  const galleryImages = articleDetail
-    ? [articleDetail.imageURL, ...(articleDetail.galleryImages || [])].filter(Boolean)
-    : [];
-
-  // Fetch article + increment viewCount
+  // 1. Check if the current user has already rated this destination
   useEffect(() => {
-    const fetchArticle = async () => {
-      try {
-        const docRef = doc(db, "tourismContent", id);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          setArticleDetail({ id: snap.id, ...snap.data() });
-          await updateDoc(docRef, { viewCount: increment(1) });
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && id) {
+        try {
+          // Check tourismData first, fallback to tourismContent if needed based on your DB structure
+          let reviewRef = doc(db, "tourismData", id, "reviews", user.uid);
+          let reviewSnap = await getDoc(reviewRef);
+          
+          if (!reviewSnap.exists()) {
+             reviewRef = doc(db, "tourismContent", id, "reviews", user.uid);
+             reviewSnap = await getDoc(reviewRef);
+          }
+
+          if (reviewSnap.exists()) {
+            setUserRating(reviewSnap.data().rating);
+            setIsSubmitted(true); // Locks the UI
+          }
+        } catch (error) {
+          console.error("Error checking user review:", error);
         }
-      } catch (error) {
-        console.error("Error fetching article:", error);
+      } else {
+        setUserRating(0);
+        setIsSubmitted(false);
       }
-    };
-    if (id) fetchArticle();
+    });
+
+    return () => unsubscribe();
   }, [id]);
 
-  // Fetch places to explore
+  // 2. Fetch Destination + increment viewCount
   useEffect(() => {
-    const fetchMorePlaces = async () => {
+    const fetchDestination = async () => {
       try {
-        const snap = await getDocs(collection(db, "tourismContent"));
-        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setMorePlaces(items.filter((item) => item.contentType !== "Article").slice(0, 4));
-      } catch (error) {
-        console.error("Error fetching places:", error);
-      }
-    };
-    fetchMorePlaces();
-  }, []);
+        let docRef = doc(db, "tourismData", id);
+        let snap = await getDoc(docRef);
+        let sourceCollection = "tourismData";
 
-  // Fetch related articles
-  useEffect(() => {
-    if (!articleDetail) return;
-    const fetchOtherArticles = async () => {
-      try {
-        const q = query(collection(db, "tourismContent"), where("contentType", "==", "Article"), limit(4));
-        const snap = await getDocs(q);
-        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setMoreArticles(items.filter((item) => item.id !== articleDetail.id).slice(0, 3));
+        if (!snap.exists()) {
+          docRef = doc(db, "tourismContent", id);
+          snap = await getDoc(docRef);
+          sourceCollection = "tourismContent";
+        }
+
+        if (snap.exists()) {
+          setDestinationDetail({ id: snap.id, _source: sourceCollection, ...snap.data() });
+          await updateDoc(docRef, { viewCount: increment(1) }).catch(() => {});
+        } else {
+          console.log("No such destination found!");
+        }
       } catch (error) {
-        console.error("Error fetching other articles:", error);
+        console.error("Error fetching destination:", error);
       }
     };
-    fetchOtherArticles();
-  }, [articleDetail]);
+    if (id) fetchDestination();
+  }, [id]);
+
+  // 3. Fetch more places
+useEffect(() => {
+  if (!destinationDetail) return;
+
+  const fetchMorePlaces = async () => {
+    try {
+      const colRef = collection(db, destinationDetail._source);
+
+      // 🔥 Query directly from Firestore
+      const q = query(
+        colRef,
+        where("type", "==", destinationDetail.type), // match same type
+        limit(6) // optional: limit results
+      );
+
+      const snap = await getDocs(q);
+
+      const items = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      // remove current item
+      setMorePlaces(items.filter((item) => item.id !== id));
+
+    } catch (error) {
+      console.error("Error fetching places:", error);
+    }
+  };
+
+  fetchMorePlaces();
+}, [destinationDetail, id]);
 
   const toggleFavorite = async (item) => {
     const user = auth.currentUser;
     if (!user) { alert("Please log in to add to your list."); return; }
+    
     const favRef = doc(db, "users", user.uid, "favorites", item.id);
+    const sourceCol = destinationDetail?._source || "tourismData";
+
     if (isFav) {
       await deleteDoc(favRef);
-      await updateDoc(doc(db, "tourismContent", item.id), { saveCount: increment(-1) }).catch(() => {});
+      await updateDoc(doc(db, sourceCol, item.id), { saveCount: increment(-1) }).catch(() => {});
     } else {
       await setDoc(favRef, item);
-      await updateDoc(doc(db, "tourismContent", item.id), { saveCount: increment(1) }).catch(() => {});
+      await updateDoc(doc(db, sourceCol, item.id), { saveCount: increment(1) }).catch(() => {});
     }
   };
 
   const handleRating = async () => {
     const user = auth.currentUser;
     if (!user) return alert("Please login first to submit a rating.");
+    if (isSubmitted) return; 
+
     try {
-      // Save to tourismContent/{id}/reviews/{uid}
-      const reviewRef = doc(db, "tourismContent", articleDetail.id, "reviews", user.uid);
+      const sourceCol = destinationDetail._source || "tourismData";
+      const reviewRef = doc(db, sourceCol, destinationDetail.id, "reviews", user.uid);
+      
       await setDoc(reviewRef, {
         userId: user.uid,
         rating: userRating,
         createdAt: serverTimestamp(),
       });
 
-      const currentRating = articleDetail.rating || 0;
-      const currentCount = articleDetail.reviewsCount || 0;
+      const currentRating = destinationDetail.rating || 0;
+      const currentCount = destinationDetail.reviewsCount || 0;
       const newCount = currentCount + 1;
       const newAverage = ((currentRating * currentCount) + userRating) / newCount;
 
-      const articleRef = doc(db, "tourismContent", articleDetail.id);
-      await updateDoc(articleRef, {
+      const placeRef = doc(db, sourceCol, destinationDetail.id);
+      await updateDoc(placeRef, {
         rating: newAverage,
         reviewsCount: newCount,
+        isTopDestination: newAverage >= 4.5 && newCount >= 5,
       });
 
-      setArticleDetail((prev) => ({ ...prev, rating: newAverage, reviewsCount: newCount }));
+      setDestinationDetail((prev) => ({ ...prev, rating: newAverage, reviewsCount: newCount }));
       setIsSubmitted(true);
       setShowPopup(true);
       setTimeout(() => setShowPopup(false), 3000);
@@ -139,24 +185,32 @@ const ArticleDetails = () => {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
-  if (!articleDetail) {
+  if (!destinationDetail) {
     return (
       <div className="font-sans min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563eb] mx-auto" />
-          <p className="mt-4 text-gray-500 font-medium">Loading article...</p>
+          <p className="mt-4 text-gray-500 font-medium">Loading destination...</p>
         </div>
       </div>
     );
   }
 
-  const formattedDate = articleDetail.publishDate || articleDetail.createdAt
-    ? new Date(articleDetail.publishDate || articleDetail.createdAt).toLocaleDateString(undefined, {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-      })
-    : new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const galleryImages = destinationDetail
+    ? [destinationDetail.imageURL, ...(destinationDetail.galleryImages || [])].filter(Boolean)
+    : [];
 
-  const saveCount = articleDetail.saveCount || 0;
+  const mapQuery = destinationDetail?.location
+    ? encodeURIComponent(`${destinationDetail.location.municipality || ""}, ${destinationDetail.location.province || "Lanao del Sur"}, Philippines`)
+    : encodeURIComponent("Lanao del Sur, Philippines");
+  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&output=embed`;
+  const mapDirectionsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+  const locationStr = destinationDetail.location
+    ? `${destinationDetail.location.municipality}, ${destinationDetail.location.province}`
+    : "Lanao del Sur";
+
+  const saveCount = destinationDetail.saveCount || 0;
 
   return (
     <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff]">
@@ -165,38 +219,46 @@ const ArticleDetails = () => {
       {/* ── HEADER ── */}
       <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-5 font-medium uppercase tracking-wider">
-          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/articles")}>
-            Articles
+          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/destinations")}>
+            Destinations
           </span>
           <span>/</span>
-          <span className="text-gray-500">{articleDetail.category || "Travel Guide"}</span>
+          <span className="text-gray-500">{destinationDetail.location?.province || "Lanao del Sur"}</span>
         </div>
 
         <div className="flex items-start justify-between gap-8 flex-wrap">
           <div className="flex-1 min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-[#2563eb] mb-4">
-              <FiTag className="text-xs" />
-              {articleDetail.category || "Travel Guide"}
-            </span>
+            
+            {/* Dynamic Badge based on Top Destination status or Category */}
+            {destinationDetail.isTopDestination || (destinationDetail.rating >= 4.5 && destinationDetail.reviewsCount > 5) ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-semibold text-red-600 mb-4">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+                  Top Destination
+                </span>
+            ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 mb-4 uppercase tracking-wider">
+                  {destinationDetail.category || destinationDetail.type || "Attraction"}
+                </span>
+            )}
 
             <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] mb-4 tracking-tight leading-tight">
-              {articleDetail.title}
+              {destinationDetail.title || destinationDetail.name}
             </h1>
 
             <p className="text-lg text-gray-500 mb-6 font-light max-w-2xl leading-relaxed">
-              {articleDetail.summary || "Discover the cultural heritage and beauty of Lanao del Sur."}
+              {destinationDetail.summary || "Discover the cultural heritage and stunning natural beauty of Lanao del Sur."}
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-1.5">
                 <span className="text-yellow-400 tracking-widest text-base">
-                  {"★".repeat(Math.floor(articleDetail.rating || 4))}
-                  <span className="text-yellow-200">{"★".repeat(5 - Math.floor(articleDetail.rating || 4))}</span>
+                  {"★".repeat(Math.floor(destinationDetail.rating || 4))}
+                  <span className="text-yellow-200">{"★".repeat(5 - Math.floor(destinationDetail.rating || 4))}</span>
                 </span>
                 <span className="font-bold text-gray-900">
-                  {articleDetail.rating ? articleDetail.rating.toFixed(1) : "—"}
+                  {destinationDetail.rating ? destinationDetail.rating.toFixed(1) : "—"}
                 </span>
-                <span className="text-gray-400">({articleDetail.reviewsCount || 0})</span>
+                <span className="text-gray-400">({destinationDetail.reviewsCount || 0})</span>
               </div>
               <div className="w-px h-4 bg-gray-200" />
               <div className="flex items-center gap-1.5 text-gray-500">
@@ -205,8 +267,8 @@ const ArticleDetails = () => {
               </div>
               <div className="w-px h-4 bg-gray-200" />
               <div className="flex items-center gap-1.5 text-gray-500">
-                <FiClock className="text-sm" />
-                <span>{articleDetail.readTime || "5 Min"} read</span>
+                <FiMapPin className="text-sm" />
+                <span>{locationStr}</span>
               </div>
             </div>
           </div>
@@ -222,10 +284,10 @@ const ArticleDetails = () => {
               </button>
               {showSharePanel && (
                 <div className="absolute right-0 top-12 z-30 bg-white rounded-[16px] border border-gray-200 shadow-xl p-4 w-56">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Share this article</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Share this place</p>
                   <div className="space-y-2">
                     <a
-                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(articleDetail.title)}`}
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(destinationDetail.title)}`}
                       target="_blank" rel="noreferrer"
                       className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
                     >
@@ -250,7 +312,7 @@ const ArticleDetails = () => {
             </div>
 
             <button
-              onClick={() => toggleFavorite(articleDetail)}
+              onClick={() => toggleFavorite(destinationDetail)}
               className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition ${
                 isFav
                   ? "bg-[#2563eb] text-white hover:bg-blue-700"
@@ -264,13 +326,13 @@ const ArticleDetails = () => {
         </div>
       </section>
 
-      {/* ── HERO IMAGE / GALLERY ── */}
+      {/* ── GALLERY ── */}
       <section className="px-6 max-w-7xl mx-auto mb-16">
         <div className="relative w-full h-[320px] md:h-[460px] lg:h-[540px] rounded-[28px] overflow-hidden shadow-lg border border-gray-100">
           <img
-            src={galleryImages[activeGalleryIndex] || articleDetail.imageURL || "/default.jpg"}
-            alt={articleDetail.title}
-            className="w-full h-full object-cover"
+            src={galleryImages[activeGalleryIndex] || destinationDetail.imageURL || "/default.jpg"}
+            alt={destinationDetail.title}
+            className="w-full h-full object-cover transition-opacity duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent rounded-[28px]" />
 
@@ -348,32 +410,69 @@ const ArticleDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
 
           {/* LEFT */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-8 md:p-10">
-              <h2 className="text-2xl font-bold text-[#2563eb] mb-6 pb-4 border-b border-gray-100">Read Article</h2>
+              <h2 className="text-2xl font-bold text-[#2563eb] mb-6 pb-4 border-b border-gray-100">
+                About this Destination
+              </h2>
               <div className="text-[1.0625rem] text-gray-700 leading-[1.9] space-y-5">
-                {(articleDetail.description || articleDetail.content)
-                  ? (articleDetail.description || articleDetail.content).split("\n").map((str, idx) => (
-                      <p key={idx}>{str}</p>
-                    ))
-                  : <p className="text-gray-500">The full content of this article is being updated. Check back soon for an insightful read on Lanao del Sur.</p>
+                {destinationDetail.description
+                  ? destinationDetail.description.split("\n").map((str, idx) => <p key={idx}>{str}</p>)
+                  : <p className="text-gray-500">Detailed description is being finalized. Prepare for an unforgettable adventure exploring the wonders of Lanao del Sur.</p>
                 }
               </div>
 
               <div className="mt-10 flex items-start gap-4 bg-blue-50 border border-blue-100 p-5 rounded-[16px]">
                 <FiInfo className="text-xl text-[#2563eb] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold mb-1 text-[#2563eb] text-sm">Editor's Note</p>
+                  <p className="font-bold mb-1 text-[#2563eb] text-sm">Entrance / Admission Details</p>
                   <p className="text-sm text-blue-800 leading-relaxed">
-                    Information in this article was verified at the time of publishing. Opening hours, prices, and availability may change — we recommend checking official local sources before planning your trip.
+                    {destinationDetail.price || destinationDetail.admissionFee || "This destination is open to the public free of charge. Local environmental fees may apply."}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Map (mobile) */}
+            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden lg:hidden">
+              <div className="relative w-full h-[220px]">
+                <iframe title="Location Map" width="100%" height="100%" frameBorder="0" src={mapEmbedUrl} allowFullScreen className="w-full h-full" />
+              </div>
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{locationStr}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Lanao del Sur, Philippines</p>
+                </div>
+                <a href={mapDirectionsUrl} target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition">
+                  <FaDirections /> Directions
+                </a>
               </div>
             </div>
           </div>
 
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
+            
+            {/* Key Details (Tailored for Destinations) */}
+            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
+              <h3 className="font-bold text-gray-900 mb-5">Key Details</h3>
+              <div className="space-y-4">
+                {[
+                  { icon: <FiMapPin />, label: "Location", value: locationStr },
+                  { icon: <FiTag />, label: "Category", value: destinationDetail.type || destinationDetail.category || "Tourist Attraction" },
+                  { icon: <FiSun />, label: "Best Time to Visit", value: destinationDetail.bestTime || "Early morning or late afternoon" },
+                ].map(({ icon, label, value }) => (
+                  <div key={label} className="flex gap-4 items-start">
+                    <span className="text-[#2563eb] text-lg mt-0.5 flex-shrink-0">{icon}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-900">{label}</p>
+                      <p className="text-sm text-gray-500 mt-0.5 leading-snug">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Rating Card */}
             <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 relative">
@@ -382,8 +481,8 @@ const ArticleDetails = () => {
                   <span className="text-green-400 text-lg leading-none">✔</span> Rating submitted!
                 </div>
               )}
-              <h3 className="font-bold text-gray-900 mb-1">Rate this article</h3>
-              <p className="text-sm text-gray-400 mb-5">Did you find this guide helpful?</p>
+              <h3 className="font-bold text-gray-900 mb-1">Rate this place</h3>
+              <p className="text-sm text-gray-400 mb-5">Share your thoughts with other travelers.</p>
               <div className="flex flex-col items-center bg-gradient-to-br from-gray-50 to-[#f0f5ff] rounded-[16px] p-5 border border-gray-100">
                 <div className="flex gap-2 text-4xl mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -411,44 +510,40 @@ const ArticleDetails = () => {
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {isSubmitted ? <><span className="text-green-600 text-lg leading-none">✔</span> Submitted</> : "Submit Rating"}
+                {isSubmitted ? <><span className="text-green-600 text-lg leading-none">✔</span> Rating Submitted</> : "Submit Rating"}
               </button>
             </div>
 
-            {/* Article Details */}
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-              <h3 className="font-bold text-gray-900 mb-5">Article Details</h3>
-              <div className="space-y-4">
-                {[
-                  { icon: <FiCalendar />, label: "Published On", value: formattedDate },
-                  { icon: <FiClock />, label: "Read Time", value: articleDetail.readTime || "5 Minutes" },
-                  { icon: <FiTag />, label: "Category", value: articleDetail.category || "Travel Guide" },
-                  { icon: <FiUser />, label: "Written By", value: articleDetail.author || "Lakbay Lanao Editorial" },
-                ].map(({ icon, label, value }) => (
-                  <div key={label} className="flex gap-4 items-start">
-                    <span className="text-[#2563eb] text-lg mt-0.5 flex-shrink-0">{icon}</span>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-900">{label}</p>
-                      <p className="text-sm text-gray-500 mt-0.5 leading-snug">{value}</p>
-                    </div>
-                  </div>
-                ))}
+            {/* Map (desktop) */}
+            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden hidden lg:block">
+              <div className="relative w-full h-[200px]">
+                <iframe title="Location Map" width="100%" height="100%" frameBorder="0" src={mapEmbedUrl} allowFullScreen className="w-full h-full" />
+              </div>
+              <div className="p-4 flex items-center justify-between border-t border-gray-100">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{locationStr}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Philippines</p>
+                </div>
+                <a href={mapDirectionsUrl} target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition">
+                  <FaDirections /> Directions
+                </a>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── EXPLORE DESTINATIONS ── */}
+      {/* ── MORE TO EXPLORE ── */}
       <section className="py-20 px-6 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-widest mb-2">Discover More</p>
-              <h3 className="text-3xl font-bold text-[#2563eb]">Explore Destinations</h3>
-              <p className="text-gray-500 mt-1.5 text-sm">Stunning places mentioned in our guides.</p>
+              <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-widest mb-2">Nearby</p>
+              <h3 className="text-3xl font-bold text-[#2563eb]">More Places to Explore</h3>
+              <p className="text-gray-500 mt-1.5 text-sm">Discover other stunning destinations nearby.</p>
             </div>
-            {morePlaces.length >= 4 && (
+            {morePlaces.length > 4 && (
               <button
                 onClick={() => navigate("/destinations")}
                 className="rounded-full border border-[#2563eb] text-[#2563eb] px-5 py-2.5 text-sm font-medium hover:bg-blue-50 transition hidden md:flex items-center gap-2"
@@ -459,10 +554,10 @@ const ArticleDetails = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {morePlaces.map((place) => (
+            {morePlaces.slice(0, 4).map((place) => (
               <div
                 key={place.id}
-                onClick={() => navigate(`/event/${place.id}`)}
+                onClick={() => navigate(`/place/${place.id}`)}
                 className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
               >
                 <div className="relative h-[180px] overflow-hidden">
@@ -493,64 +588,10 @@ const ArticleDetails = () => {
           </div>
         </div>
       </section>
-
-      {/* ── RELATED ARTICLES ── */}
-      <section className="py-20 px-6 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] border-t border-gray-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-widest mb-2">Keep Reading</p>
-              <h3 className="text-3xl font-bold text-[#2563eb]">Related Travel News</h3>
-            </div>
-            <button
-              onClick={() => navigate("/articles")}
-              className="rounded-full border border-[#2563eb] text-[#2563eb] px-5 py-2.5 text-sm font-medium hover:bg-blue-50 transition hidden md:flex items-center gap-2"
-            >
-              All articles <FiChevronRight />
-            </button>
-          </div>
-
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden">
-            {moreArticles.length > 0 ? (
-              moreArticles.map((article, index) => (
-                <div
-                  key={article.id}
-                  onClick={() => navigate(`/article/${article.id}`)}
-                  className={`flex items-center justify-between p-5 cursor-pointer hover:bg-[#f8fbff] transition-colors ${
-                    index !== moreArticles.length - 1 ? "border-b border-gray-100" : ""
-                  }`}
-                >
-                  <div className="pr-4 flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                        {article.category || "Travel News"}
-                      </span>
-                    </div>
-                    <h4 className="text-[15px] font-semibold text-gray-900 line-clamp-2 leading-snug hover:text-[#2563eb] transition">
-                      {article.title}
-                    </h4>
-                  </div>
-                  <div className="flex-shrink-0 ml-4">
-                    <img
-                      src={article.imageURL || "/default.jpg"}
-                      alt={article.title}
-                      className="w-[100px] h-[68px] object-cover rounded-[12px] border border-gray-100"
-                    />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-sm text-gray-400">No related articles available at the moment.</div>
-            )}
-          </div>
-        </div>
-      </section>
-
       <TourismChatbot />
       <Footer />
     </div>
   );
 };
 
-export default ArticleDetails;
+export default DestinationDetails;

@@ -6,8 +6,28 @@ import {
   serverTimestamp,
   onSnapshot,
 } from "firebase/firestore";
-import { db } from "../../firebase/config";
+import { db, auth } from "../../firebase/config";
 import { updateDoc, doc } from "firebase/firestore";
+
+
+const getCoordinates = async (place, province) => {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/geocode?place=${encodeURIComponent(place)}&province=${encodeURIComponent(province)}`
+    );
+
+    if (!res.ok) {
+      console.error("Geocode failed:", res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    return null;
+  }
+};
 
 
 function ManageTourismData() {
@@ -74,10 +94,10 @@ const handleRestore = async (id) => {
 };
 
   const municipalities = [
-  "Amai Manabilang (formerly Bumbaran)", "Bacolod-Kalawi (formerly Bacolod Grande)", "Balabagan", "Balindong (formerly Watu)", "Bayang", "Binidayan", "Buadiposo-Buntong", "Bubong",
-  "Butig", "Calanogas", "Ditsaan-Ramain", "Ganassi", "Kapai", "Kapatagan", "Lumba-Bayabao (formerly Maguing)", "Lumbaca-Unayan", "Lumbatan", "Lumbayanague",
-  "Madalum", "Madamba", "Maguing", "Malabang", "Marantao", "Marogong", "Masiu", "Mulondo", "Pagayawan (formerly Tatarikan)", "Piagapo",
-  "Picong (formerly Sultan Gumander)", "Poona Bayabao (formerly Gata)", "Pualas", "Saguiaran", "Sultan Dumalondong", "Tagoloan II", "Tamparan", "Taraka", "Tubaran", "Tugaya", "Wao"
+  "Amai Manabilang", "Bacolod-Kalawi", "Balabagan", "Balindong", "Bayang", "Binidayan", "Buadiposo-Buntong", "Bubong",
+  "Butig", "Calanogas", "Ditsaan-Ramain", "Ganassi", "Kapai", "Kapatagan", "Lumba-Bayabao", "Lumbaca-Unayan", "Lumbatan", "Lumbayanague",
+  "Madalum", "Madamba", "Maguing", "Malabang", "Marantao", "Marogong", "Masiu", "Mulondo", "Pagayawan", "Piagapo",
+  "Picong", "Poona Bayabao", "Pualas", "Saguiaran", "Sultan Dumalondong", "Tagoloan II", "Tamparan", "Taraka", "Tubaran", "Tugaya", "Wao"
   ];
 
 
@@ -112,31 +132,79 @@ const filteredTourism = tourismList.filter((item) => {
     return () => unsubscribe();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+const handleChange = async (e) => {
+  const { name, value } = e.target;
 
-    if (name === "category") {
-      setFormData({
-        ...formData,
-        category: value,
-        type: "",
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-  };
+  // CATEGORY CHANGE
+  if (name === "category") {
+    setFormData((prev) => ({
+      ...prev,
+      category: value,
+      type: "",
+    }));
+    return;
+  }
+
+  // MUNICIPALITY CHANGE (AUTO COORDINATES)
+if (name === "municipality") {
+  // ❗ prevent empty place name
+  if (!formData.name) {
+    console.warn("Place name is empty, skipping geocode");
+    setFormData((prev) => ({
+      ...prev,
+      municipality: value,
+    }));
+    return;
+  }
+
+  try {
+    const coords = await getCoordinates(
+      `${formData.name}, ${value}`,
+      formData.province
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      municipality: value,
+      latitude: coords?.lat || "",
+      longitude: coords?.lng || "",
+    }));
+  } catch (error) {
+    console.error("Failed to get coordinates:", error);
+  }
+
+  return;
+}
+// DEFAULT INPUT CHANGE
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
 const handleSubmit = async (e) => {
+  
+const user = auth.currentUser;
+
+console.log("CURRENT USER:", user);
+
+if (!user) {
+  alert("You must be logged in to add data.");
+  setLoading(false);
+  return;
+}
   e.preventDefault();
   setLoading(true);
 
   try {
+    console.log("STEP 1: Start submit");
+
     let imageURL = null;
 
+    // 🔹 IMAGE UPLOAD
     if (imageFile) {
+      console.log("STEP 2: Uploading image...");
+
       const formDataImage = new FormData();
       formDataImage.append("file", imageFile);
       formDataImage.append("upload_preset", "tourism_upload");
@@ -151,67 +219,83 @@ const handleSubmit = async (e) => {
 
       const data = await response.json();
       imageURL = data.secure_url;
+
+      console.log("STEP 3: Image uploaded:", imageURL);
     }
 
-        if (editingId) {
-          await updateDoc(doc(db, "tourismData", editingId), {
-              name: formData.name,
-              category: formData.category,
-              type: formData.type,
-              description: formData.description,
-              location: {
-                province: "Lanao del Sur",
-                municipality: formData.municipality,
-              },
-              coordinates: {
-                lat: Number(formData.latitude),
-                lng: Number(formData.longitude)
-              },
-              ...(imageURL && { imageURL }),
-            });
+    // 🔹 UPDATE
+    if (editingId) {
+      console.log("STEP 4: Updating document", editingId);
 
-          setToast("Entry updated successfully!");
-        } else {
-          if (!imageURL) {
-            alert("Please upload an image");
-            setLoading(false);
-            return;
-          }
+      await updateDoc(doc(db, "tourismData", editingId), {
+        name: formData.name,
+        category: formData.category,
+        type: formData.type,
+        description: formData.description,
+        location: {
+          province: "Lanao del Sur",
+          municipality: formData.municipality,
+        },
+        coordinates: {
+          lat: Number(formData.latitude),
+          lng: Number(formData.longitude),
+        },
+        ...(imageURL && { imageURL }),
+      });
 
-         await addDoc(collection(db, "tourismData"), {
-          name: formData.name,
-          category: formData.category,
-          type: formData.type,
-          description: formData.description,
+      console.log("✅ UPDATE SUCCESS");
+      setToast("Entry updated successfully!");
+    } 
+    
+    // 🔹 ADD NEW
+    else {
+      console.log("STEP 5: Adding new document");
 
-          location: {
-            province: "Lanao del Sur",
-            municipality: formData.municipality,
-          },
-
-          coordinates: {
-            lat: Number(formData.latitude),
-            lng: Number(formData.longitude)
-          },
-
-          imageURL,
-          status: "active",
-          createdAt: serverTimestamp(),
-        });
-
-          setToast("Entry added successfully!");
-        }
-
-        setOpenModal(false);
-        setEditingId(null);
-        setImageFile(null);
-        setTimeout(() => setToast(""), 3000);
-      } catch (error) {
-        console.error("Error:", error);
+      if (!imageURL) {
+        console.log("❌ ERROR: No image");
+        alert("Please upload an image");
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
-    };
+      console.log("STEP 6: Sending to Firestore...");
+
+      await addDoc(collection(db, "tourismData"), {
+        name: formData.name,
+        category: formData.category,
+        type: formData.type,
+        description: formData.description,
+        location: {
+          province: "Lanao del Sur",
+          municipality: formData.municipality,
+        },
+        coordinates: {
+          lat: Number(formData.latitude),
+          lng: Number(formData.longitude),
+        },
+        imageURL,
+        status: "active",
+        createdAt: serverTimestamp(),
+      });
+
+      console.log("✅ ADD SUCCESS");
+      setToast("Entry added successfully!");
+    }
+
+    console.log("STEP 7: Done");
+
+    setOpenModal(false);
+    setEditingId(null);
+    setImageFile(null);
+
+    setTimeout(() => setToast(""), 3000);
+
+  } catch (error) {
+    console.error("FINAL ERROR:", error);
+  }
+
+  setLoading(false);
+};
 
   return (
     <>
@@ -492,26 +576,19 @@ const handleSubmit = async (e) => {
 
               <input
                 type="number"
-                step="any"
                 name="latitude"
-                placeholder="Latitude"
                 value={formData.latitude}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg px-4 py-3"
+                readOnly
+                className="w-full border rounded-lg px-4 py-3 bg-gray-100"
               />
 
               <input
                 type="number"
-                step="any"
                 name="longitude"
-                placeholder="Longitude"
                 value={formData.longitude}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg px-4 py-3"
+                readOnly
+                className="w-full border rounded-lg px-4 py-3 bg-gray-100"
               />
-
               <input
                 type="text"
                 value="Lanao del Sur"
