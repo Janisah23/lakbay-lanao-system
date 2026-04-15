@@ -10,7 +10,7 @@ import { FiTrash2 } from "react-icons/fi";
 const DEFAULT_MESSAGES = [
   {
     sender: "bot",
-    text: "👋 Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur.",
+    text: "Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur.",
   },
   {
     sender: "suggestions",
@@ -18,7 +18,7 @@ const DEFAULT_MESSAGES = [
       "What is Lakbay Lanao?",
       "Top tourist destinations in Lanao del Sur",
       "Where can I find hotels in Marawi?",
-      "What are the cultural attractions in Lanao del Sur?",
+      "What events are happening this month?",
     ],
   },
 ];
@@ -182,7 +182,7 @@ function TourismChatbot() {
           }}
           className="
             relative rounded-full p-1.5
-            border border-white/70 bg-white/85
+           
             shadow-[0_12px_28px_rgba(37,99,235,0.18)]
             backdrop-blur-sm
             transition-all duration-300
@@ -215,13 +215,12 @@ function TourismChatbot() {
       {/* CHAT WINDOW */}
       <div
         ref={chatRef}
-        className={`
-          fixed bottom-24 right-6 z-[9999]
-          flex w-[390px] max-w-[calc(100vw-24px)] flex-col overflow-hidden
-          rounded-[32px] border border-white/50
-          bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.16)]
-          backdrop-blur-md
-          transition-all duration-300 ease-out
+       className={`
+        fixed bottom-24 right-6 z-[9999]
+        flex w-[360px] max-w-[calc(100vw-24px)] flex-col overflow-hidden
+        rounded-[26px] border border-gray-200/80
+        bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)]
+        transition-all duration-300 ease-out
           ${open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none translate-y-4 scale-95 opacity-0"
@@ -229,37 +228,39 @@ function TourismChatbot() {
         `}
         style={{ height: "500px" }}
       >
-        {/* HEADER */}
+      {/* HEADER */}
+      <div className="px-3 pt-3 pb-2 bg-transparent">
         <div
           className="
             relative flex items-center justify-between
-            border-b border-white/10
-            bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6]
-            px-5 py-4 text-white
+            rounded-[22px]
+            bg-gradient-to-r from-[#2563eb] to-[#3b82f6]
+            px-4 py-3 text-white
+            shadow-[0_6px_18px_rgba(37,99,235,0.14)]
           "
         >
-          <div className="pointer-events-none absolute inset-0 bg-white/5" />
+          <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-white/5" />
 
           <div className="relative flex items-center gap-3">
-            <div className="rounded-2xl bg-white/15 p-2.5 ring-1 ring-white/20">
+            <div className="rounded-2xl ring-white/20">
               <img
                 src="/chatbot-logo.png"
                 alt="Assistant Logo"
-                className="w-6"
+                className="w-10 h-10 rounded-full object-cover"
               />
             </div>
 
             <div>
-              <p className="text-sm font-semibold tracking-[0.2px]">
+              <p className="text-[13.5px] font-semibold tracking-[0.2px] leading-tight">
                 Lakbay Lanao Assistant
               </p>
-              <p className="text-xs text-blue-100/95">
+              <p className="text-[11.5px] text-blue-100/90 leading-tight">
                 Smart Tourism Guide
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="relative flex items-center gap-1">
             <button
               onClick={() => setShowClearConfirm(true)}
               title="Clear Chat History"
@@ -281,6 +282,7 @@ function TourismChatbot() {
             </button>
           </div>
         </div>
+      </div>
 
         {/* CUSTOM CONFIRMATION MODAL OVERLAY */}
         {showClearConfirm && (
@@ -315,21 +317,22 @@ function TourismChatbot() {
         )}
 
         {/* CHAT BODY */}
-        <div className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 space-y-4">
+       <div className="flex-1 space-y-3 overflow-y-auto bg-[#f8fafc] px-3.5 py-4">
           {messages.map((msg, index) => {
             if (msg.sender === "suggestions") {
               if (!suggestionsVisible) return null;
               return (
-                <div key={index} className="space-y-2">
+                <div key={index} className="space-y-2 flex flex-col items-start">
                   {msg.options.map((q, i) => (
                     <button
                       key={i}
                       onClick={() => sendMessage(q)}
                       className="
-                        block w-full rounded-2xl border border-gray-200
-                        bg-white px-4 py-3 text-left text-[15px] font-medium text-gray-800
-                        shadow-sm transition-all duration-200
-                        hover:border-blue-200 hover:bg-blue-50
+                       block max-w-[85%] rounded-2xl border border-gray-200
+                      bg-white px-5 py-2 text-left text-[12px] font-medium text-gray-700
+                      shadow-sm transition-all duration-200
+                      hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700
+                       
                       "
                     >
                       {q}
@@ -346,73 +349,86 @@ function TourismChatbot() {
                 className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[86%] px-4 py-3 text-[15px] shadow-sm ${isUser
-                      ? "rounded-[20px] rounded-br-md bg-[#2563eb] text-white leading-7"
-                      : "rounded-[20px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
-                    }`}
+                  className={`max-w-[85%] px-4 py-3 text-sm shadow-sm ${
+                  isUser
+                    ? "rounded-[18px] rounded-br-md bg-[#2563eb] text-white leading-6"
+                    : "rounded-[18px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
+                }`}
                 >
                   {isUser ? (
                     msg.text
                   ) : (
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => (
-                          <p className="mb-2 last:mb-0 leading-7">{children}</p>
-                        ),
-                        strong: ({ children }) => (
-                          <strong className="font-semibold text-gray-900">{children}</strong>
-                        ),
-                        em: ({ children }) => (
-                          <em className="italic text-gray-700">{children}</em>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="leading-6">{children}</li>
-                        ),
-                        h1: ({ children }) => (
-                          <h1 className="mb-2 text-base font-bold text-gray-900">{children}</h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="mb-1.5 text-[15px] font-bold text-gray-900">{children}</h2>
-                        ),
-                        h3: ({ children }) => (
-                          <h3 className="mb-1 text-[14px] font-semibold text-gray-800">{children}</h3>
-                        ),
-                        code: ({ inline, children }) =>
-                          inline ? (
-                            <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[13px] text-blue-700">
-                              {children}
-                            </code>
-                          ) : (
-                            <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[13px] text-gray-800">
-                              <code>{children}</code>
-                            </pre>
-                          ),
-                        blockquote: ({ children }) => (
-                          <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 text-gray-600 italic">
+                   <ReactMarkdown
+                    components={{
+                      p: ({ children }) => (
+                        <p className="mb-1 last:mb-0 text-[13px] leading-[1.5]">
+                          {children}
+                        </p>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-gray-900">{children}</strong>
+                      ),
+                      em: ({ children }) => (
+                        <em className="italic text-gray-700">{children}</em>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="mb-1 ml-4 list-disc space-y-0.5 text-[13px] leading-[1.5]">
+                          {children}
+                        </ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="mb-1 ml-4 list-decimal space-y-0.5 text-[13px] leading-[1.5]">
+                          {children}
+                        </ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="leading-[1.5]">{children}</li>
+                      ),
+                      h1: ({ children }) => (
+                        <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-900">
+                          {children}
+                        </h1>
+                      ),
+                      h2: ({ children }) => (
+                        <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-900">
+                          {children}
+                        </h2>
+                      ),
+                      h3: ({ children }) => (
+                        <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-800">
+                          {children}
+                        </h3>
+                      ),
+                      code: ({ inline, children }) =>
+                        inline ? (
+                          <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] text-blue-700">
                             {children}
-                          </blockquote>
+                          </code>
+                        ) : (
+                          <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[11px] text-gray-800">
+                            <code>{children}</code>
+                          </pre>
                         ),
-                        a: ({ href, children }) => (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline hover:text-blue-800"
-                          >
-                            {children}
-                          </a>
-                        ),
-                        hr: () => <hr className="my-2 border-gray-200" />,
-                      }}
-                    >
-                      {msg.text}
-                    </ReactMarkdown>
+                      blockquote: ({ children }) => (
+                        <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 italic text-[13px] leading-[1.5] text-gray-600">
+                          {children}
+                        </blockquote>
+                      ),
+                      a: ({ href, children }) => (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline hover:text-blue-800"
+                        >
+                          {children}
+                        </a>
+                      ),
+                      hr: () => <hr className="my-2 border-gray-200" />,
+                    }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
                   )}
                 </div>
               </div>
@@ -435,8 +451,8 @@ function TourismChatbot() {
         </div>
 
         {/* INPUT AREA */}
-        <div className="border-t border-gray-100 bg-white/95 px-3 py-3">
-          <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-sm">
+        <div className="border-t border-gray-100 bg-white px-3 py-2.5">
+         <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
             <input
               type="text"
               value={input}
