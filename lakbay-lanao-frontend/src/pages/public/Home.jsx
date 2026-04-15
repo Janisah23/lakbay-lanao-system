@@ -136,7 +136,7 @@ function Home() {
       <section className="hero">
         <Swiper
           modules={[Autoplay]}
-          autoplay={{ delay: 1200, disableOnInteraction: false }}
+          autoplay={{ delay: 8000, disableOnInteraction: false }}
           loop={true}
           className="hero-swiper"
         >
