@@ -18,8 +18,9 @@ import {
 } from "firebase/firestore";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
-const DestinationDetails = () => {
+const PlacesDetails = () => {
   const [morePlaces, setMorePlaces] = useState([]);
+  const [nearbyHotels, setNearbyHotels] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
   const [destinationDetail, setDestinationDetail] = useState(null);
@@ -42,7 +43,6 @@ const DestinationDetails = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && id) {
         try {
-          // Check tourismData first, fallback to tourismContent if needed based on your DB structure
           let reviewRef = doc(db, "tourismData", id, "reviews", user.uid);
           let reviewSnap = await getDoc(reviewRef);
           
@@ -53,7 +53,7 @@ const DestinationDetails = () => {
 
           if (reviewSnap.exists()) {
             setUserRating(reviewSnap.data().rating);
-            setIsSubmitted(true); // Locks the UI
+            setIsSubmitted(true);
           }
         } catch (error) {
           console.error("Error checking user review:", error);
@@ -94,38 +94,48 @@ const DestinationDetails = () => {
     if (id) fetchDestination();
   }, [id]);
 
-  // 3. Fetch more places
-useEffect(() => {
-  if (!destinationDetail) return;
+  // 3. Fetch more places & Nearby Hotels
+  useEffect(() => {
+    if (!destinationDetail) return;
 
-  const fetchMorePlaces = async () => {
-    try {
-      const colRef = collection(db, destinationDetail._source);
+    const fetchRelatedData = async () => {
+      try {
+        // Fetch More Places (same type)
+        const colRef = collection(db, destinationDetail._source);
+        const qMore = query(
+          colRef,
+          where("type", "==", destinationDetail.type),
+          limit(6)
+        );
+        const snapMore = await getDocs(qMore);
+        const itemsMore = snapMore.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setMorePlaces(itemsMore.filter((item) => item.id !== id));
 
-      // 🔥 Query directly from Firestore
-      const q = query(
-        colRef,
-        where("type", "==", destinationDetail.type), // match same type
-        limit(6) // optional: limit results
-      );
+        // Fetch Nearby Hotels (same municipality, type hotel/resort)
+        if (destinationDetail.location?.municipality) {
+          // Assuming hotels are primarily in tourismData
+          const dataColRef = collection(db, "tourismData");
+          const qHotels = query(
+            dataColRef,
+            where("location.municipality", "==", destinationDetail.location.municipality)
+          );
+          const snapHotels = await getDocs(qHotels);
+          const hotelItems = snapHotels.docs.map((d) => ({ id: d.id, ...d.data() })).filter((item) => {
+            const type = String(item.type || "").toLowerCase();
+            const cat = String(item.category || "").toLowerCase();
+            const isHotel = type === "hotel" || type === "resort" || type === "inn" || type === "accommodation" || cat === "hotel";
+            return isHotel && item.id !== id;
+          });
+          setNearbyHotels(hotelItems.slice(0, 4));
+        }
 
-      const snap = await getDocs(q);
+      } catch (error) {
+        console.error("Error fetching related data:", error);
+      }
+    };
 
-      const items = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-
-      // remove current item
-      setMorePlaces(items.filter((item) => item.id !== id));
-
-    } catch (error) {
-      console.error("Error fetching places:", error);
-    }
-  };
-
-  fetchMorePlaces();
-}, [destinationDetail, id]);
+    fetchRelatedData();
+  }, [destinationDetail, id]);
 
   const toggleFavorite = async (item) => {
     const user = auth.currentUser;
@@ -185,6 +195,18 @@ useEffect(() => {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  // Helper to determine breadcrumb path based on category
+  const getBreadcrumbData = () => {
+    if (!destinationDetail) return { label: "Destinations", path: "/destinations" };
+    const cat = String(destinationDetail.category || destinationDetail.contentType || "").toLowerCase();
+    
+    if (cat.includes("establishment")) return { label: "Establishments", path: "/establishment" };
+    if (cat.includes("landmark")) return { label: "Landmarks", path: "/landmarks" };
+    if (cat.includes("cultural") || cat.includes("heritage")) return { label: "Cultural Heritage", path: "/cultural"  };
+    
+    return { label: "Destinations", path: "/destinations" };
+  };
+ 
   if (!destinationDetail) {
     return (
       <div className="font-sans min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] flex items-center justify-center">
@@ -196,9 +218,8 @@ useEffect(() => {
     );
   }
 
-  const galleryImages = destinationDetail
-    ? [destinationDetail.imageURL, ...(destinationDetail.galleryImages || [])].filter(Boolean)
-    : [];
+  const breadcrumb = getBreadcrumbData();
+  const galleryImages = [destinationDetail.imageURL, ...(destinationDetail.galleryImages || [])].filter(Boolean);
 
   const mapQuery = destinationDetail?.location
     ? encodeURIComponent(`${destinationDetail.location.municipality || ""}, ${destinationDetail.location.province || "Lanao del Sur"}, Philippines`)
@@ -219,17 +240,19 @@ useEffect(() => {
       {/* ── HEADER ── */}
       <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-5 font-medium uppercase tracking-wider">
-          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/destinations")}>
-            Destinations
+          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/")}>Discover</span>
+            <span>/</span>
+          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate(breadcrumb.path)}>
+            {breadcrumb.label}
           </span>
           <span>/</span>
-          <span className="text-gray-500">{destinationDetail.location?.province || "Lanao del Sur"}</span>
+          {/* Changed this line to display the type/category instead of the province */}
+          <span className="text-gray-500">
+            {destinationDetail.type || destinationDetail.category || "Details"}
+          </span>
         </div>
-
         <div className="flex items-start justify-between gap-8 flex-wrap">
           <div className="flex-1 min-w-0">
-            
-            {/* Dynamic Badge based on Top Destination status or Category */}
             {destinationDetail.isTopDestination || (destinationDetail.rating >= 4.5 && destinationDetail.reviewsCount > 5) ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-semibold text-red-600 mb-4">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
@@ -273,37 +296,22 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex items-center gap-3 flex-shrink-0 mt-2">
             <div className="relative">
-              <button
-                onClick={() => setShowSharePanel(!showSharePanel)}
-                className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:border-[#2563eb] hover:text-[#2563eb] transition"
-              >
+              <button onClick={() => setShowSharePanel(!showSharePanel)} className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:border-[#2563eb] hover:text-[#2563eb] transition">
                 <FiShare2 className="text-base" /> Share
               </button>
               {showSharePanel && (
                 <div className="absolute right-0 top-12 z-30 bg-white rounded-[16px] border border-gray-200 shadow-xl p-4 w-56">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Share this place</p>
                   <div className="space-y-2">
-                    <a
-                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(destinationDetail.title)}`}
-                      target="_blank" rel="noreferrer"
-                      className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
-                    >
+                    <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(destinationDetail.title)}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition">
                       <FaTwitter className="text-[#1da1f2]" /> Twitter / X
                     </a>
-                    <a
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
-                      target="_blank" rel="noreferrer"
-                      className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
-                    >
+                    <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition">
                       <FaFacebookF className="text-[#1877f2]" /> Facebook
                     </a>
-                    <button
-                      onClick={handleCopyLink}
-                      className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
-                    >
+                    <button onClick={handleCopyLink} className="flex items-center gap-3 w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition">
                       <FaLink className="text-gray-400" /> {linkCopied ? "Copied!" : "Copy link"}
                     </button>
                   </div>
@@ -311,14 +319,7 @@ useEffect(() => {
               )}
             </div>
 
-            <button
-              onClick={() => toggleFavorite(destinationDetail)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition ${
-                isFav
-                  ? "bg-[#2563eb] text-white hover:bg-blue-700"
-                  : "bg-white border border-gray-200 text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
-              }`}
-            >
+            <button onClick={() => toggleFavorite(destinationDetail)} className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition ${isFav ? "bg-[#2563eb] text-white hover:bg-blue-700" : "bg-white border border-gray-200 text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"}`}>
               {isFav ? <MdBookmarkAdded className="text-base" /> : <MdOutlineBookmarkAdd className="text-base" />}
               {isFav ? "Saved" : "Save"}
             </button>
@@ -330,7 +331,7 @@ useEffect(() => {
       <section className="px-6 max-w-7xl mx-auto mb-16">
         <div className="relative w-full h-[320px] md:h-[460px] lg:h-[540px] rounded-[28px] overflow-hidden shadow-lg border border-gray-100">
           <img
-            src={galleryImages[activeGalleryIndex] || destinationDetail.imageURL || "/default.jpg"}
+            src={galleryImages[activeGalleryIndex] || "/default.jpg"}
             alt={destinationDetail.title}
             className="w-full h-full object-cover transition-opacity duration-500"
           />
@@ -338,31 +339,18 @@ useEffect(() => {
 
           {galleryImages.length > 1 && (
             <>
-              <button
-                onClick={() => setActiveGalleryIndex((i) => Math.max(i - 1, 0))}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow hover:bg-white transition"
-              >
+              <button onClick={() => setActiveGalleryIndex((i) => Math.max(i - 1, 0))} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow hover:bg-white transition">
                 <FiChevronLeft className="text-gray-700 text-lg" />
               </button>
-              <button
-                onClick={() => setActiveGalleryIndex((i) => Math.min(i + 1, galleryImages.length - 1))}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow hover:bg-white transition"
-              >
+              <button onClick={() => setActiveGalleryIndex((i) => Math.min(i + 1, galleryImages.length - 1))} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow hover:bg-white transition">
                 <FiChevronRight className="text-gray-700 text-lg" />
               </button>
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                 {galleryImages.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveGalleryIndex(i)}
-                    className={`rounded-full transition-all ${i === activeGalleryIndex ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/50 hover:bg-white/80"}`}
-                  />
+                  <button key={i} onClick={() => setActiveGalleryIndex(i)} className={`rounded-full transition-all ${i === activeGalleryIndex ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/50 hover:bg-white/80"}`} />
                 ))}
               </div>
-              <button
-                onClick={() => setLightboxOpen(true)}
-                className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold text-gray-800 shadow hover:bg-white transition"
-              >
+              <button onClick={() => setLightboxOpen(true)} className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold text-gray-800 shadow hover:bg-white transition">
                 View all {galleryImages.length} photos
               </button>
             </>
@@ -372,13 +360,7 @@ useEffect(() => {
         {galleryImages.length > 1 && (
           <div className="flex gap-3 mt-4 overflow-x-auto pb-1">
             {galleryImages.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveGalleryIndex(i)}
-                className={`flex-shrink-0 w-20 h-14 rounded-[12px] overflow-hidden border-2 transition ${
-                  i === activeGalleryIndex ? "border-[#2563eb] shadow-md" : "border-transparent opacity-60 hover:opacity-90"
-                }`}
-              >
+              <button key={i} onClick={() => setActiveGalleryIndex(i)} className={`flex-shrink-0 w-20 h-14 rounded-[12px] overflow-hidden border-2 transition ${i === activeGalleryIndex ? "border-[#2563eb] shadow-md" : "border-transparent opacity-60 hover:opacity-90"}`}>
                 <img src={img} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
               </button>
             ))}
@@ -443,8 +425,7 @@ useEffect(() => {
                   <p className="text-sm font-semibold text-gray-900">{locationStr}</p>
                   <p className="text-xs text-gray-400 mt-0.5">Lanao del Sur, Philippines</p>
                 </div>
-                <a href={mapDirectionsUrl} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition">
+                <a href={mapDirectionsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition">
                   <FaDirections /> Directions
                 </a>
               </div>
@@ -454,7 +435,7 @@ useEffect(() => {
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
             
-            {/* Key Details (Tailored for Destinations) */}
+            {/* Key Details */}
             <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
               <h3 className="font-bold text-gray-900 mb-5">Key Details</h3>
               <div className="space-y-4">
@@ -486,11 +467,7 @@ useEffect(() => {
               <div className="flex flex-col items-center bg-gradient-to-br from-gray-50 to-[#f0f5ff] rounded-[16px] p-5 border border-gray-100">
                 <div className="flex gap-2 text-4xl mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      onClick={() => { if (!isSubmitted) setUserRating(star); }}
-                      className={`transition-all duration-200 ${star <= userRating ? "text-yellow-400 scale-110" : "text-gray-200 hover:text-yellow-200"} ${isSubmitted ? "cursor-default" : "cursor-pointer hover:scale-110"}`}
-                    >
+                    <span key={star} onClick={() => { if (!isSubmitted) setUserRating(star); }} className={`transition-all duration-200 ${star <= userRating ? "text-yellow-400 scale-110" : "text-gray-200 hover:text-yellow-200"} ${isSubmitted ? "cursor-default" : "cursor-pointer hover:scale-110"}`}>
                       ★
                     </span>
                   ))}
@@ -499,17 +476,7 @@ useEffect(() => {
                   {userRating > 0 ? `${userRating} out of 5 Stars` : "Select a rating"}
                 </p>
               </div>
-              <button
-                onClick={handleRating}
-                disabled={userRating === 0 || isSubmitted}
-                className={`w-full mt-4 font-semibold py-3 px-4 rounded-full transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
-                  isSubmitted
-                    ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
-                    : userRating > 0
-                    ? "bg-[#2563eb] hover:bg-blue-700 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
-              >
+              <button onClick={handleRating} disabled={userRating === 0 || isSubmitted} className={`w-full mt-4 font-semibold py-3 px-4 rounded-full transition-all duration-300 flex items-center justify-center gap-2 text-sm ${isSubmitted ? "bg-green-50 text-green-700 border border-green-200 cursor-default" : userRating > 0 ? "bg-[#2563eb] hover:bg-blue-700 text-white shadow-sm" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
                 {isSubmitted ? <><span className="text-green-600 text-lg leading-none">✔</span> Rating Submitted</> : "Submit Rating"}
               </button>
             </div>
@@ -524,8 +491,7 @@ useEffect(() => {
                   <p className="text-sm font-semibold text-gray-900">{locationStr}</p>
                   <p className="text-xs text-gray-400 mt-0.5">Philippines</p>
                 </div>
-                <a href={mapDirectionsUrl} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition">
+                <a href={mapDirectionsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition">
                   <FaDirections /> Directions
                 </a>
               </div>
@@ -534,64 +500,87 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* ── MORE TO EXPLORE ── */}
-      <section className="py-20 px-6 bg-white border-t border-gray-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-widest mb-2">Nearby</p>
-              <h3 className="text-3xl font-bold text-[#2563eb]">More Places to Explore</h3>
-              <p className="text-gray-500 mt-1.5 text-sm">Discover other stunning destinations nearby.</p>
-            </div>
-            {morePlaces.length > 4 && (
-              <button
-                onClick={() => navigate("/destinations")}
-                className="rounded-full border border-[#2563eb] text-[#2563eb] px-5 py-2.5 text-sm font-medium hover:bg-blue-50 transition hidden md:flex items-center gap-2"
-              >
-                View all <FiChevronRight />
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {morePlaces.slice(0, 4).map((place) => (
-              <div
-                key={place.id}
-                onClick={() => navigate(`/place/${place.id}`)}
-                className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-              >
-                <div className="relative h-[180px] overflow-hidden">
-                  <img
-                    src={place.imageURL || "/default.jpg"}
-                    alt={place.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(place); }}
-                    className="absolute top-3 right-3 bg-white/95 p-2 rounded-full shadow-md z-10 hover:bg-white transition"
-                  >
-                    {favorites.some((fav) => String(fav.id) === String(place.id))
-                      ? <FaHeart className="text-[#2563eb] text-sm" />
-                      : <FiHeart className="text-gray-500 text-sm" />}
-                  </button>
-                </div>
-                <div className="p-4">
-                  <h4 className="font-semibold text-[#2563eb] text-[14px] line-clamp-1 group-hover:text-blue-700 transition">
-                    {place.name || place.title}
-                  </h4>
-                  <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
-                    {place.description || "Discover this amazing place in Lanao."}
-                  </p>
-                </div>
+      {/* ── NEARBY HOTELS ── */}
+      {nearbyHotels.length > 0 && (
+        <section className="py-20 px-6 bg-[#f8fbff] border-t border-gray-100">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-widest mb-2">Recommended Stays</p>
+                <h3 className="text-3xl font-bold text-[#2563eb]">Hotels Near {destinationDetail.location?.municipality || "Here"}</h3>
+                <p className="text-gray-500 mt-1.5 text-sm">Top-rated accommodations to rest and recharge.</p>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {nearbyHotels.map((place) => (
+                <div key={place.id} onClick={() => navigate(`/destination/${place.id}`)} className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                  <div className="relative h-[180px] overflow-hidden">
+                    <img src={place.imageURL || "/default.jpg"} alt={place.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <button onClick={(e) => { e.stopPropagation(); toggleFavorite(place); }} className="absolute top-3 right-3 bg-white/95 p-2 rounded-full shadow-md z-10 hover:bg-white transition">
+                      {favorites.some((fav) => String(fav.id) === String(place.id)) ? <FaHeart className="text-[#2563eb] text-sm" /> : <FiHeart className="text-gray-500 text-sm" />}
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-semibold text-[#2563eb] text-[14px] line-clamp-1 group-hover:text-blue-700 transition">
+                      {place.name || place.title}
+                    </h4>
+                    <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
+                      {place.description || "A wonderful place to stay nearby."}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* ── MORE TO EXPLORE ── */}
+      {morePlaces.length > 0 && (
+        <section className="py-20 px-6 bg-white border-t border-gray-100">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-widest mb-2">Explore</p>
+                <h3 className="text-3xl font-bold text-[#2563eb]">Similar Places to Explore</h3>
+                <p className="text-gray-500 mt-1.5 text-sm">Discover other stunning destinations of the same type.</p>
+              </div>
+              {morePlaces.length > 4 && (
+                <button onClick={() => navigate("/destinations")} className="rounded-full border border-[#2563eb] text-[#2563eb] px-5 py-2.5 text-sm font-medium hover:bg-blue-50 transition hidden md:flex items-center gap-2">
+                  View all <FiChevronRight />
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {morePlaces.slice(0, 4).map((place) => (
+                <div key={place.id} onClick={() => navigate(`/destination/${place.id}`)} className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                  <div className="relative h-[180px] overflow-hidden">
+                    <img src={place.imageURL || "/default.jpg"} alt={place.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <button onClick={(e) => { e.stopPropagation(); toggleFavorite(place); }} className="absolute top-3 right-3 bg-white/95 p-2 rounded-full shadow-md z-10 hover:bg-white transition">
+                      {favorites.some((fav) => String(fav.id) === String(place.id)) ? <FaHeart className="text-[#2563eb] text-sm" /> : <FiHeart className="text-gray-500 text-sm" />}
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-semibold text-[#2563eb] text-[14px] line-clamp-1 group-hover:text-blue-700 transition">
+                      {place.name || place.title}
+                    </h4>
+                    <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
+                      {place.description || "Discover this amazing place in Lanao."}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <TourismChatbot />
       <Footer />
     </div>
   );
 };
 
-export default DestinationDetails;
+export default PlacesDetails;

@@ -4,24 +4,26 @@ import { collectionGroup, getDocs, collection, onSnapshot } from "firebase/fires
 import { 
   FiEye, FiBookmark, FiStar, FiAlertCircle, 
   FiAward, FiFilter, FiCheckCircle, FiMoreHorizontal,
-  FiTrendingUp, FiTrendingDown
+  FiTrendingUp
 } from "react-icons/fi";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from "recharts";
 
-
-// Modern dashboard color palette inspired by the screenshot
+// Modern dashboard color palette
 const COLORS = ['#3B82F6', '#60A5FA', '#93C5FD', '#C4B5FD', '#FCA5A5'];
 
 function RatingsSummary() {
   const [reviews, setReviews] = useState([]);
   const [places, setPlaces] = useState({});
   const [filters, setFilters] = useState({ municipality: "", days: "all", category: "all" });
+  
+  // New state to hold dynamic options from Firestore
+  const [filterOptions, setFilterOptions] = useState({ municipalities: [], categories: [] });
   const [loading, setLoading] = useState(true);
 
-  // 1. Fetch all parent documents (to get Names, Views, and Saves)
+  // 1. Fetch all parent documents (to get Names, Views, Saves, and Dynamic Filters)
   useEffect(() => {
     const fetchPlaces = async () => {
       try {
@@ -31,9 +33,41 @@ function RatingsSummary() {
         ]);
         
         const placesMap = {};
-        dataSnap.forEach(d => placesMap[d.id] = { id: d.id, collection: 'tourismData', ...d.data() });
-        contentSnap.forEach(d => placesMap[d.id] = { id: d.id, collection: 'tourismContent', ...d.data() });
+        const uniqueMunis = new Set();
+        const uniqueCats = new Set();
+
+        // Process Tourism Data (Destinations, Establishments, Landmarks, etc.)
+        dataSnap.forEach(d => {
+          const data = d.data();
+          placesMap[d.id] = { id: d.id, collection: 'tourismData', ...data };
+          
+          // Extract dynamic Municipality
+          const muni = data.location?.municipality || data.municipality;
+          if (muni) uniqueMunis.add(muni);
+
+          // Extract dynamic Category
+          const cat = data.category; 
+          if (cat) uniqueCats.add(cat);
+        });
+
+        // Process Tourism Content (Events, Articles)
+        contentSnap.forEach(d => {
+          const data = d.data();
+          placesMap[d.id] = { id: d.id, collection: 'tourismContent', ...data };
+          
+          const muni = data.location?.municipality || data.municipality;
+          if (muni) uniqueMunis.add(muni);
+
+          const cat = data.category || data.contentType || "Event";
+          if (cat) uniqueCats.add(cat);
+        });
         
+        // Save sorted options for dropdowns
+        setFilterOptions({
+          municipalities: Array.from(uniqueMunis).sort(),
+          categories: Array.from(uniqueCats).sort()
+        });
+
         setPlaces(placesMap);
       } catch (error) {
         console.error("Error fetching places:", error);
@@ -74,10 +108,13 @@ function RatingsSummary() {
       const place = places[rev.placeId];
       if (!place) return false;
 
+      // Filter by dynamic Municipality
       const placeMuni = place.location?.municipality || place.municipality || "";
       if (filters.municipality && placeMuni !== filters.municipality) return false;
-      if (filters.category === "destination" && place.collection !== "tourismData") return false;
-      if (filters.category === "event" && place.collection !== "tourismContent") return false;
+      
+      // Filter by dynamic Category
+      const placeCat = place.category || place.contentType || (place.collection === 'tourismData' ? 'Destination' : 'Event');
+      if (filters.category !== "all" && placeCat !== filters.category) return false;
 
       return true;
     });
@@ -87,8 +124,9 @@ function RatingsSummary() {
     Object.values(places).forEach(place => {
       const placeMuni = place.location?.municipality || place.municipality || "";
       if (filters.municipality && placeMuni !== filters.municipality) return;
-      if (filters.category === "destination" && place.collection !== "tourismData") return;
-      if (filters.category === "event" && place.collection !== "tourismContent") return;
+      
+      const placeCat = place.category || place.contentType || (place.collection === 'tourismData' ? 'Destination' : 'Event');
+      if (filters.category !== "all" && placeCat !== filters.category) return;
 
       totalViews += (place.viewCount || 0);
       totalSaves += (place.saveCount || 0);
@@ -110,8 +148,7 @@ function RatingsSummary() {
     const avg = filteredReviews.length ? (sum / filteredReviews.length) : 0;
     const satisfaction = filteredReviews.length ? Math.round((satisfied / filteredReviews.length) * 100) : 0;
 
-    // Format for Recharts PieChart (requires 'value')
-    const totalRatings = filteredReviews.length || 1; // prevent div by zero
+    const totalRatings = filteredReviews.length || 1; 
     const distributionData = [
       { name: '5 Stars', value: counts[4], pct: Math.round((counts[4]/totalRatings)*100) },
       { name: '4 Stars', value: counts[3], pct: Math.round((counts[3]/totalRatings)*100) },
@@ -120,7 +157,6 @@ function RatingsSummary() {
       { name: '1 Star',  value: counts[0], pct: Math.round((counts[0]/totalRatings)*100) },
     ];
 
-    // Trend Line Data
     const trendMap = {};
     filteredReviews.forEach(r => {
       const date = new Date(r.createdAt);
@@ -138,7 +174,6 @@ function RatingsSummary() {
       "Avg Rating": parseFloat((t.rawSum / t.Reviews).toFixed(1))
     }));
 
-    // Top & Low Places
     const placePerformance = {};
     filteredReviews.forEach(r => {
       if(!placePerformance[r.placeId]) {
@@ -165,7 +200,6 @@ function RatingsSummary() {
 
   }, [reviews, places, filters]);
 
-
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 text-gray-500">
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3B82F6] mb-4"></div>
@@ -179,35 +213,43 @@ function RatingsSummary() {
       {/* ── HEADER & SEARCH / FILTER BAR ── */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-[#2563EB] tracking-tight">Analytics & Ratings</h2>
+          <h2 className="text-2xl font-bold text-[#2563EB] tracking-tight">Dashboard Overview</h2>
           <p className="text-sm text-gray-500 mt-1">Welcome back. Here is your tourism performance data.</p>
         </div>
 
         <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
           <FiFilter className="text-gray-400" />
+          
+          {/* Dynamic Municipality Filter */}
           <select 
+            value={filters.municipality}
             onChange={(e) => setFilters(prev => ({ ...prev, municipality: e.target.value }))}
-            className="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer outline-none font-medium"
+            className="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer outline-none font-medium capitalize"
           >
             <option value="">All Municipalities</option>
-            <option value="Marawi">Marawi</option>
-            <option value="Balindong">Balindong</option>
+            {filterOptions.municipalities.map(muni => (
+              <option key={muni} value={muni}>{muni}</option>
+            ))}
           </select>
+          
           <div className="w-px h-5 bg-gray-200 mx-1"></div>
+          
+          {/* Dynamic Category Filter */}
           <select 
+            value={filters.category}
             onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-            className="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer outline-none font-medium"
+            className="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer outline-none font-medium capitalize"
           >
             <option value="all">All Categories</option>
-            <option value="destination">Destinations Only</option>
-            <option value="event">Events Only</option>
+            {filterOptions.categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
           </select>
         </div>
       </div>
 
-      {/* ── 1. KPI CARDS (Matching "Total Booking" style) ── */}
+      {/* ── 1. KPI CARDS ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Card 1 */}
         <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 flex items-center gap-5">
           <div className="w-14 h-14 rounded-full bg-blue-50 text-[#3B82F6] flex items-center justify-center text-2xl">
             <FiStar />
@@ -223,7 +265,6 @@ function RatingsSummary() {
           </div>
         </div>
 
-        {/* Card 2 */}
         <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 flex items-center gap-5">
           <div className="w-14 h-14 rounded-full bg-blue-50 text-[#3B82F6] flex items-center justify-center text-2xl">
             <FiCheckCircle />
@@ -236,7 +277,6 @@ function RatingsSummary() {
           </div>
         </div>
 
-        {/* Card 3 */}
         <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 flex items-center gap-5">
           <div className="w-14 h-14 rounded-full bg-blue-50 text-[#3B82F6] flex items-center justify-center text-2xl">
             <FiEye />
@@ -249,7 +289,6 @@ function RatingsSummary() {
           </div>
         </div>
 
-        {/* Card 4 */}
         <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 flex items-center gap-5">
           <div className="w-14 h-14 rounded-full bg-blue-50 text-[#3B82F6] flex items-center justify-center text-2xl">
             <FiBookmark />
@@ -263,10 +302,10 @@ function RatingsSummary() {
         </div>
       </div>
 
-      {/* ── 2. CHARTS ROW (Line Chart + Donut Chart) ── */}
+      {/* ── 2. CHARTS ROW ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
-        {/* Trend Line Chart (Like "Revenue Overview") */}
+        {/* Trend Line Chart */}
         <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-gray-900">Rating Trends</h3>
@@ -280,7 +319,7 @@ function RatingsSummary() {
             </select>
           </div>
           
-          <div className="h-[280px] w-full">
+          <div className="h-[280px] min-h-[280px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={analytics.trendData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
@@ -303,16 +342,16 @@ function RatingsSummary() {
           </div>
         </div>
 
-        {/* Rating Distribution Donut (Like "Top Destinations") */}
+        {/* Rating Distribution Donut */}
         <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-bold text-gray-900">Rating Distribution</h3>
             <FiMoreHorizontal className="text-gray-400 text-xl cursor-pointer" />
           </div>
           
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
+          <div className="flex-1 flex flex-col items-center justify-center w-full min-w-0">
+            <div className="h-[200px] min-h-[200px] w-full min-w-0 relative">        
+              <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={analytics.distributionData}
@@ -331,14 +370,12 @@ function RatingsSummary() {
                   <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center Text in Donut */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
                 <span className="text-2xl font-bold text-gray-900">{analytics.stats.avg.toFixed(1)}</span>
                 <span className="text-[10px] font-semibold text-gray-400 uppercase">Avg Rating</span>
               </div>
             </div>
 
-            {/* Custom Legend to match screenshot */}
             <div className="w-full mt-4 grid grid-cols-2 gap-y-3 px-2">
               {analytics.distributionData.map((entry, index) => (
                 <div key={entry.name} className="flex items-center gap-2">
@@ -353,10 +390,10 @@ function RatingsSummary() {
 
       </div>
 
-      {/* ── 3. LISTS ROW (Top Performers & Low Rated) ── */}
+      {/* ── 3. LISTS ROW ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Top Rated Destinations (Like "Travel Packages") */}
+        {/* Top Rated Destinations */}
         <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-gray-900">Top Rated Places</h3>
@@ -370,7 +407,6 @@ function RatingsSummary() {
               analytics.topPlaces.map((place) => (
                 <div key={place.id} className="flex items-center justify-between group">
                   <div className="flex items-center gap-4">
-                    {/* Placeholder for image, using a colored block or icon */}
                     <div className="w-12 h-12 rounded-xl bg-blue-50 overflow-hidden flex items-center justify-center">
                       {place.imageURL ? (
                         <img src={place.imageURL} alt={place.title} className="w-full h-full object-cover" />
@@ -386,8 +422,9 @@ function RatingsSummary() {
                     </div>
                   </div>
                   <div className="text-right">
+                    {/* Dynamic Label extracted directly from the item */}
                     <span className="text-xs font-bold bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full capitalize">
-                      {place.collection === 'tourismData' ? 'Destination' : 'Event'}
+                      {place.category || place.contentType || (place.collection === 'tourismData' ? 'Destination' : 'Event')}
                     </span>
                   </div>
                 </div>
@@ -396,7 +433,7 @@ function RatingsSummary() {
           </div>
         </div>
 
-        {/* Needs Improvement (Like "Messages") */}
+        {/* Needs Improvement */}
         <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-gray-900">Needs Improvement <span className="text-red-500 text-sm ml-1">(&lt; 3.0)</span></h3>
@@ -426,7 +463,7 @@ function RatingsSummary() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-full">
+                    <span className="text-xs font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-full capitalize">
                       Alert
                     </span>
                   </div>

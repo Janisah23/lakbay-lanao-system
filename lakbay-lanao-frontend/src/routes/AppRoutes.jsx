@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "../pages/public/Home";
 import Destinations from "../pages/public/Destinations";
+import CulturalHeritage from "../pages/public/CulturalHeritage";
+import Landmarks from "../pages/public/Landmark";
 import MapView from "../pages/public/MapView";
 import Gallery from "../pages/public/Gallery";
 import TourismBlog from "../pages/public/TourismBlog";
 import ArticleDetails from "../pages/public/ArticleDetails";
 import EventDetails from "../pages/public/EventDetails";
-import DestinationDetails from "../pages/public/DestinationDetails";
+import PlacesDetails from "../pages/public/PlacesDetails";
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -42,6 +44,8 @@ function AppRoutes() {
 
         <Route path="/destinations" element={<Destinations />} />
         <Route path="/establishment" element={<Establishments />} />
+        <Route path="/landmarks" element={<Landmarks />} />
+        <Route path="/cultural" element={<CulturalHeritage />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/signup" element={<Signup />} />
@@ -53,7 +57,7 @@ function AppRoutes() {
 
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />
-        <Route path="/destination/:id" element={<DestinationDetails />} />
+        <Route path="/destination/:id" element={<PlacesDetails />} />
 
         <Route
           path="/itinerary"
@@ -81,7 +85,7 @@ function AppRoutes() {
             </AdminRoute>
           }
         >
-          <Route index element={<AccountManagement />} />
+          <Route index element={<AdminDashboard />} />
           <Route path="accounts" element={<AccountManagement />} />
           <Route path="ratings" element={<RatingsSummary />} />
           <Route path="logs" element={<SystemLogs />} />

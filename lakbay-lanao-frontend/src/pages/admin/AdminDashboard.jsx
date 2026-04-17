@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../../firebase/config";
-import { collection, getDocs, collectionGroup, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, collectionGroup } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { 
   FiUsers, FiMapPin, FiCalendar, FiFileText, 
-  FiStar, FiMessageSquare, FiClock, FiChevronLeft, FiChevronRight
+  FiStar, FiMessageSquare, FiChevronLeft, FiChevronRight,
+  FiActivity, FiClipboard
 } from "react-icons/fi";
-
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer 
+} from "recharts";
 
 function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [recentLogs, setRecentLogs] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   
   // Dashboard Core Metrics
@@ -24,6 +26,13 @@ function AdminDashboard() {
     totalReviews: 0,
   });
 
+  // Log Stats & Chart Data
+  const [logStats, setLogStats] = useState({
+    total: 0,
+    today: 0,
+    chartData: []
+  });
+
   // Calendar State
   const [calDate, setCalDate] = useState(new Date());
 
@@ -31,13 +40,13 @@ function AdminDashboard() {
     const fetchDashboardData = async () => {
       try {
         // Fetch all required collections in parallel for performance
-        const [usersSnap, dataSnap, contentSnap, reviewsSnap] = await Promise.all([
+        const [usersSnap, dataSnap, contentSnap, reviewsSnap, logsSnap] = await Promise.all([
           getDocs(collection(db, "users")),
           getDocs(collection(db, "tourismData")),
           getDocs(collection(db, "tourismContent")),
-          getDocs(collectionGroup(db, "reviews"))
+          getDocs(collectionGroup(db, "reviews")),
+          getDocs(collection(db, "logs")) // Make sure your Firestore rules allow read for /logs
         ]);
-        
 
         // 1. Process Users & Recent Users
         const usersData = [];
@@ -46,61 +55,86 @@ function AdminDashboard() {
         });
         const totalUsers = usersData.length;
 
-        // Sort by createdAt if available, else just take the last 5
         const sortedUsers = usersData
           .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
           .slice(0, 5);
         setRecentUsers(sortedUsers);
 
-        // 2. Total Destinations (from tourismData)
+        // 2. Total Destinations
         const totalDestinations = dataSnap.size;
-        
 
+        // 3. Process tourismContent
         let totalEvents = 0;
         let totalArticles = 0;
 
         contentSnap.forEach((doc) => {
-        const data = doc.data();
-
-        const type = (data.contentType || "").toLowerCase();
-          console.log("DOC ID:", doc.id);
-  console.log("TYPE:", data.contentType);
-  console.log("CATEGORY:", data.category);
-
-
-        if (type === "event") {
-            totalEvents++;
-        } 
-        else if (type === "article") {
-            totalArticles++;
-        }
+          const data = doc.data();
+          const type = (data.contentType || "").toLowerCase();
+          if (type === "event") totalEvents++;
+          else if (type === "article") totalArticles++;
         });
+
         // 4. Reviews
         let sumRating = 0;
         let validRatings = 0;
 
         reviewsSnap.forEach((doc) => {
-        const rating = doc.data().rating;
-
-        if (typeof rating === "number" && rating >= 1 && rating <= 5) {
-            sumRating += rating;
-            validRatings++;
-        }
+          const rating = doc.data().rating;
+          if (typeof rating === "number" && rating >= 1 && rating <= 5) {
+              sumRating += rating;
+              validRatings++;
+          }
         });
 
         const totalReviews = validRatings;
         const avgRating = validRatings > 0 ? (sumRating / validRatings) : 0;
-        // 5. Fetch Recent System Logs
-        let logs = [];
-        try {
-          const logsQuery = query(collection(db, "systemLogs"), orderBy("timestamp", "desc"), limit(5));
-          const logsSnap = await getDocs(logsQuery);
-          logs = logsSnap.docs.map(d => ({ id: d.id, ...d.data(), time: d.data().timestamp?.toDate() }));
-        } catch (e) {
-          console.log("systemLogs collection might not exist yet.", e);
+
+        // 5. Process System Logs for Graph
+        let totalLogsCount = logsSnap.size;
+        let todayLogsCount = 0;
+        
+        const now = new Date();
+        const todayStr = now.toDateString();
+
+        // Initialize last 7 days array
+        const last7DaysMap = {};
+        const daysOrder = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+          last7DaysMap[dayName] = 0;
+          daysOrder.push(dayName);
         }
 
-        // Set State
+        logsSnap.forEach(doc => {
+          const data = doc.data();
+          if (data.timestamp) {
+            const logDate = data.timestamp.toDate();
+            
+            // Count today's logs
+            if (logDate.toDateString() === todayStr) {
+              todayLogsCount++;
+            }
+            
+            // Map to chart data if within last 7 days
+            const diffTime = Math.abs(now - logDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            if (diffDays <= 7) {
+              const dayName = logDate.toLocaleDateString('en-US', { weekday: 'short' });
+              if (last7DaysMap[dayName] !== undefined) {
+                last7DaysMap[dayName]++;
+              }
+            }
+          }
+        });
+
+        const chartData = daysOrder.map(day => ({
+          name: day,
+          Logs: last7DaysMap[day]
+        }));
+
+        // Set States
         setMetrics({
           totalUsers,
           totalDestinations,
@@ -109,8 +143,13 @@ function AdminDashboard() {
           avgRating,
           totalReviews
         });
+
+        setLogStats({
+          total: totalLogsCount,
+          today: todayLogsCount,
+          chartData
+        });
         
-        setRecentLogs(logs);
         setLoading(false);
 
       } catch (error) {
@@ -143,10 +182,10 @@ function AdminDashboard() {
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-bold text-gray-900 text-lg">{monthNames[month]} <span className="text-gray-500 font-medium">{year}</span></h3>
           <div className="flex gap-2">
-            <button onClick={prevMonth} className="p-1.5 rounded-lg bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition">
+            <button onClick={prevMonth} className="p-1.5 rounded-lg bg-gray-50 hover:bg-blue-50 text-[#3B82F6] transition">
               <FiChevronLeft />
             </button>
-            <button onClick={nextMonth} className="p-1.5 rounded-lg bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition">
+            <button onClick={nextMonth} className="p-1.5 rounded-lg bg-gray-50 hover:bg-blue-50 text-[#3B82F6] transition">
               <FiChevronRight />
             </button>
           </div>
@@ -176,7 +215,7 @@ function AdminDashboard() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-gray-500">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3B82F6] mb-4"></div>
-      Loading Command Center...
+      Loading Dashboard...
     </div>
   );
 
@@ -186,12 +225,12 @@ function AdminDashboard() {
       {/* ── HEADER ── */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-[#2563EB] tracking-tight">Dashboard Overview</h2>
-        <p className="text-sm text-gray-500 mt-1">Live overview of your platform data and user engagement.</p>
+        <p className="text-sm text-gray-500 mt-1">Live overview of your platform data and system activity.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         
-        {/* ── LEFT COLUMN (Metrics & Logs) ── */}
+        {/* ── LEFT COLUMN (Metrics & Graph) ── */}
         <div className="lg:col-span-2 xl:col-span-3 space-y-6">
           
           {/* ── METRICS GRID ── */}
@@ -268,40 +307,53 @@ function AdminDashboard() {
 
           </div>
 
-          {/* ── LIVE ACTIVITY FEED ── */}
-          <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 overflow-hidden">
-            <div className="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <FiClock className="text-[#3B82F6]" /> Recent Activity
-              </h3>
+          {/* ── SYSTEM ACTIVITY CHART ── */}
+          <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <FiActivity className="text-[#3B82F6]" /> System Activity
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Total Logs: <span className="font-bold text-gray-900">{logStats.total}</span> <span className="mx-2 text-gray-300">|</span> Activity Today: <span className="font-bold text-[#3B82F6]">{logStats.today}</span>
+                </p>
+              </div>
               <button 
                 onClick={() => navigate("/admin/logs")}
-                className="text-xs font-bold text-[#3B82F6] hover:text-blue-800 transition px-3 py-1 rounded-full hover:bg-blue-50"
+                className="flex items-center gap-2 text-xs font-bold text-[#3B82F6] hover:text-white border border-[#3B82F6] hover:bg-[#3B82F6] px-4 py-2 rounded-full transition w-fit"
               >
-                View All Logs
+                <FiClipboard /> View Full Logs
               </button>
             </div>
             
-            <div className="divide-y divide-gray-50">
-              {recentLogs.length === 0 ? (
-                <div className="p-8 text-center text-sm text-gray-400 font-medium">
-                  No recent activity recorded yet.
-                </div>
-              ) : (
-                recentLogs.map((log) => (
-                  <div key={log.id} className="px-6 py-4 hover:bg-blue-50/30 transition flex items-start gap-4">
-                    <div className="w-2 h-2 rounded-full bg-[#3B82F6] mt-2.5 flex-shrink-0 shadow-sm shadow-blue-200"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 leading-relaxed">
-                        <span className="font-bold text-[#3B82F6]">{log.user || "System"}</span> {log.action}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1 font-medium">
-                        {log.time?.toLocaleString() || "Recently"}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
+            {/* FIX ADDED HERE: Added min-h-[300px] to prevent Recharts collapse warning */}
+            <div className="h-[300px] min-h-[300px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={logStats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorLogs" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} />
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                    cursor={{ stroke: '#3B82F6', strokeWidth: 1, strokeDasharray: '5 5' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="Logs" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#colorLogs)" 
+                    activeDot={{r: 6, fill: '#3B82F6', stroke: '#fff', strokeWidth: 2}} 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

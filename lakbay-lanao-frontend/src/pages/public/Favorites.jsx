@@ -204,6 +204,10 @@ function Favorites() {
         <div className="relative z-10 h-full flex flex-col justify-end pb-14 px-6 max-w-7xl mx-auto">
           <div className="flex items-center gap-2 text-xs text-white/60 mb-4 font-medium uppercase tracking-wider">
             <span>Visit Lanao</span>
+             <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("itinerary/")}>
+            Itinerary
+          </span>
+
             <FiChevronRight className="text-white/40" />
             <span className="text-white/80">My Favorites</span>
           </div>
