@@ -30,7 +30,8 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
   const staffNav = [
     { name: "Manage Tourism Data", path: "/staff/manage", icon: <FiFolder /> },
     { name: "Tourism Content", path: "/staff/content", icon: <FiFileText /> },
-    { name: "Feedback & Ratings", path: "/staff/feedback", icon: <FiStar /> }
+    { name: "Feedback & Ratings", path: "/staff/feedback", icon: <FiStar /> },
+    { name: "Manage Gallery", path: "/staff/gallery", icon: <FiFolder /> }
   ];
 
   // Updated Admin Navigation Structure
