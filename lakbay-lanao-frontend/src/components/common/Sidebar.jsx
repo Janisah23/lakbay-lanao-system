@@ -7,7 +7,9 @@ import {
   FiMenu,
   FiChevronDown,
   FiLogOut,
-  FiCpu
+  FiCpu,
+  FiBarChart2,
+  FiHome
 } from "react-icons/fi";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -31,14 +33,13 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
     { name: "Feedback & Ratings", path: "/staff/feedback", icon: <FiStar /> },
     { name: "Manage Gallery", path: "/staff/gallery", icon: <FiFolder /> }
   ];
-
-  const adminNav = [
-    { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
-    { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
-    { name: "Account Management", path: "/admin/accounts", icon: <FiUsers /> },
-    { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
-    { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
-  ];
+const adminNav = [
+  { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
+  { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
+  { name: "Account Management", path: "/admin/accounts", icon: <FiUsers /> },
+  { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
+  { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
+];
   const navItems = role === "admin" ? adminNav : staffNav;
 
   return (

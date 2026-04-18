@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Home from "../pages/public/Home";;
+import Home from "../pages/public/Home";
+import Destinations from "../pages/public/Destinations";
+import Establishments from "../pages/public/Establishments";
 import CulturalHeritage from "../pages/public/CulturalHeritage";
 import Landmarks from "../pages/public/Landmark";
 import MapView from "../pages/public/MapView";
@@ -8,6 +10,9 @@ import Gallery from "../pages/public/Gallery";
 import TourismBlog from "../pages/public/TourismBlog";
 import ArticleDetails from "../pages/public/ArticleDetails";
 import EventDetails from "../pages/public/EventDetails";
+import PlacesDetails from "../pages/public/PlacesDetails";
+import Favorites from "../pages/public/Favorites";
+import Itinerary from "../pages/public/Itinerary";
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -16,21 +21,18 @@ import FeedbackRatings from "../pages/staff/FeedbackRatings";
 import ManageGallery from "../pages/staff/ManageGallery";
 
 import AdminLayout from "../layout/AdminLayout";
-import AccountManagement from "../pages/admin/AdminDashboard";
 import RatingsSummary from "../pages/admin/RatingsSummary";
 import SystemLogs from "../pages/admin/SystemLogs";
 import AIKnowledge from "../pages/admin/AIKnowledge";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AccountManagement from "../pages/admin/AccountManagement";
 
 import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 
 import AdminRoute from "../components/common/AdminRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute";
-
-import Itinerary from "../pages/public/Itinerary";
 import TourismChatbot from "../components/chatbot/TourismChatbot";
-import Favorites from "../pages/public/Favorites";
 
 function AppRoutes() {
   return (
@@ -41,7 +43,7 @@ function AppRoutes() {
         <Route path="/home" element={<Home />} />
 
         <Route path="/destinations" element={<Destinations />} />
-        <Route path="/establishment" element={<Establishments />} />
+        <Route path="/establishments" element={<Establishments />} />
         <Route path="/landmarks" element={<Landmarks />} />
         <Route path="/cultural" element={<CulturalHeritage />} />
         <Route path="/map" element={<MapView />} />
@@ -85,11 +87,11 @@ function AppRoutes() {
           }
         >
           <Route index element={<AdminDashboard />} />
-      
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="ratings" element={<RatingsSummary />} />
           <Route path="logs" element={<SystemLogs />} />
           <Route path="knowledge" element={<AIKnowledge />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="accounts" element={<AccountManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>
