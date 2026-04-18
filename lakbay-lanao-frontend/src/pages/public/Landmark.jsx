@@ -4,14 +4,25 @@ import { collection, getDocs, deleteDoc, doc, setDoc } from "firebase/firestore"
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import { FaHeart } from "react-icons/fa";
-import { FiHeart, FiSearch, FiChevronRight, FiMapPin, FiGrid, FiList } from "react-icons/fi";
+import {
+  FiHeart,
+  FiSearch,
+  FiChevronRight,
+  FiMapPin,
+  FiGrid,
+  FiList,
+} from "react-icons/fi";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
-<<<<<<< HEAD
-const CATEGORIES = ["All", "Landmark", "Historic", "Monument", "Religious", "Public Site", "Viewpoint"];
-=======
-const CATEGORIES = ["All", "Historical", "Natural", "Architectural"];
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
+const CATEGORIES = [
+  "All",
+  "Landmark",
+  "Historic",
+  "Monument",
+  "Religious",
+  "Public Site",
+  "Viewpoint",
+];
 
 const normalize = (value) => String(value || "").trim().toLowerCase();
 
@@ -41,14 +52,12 @@ const StarRating = ({ rating }) => {
 
 function Landmarks() {
   const [data, setData] = useState([]);
-<<<<<<< HEAD
-=======
   const [topPlaces, setTopPlaces] = useState([]);
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [showHeart, setShowHeart] = useState(null);
+
   const navigate = useNavigate();
   const { favorites } = useFavorites();
 
@@ -63,24 +72,17 @@ function Landmarks() {
         const tourismDataItems = tourismDataSnap.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data(),
-<<<<<<< HEAD
           _source: "tourismData",
-=======
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
         }));
 
         const tourismContentItems = tourismContentSnap.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data(),
-<<<<<<< HEAD
           _source: "tourismContent",
-=======
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
         }));
 
         const combined = [...tourismDataItems, ...tourismContentItems];
 
-<<<<<<< HEAD
         const landmarksOnly = combined.filter((item) => {
           const contentType = normalize(item.contentType);
           const type = normalize(item.type);
@@ -95,8 +97,7 @@ function Landmarks() {
             category === "news" ||
             category === "article";
 
-          const isEvent =
-            contentType === "event" || category === "event";
+          const isEvent = contentType === "event" || category === "event";
 
           const isLandmark =
             contentType === "landmark" ||
@@ -128,30 +129,11 @@ function Landmarks() {
         );
 
         setData(uniqueById);
-=======
-        // Filter strictly for Landmarks based on your specific types
-        const landmarkOnly = combined.filter((item) => {
-          const type = normalize(item.type);
 
-          const isLandmarkLike =
-            type === "historical" ||
-            type === "natural" ||
-            type === "architectural";
-          return isLandmarkLike;
-        });
-
-        // Ensure no duplicates
-        const uniqueById = Array.from(
-          new Map(landmarkOnly.map((item) => [item.id, item])).values()
+        const sortedTop = [...uniqueById].sort(
+          (a, b) => (b.rating || 0) - (a.rating || 0)
         );
-
-        setData(uniqueById);
-
-        // Get Top Places sorted by rating
-        const sortedTop = [...uniqueById].sort((a, b) => (b.rating || 0) - (a.rating || 0));
         setTopPlaces(sortedTop.slice(0, 4));
-
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
       } catch (error) {
         console.error("Error fetching landmarks:", error);
       }
@@ -178,13 +160,9 @@ function Landmarks() {
         normalize(item.description).includes(query) ||
         normalize(item.summary).includes(query) ||
         normalize(item.location?.municipality).includes(query) ||
-<<<<<<< HEAD
         normalize(item.location?.province).includes(query) ||
         normalize(item.type).includes(query) ||
         normalize(item.category).includes(query);
-=======
-        normalize(item.location?.province).includes(query);
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
 
       return matchesCategory && matchesSearch;
     });
@@ -212,13 +190,10 @@ function Landmarks() {
     }
   };
 
-<<<<<<< HEAD
-=======
   const handleCategoryChange = (cat) => {
     setActiveCategory(cat);
   };
 
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
   const handleClearFilters = () => {
     setActiveCategory("All");
     setSearchQuery("");
@@ -227,11 +202,9 @@ function Landmarks() {
   const featuredItem = filteredData[0];
   const regularItems = filteredData.slice(1);
 
-<<<<<<< HEAD
-=======
-  // Reusable MiniCard
   const MiniCard = ({ item }) => {
     const isFav = favorites.some((fav) => String(fav.id) === String(item.id));
+
     return (
       <div
         onClick={() => navigate(`/destination/${item.id}`)}
@@ -244,7 +217,7 @@ function Landmarks() {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          
+
           <div className="absolute top-3 left-3">
             <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
               {item.type || item.category || "Landmark"}
@@ -255,7 +228,11 @@ function Landmarks() {
             onClick={(e) => handleToggleFavorite(e, item)}
             className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md z-10 hover:bg-white transition"
           >
-            {isFav ? <FaHeart className="text-[#2563eb] text-sm" /> : <FiHeart className="text-gray-500 text-sm" />}
+            {isFav ? (
+              <FaHeart className="text-[#2563eb] text-sm" />
+            ) : (
+              <FiHeart className="text-gray-500 text-sm" />
+            )}
           </button>
 
           {showHeart === item.id && (
@@ -274,7 +251,9 @@ function Landmarks() {
           {item.rating && (
             <div className="flex items-center gap-1.5 mt-2">
               <StarRating rating={item.rating} />
-              <span className="text-xs text-gray-400 font-medium">{item.rating.toFixed(1)}</span>
+              <span className="text-xs text-gray-400 font-medium">
+                {item.rating.toFixed(1)}
+              </span>
             </div>
           )}
         </div>
@@ -282,12 +261,10 @@ function Landmarks() {
     );
   };
 
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
   return (
     <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] pb-24">
       <Navbar />
 
-<<<<<<< HEAD
       <section className="pt-32 pb-10 px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 font-medium uppercase tracking-wider">
           <span
@@ -296,11 +273,6 @@ function Landmarks() {
           >
             Visit Lanao
           </span>
-=======
-      <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 font-medium uppercase tracking-wider">
-          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/")}>Discover</span>
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
           <span>/</span>
           <span className="text-gray-500">Landmarks</span>
         </div>
@@ -311,17 +283,10 @@ function Landmarks() {
               <FiMapPin className="text-xs" /> Lanao del Sur
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] leading-tight tracking-tight">
-<<<<<<< HEAD
               Lanao<br className="hidden md:block" /> Landmarks
             </h1>
             <p className="mt-3 text-gray-500 max-w-md text-base font-light leading-relaxed">
               Explore iconic landmarks, historic places, and recognizable sites across Lanao del Sur.
-=======
-              Landmarks &<br className="hidden md:block" /> Monuments
-            </h1>
-            <p className="mt-3 text-gray-500 max-w-md text-base font-light leading-relaxed">
-              Explore the rich history, striking architecture, and breathtaking natural wonders of the region.
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
             </p>
           </div>
 
@@ -339,20 +304,15 @@ function Landmarks() {
       </section>
 
       <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-<<<<<<< HEAD
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-3 flex items-center gap-4">
-=======
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
-          <div className="flex gap-2 overflow-x-auto pb-0.5 flex-1" style={{ scrollbarWidth: "none" }}>
+          <div
+            className="flex gap-2 overflow-x-auto pb-0.5 flex-1"
+            style={{ scrollbarWidth: "none" }}
+          >
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
-<<<<<<< HEAD
-                onClick={() => setActiveCategory(cat)}
-=======
                 onClick={() => handleCategoryChange(cat)}
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full transition flex-shrink-0 ${
                   activeCategory === cat
                     ? "bg-[#2563eb] text-white shadow-sm"
@@ -368,13 +328,9 @@ function Landmarks() {
             <button
               onClick={() => setViewMode("grid")}
               className={`p-2 rounded-full transition ${
-<<<<<<< HEAD
                 viewMode === "grid"
                   ? "bg-white shadow-sm text-[#2563eb]"
                   : "text-gray-400 hover:text-gray-600"
-=======
-                viewMode === "grid" ? "bg-white shadow-sm text-[#2563eb]" : "text-gray-400 hover:text-gray-600"
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
               }`}
             >
               <FiGrid className="text-sm" />
@@ -382,13 +338,9 @@ function Landmarks() {
             <button
               onClick={() => setViewMode("list")}
               className={`p-2 rounded-full transition ${
-<<<<<<< HEAD
                 viewMode === "list"
                   ? "bg-white shadow-sm text-[#2563eb]"
                   : "text-gray-400 hover:text-gray-600"
-=======
-                viewMode === "list" ? "bg-white shadow-sm text-[#2563eb]" : "text-gray-400 hover:text-gray-600"
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
               }`}
             >
               <FiList className="text-sm" />
@@ -401,7 +353,6 @@ function Landmarks() {
         </div>
       </div>
 
-<<<<<<< HEAD
       <main className="max-w-7xl mx-auto px-6 lg:px-8 pt-10">
         {filteredData.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-[28px] border border-dashed border-gray-200">
@@ -410,13 +361,6 @@ function Landmarks() {
               onClick={handleClearFilters}
               className="mt-4 text-sm text-[#2563eb] font-semibold hover:underline"
             >
-=======
-      <main className="max-w-7xl mx-auto px-6 pt-10">
-        {filteredData.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-[28px] border border-dashed border-gray-200">
-            <p className="text-gray-400 text-sm font-medium">No landmarks found.</p>
-            <button onClick={handleClearFilters} className="mt-4 text-sm text-[#2563eb] font-semibold hover:underline">
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
               Clear filters
             </button>
           </div>
@@ -447,11 +391,7 @@ function Landmarks() {
                       {item.title}
                     </h3>
                     <p className="text-sm text-gray-400 mt-1 line-clamp-1 font-light">
-<<<<<<< HEAD
                       {item.description || item.summary || "Explore this landmark in Lanao."}
-=======
-                      {item.description || item.summary || "Discover this significant landmark."}
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
                     </p>
                     {item.rating && <StarRating rating={item.rating} />}
                   </div>
@@ -460,15 +400,11 @@ function Landmarks() {
                     onClick={(e) => handleToggleFavorite(e, item)}
                     className="flex-shrink-0 p-2.5 bg-gray-50 rounded-full hover:bg-blue-50 transition mr-2"
                   >
-<<<<<<< HEAD
                     {isFav ? (
                       <FaHeart className="text-[#2563eb] text-sm" />
                     ) : (
                       <FiHeart className="text-gray-400 text-sm" />
                     )}
-=======
-                    {isFav ? <FaHeart className="text-[#2563eb] text-sm" /> : <FiHeart className="text-gray-400 text-sm" />}
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
                   </button>
 
                   <FiChevronRight className="text-gray-300 flex-shrink-0 hidden md:block" />
@@ -525,251 +461,67 @@ function Landmarks() {
                       {featuredItem.title}
                     </h3>
                     <p className="text-white/70 text-sm line-clamp-2 font-light">
-<<<<<<< HEAD
                       {featuredItem.description || featuredItem.summary || "Explore this landmark in Lanao."}
-=======
-                      {featuredItem.description || featuredItem.summary || "Discover this significant landmark."}
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
                     </p>
                     <div className="flex items-center gap-2 mt-3">
                       <FiMapPin className="text-white/60 text-xs flex-shrink-0" />
                       <span className="text-white/60 text-xs">
-                        {featuredItem.location?.municipality || featuredItem.location?.province || "Lanao del Sur"}
+                        {featuredItem.location?.municipality ||
+                          featuredItem.location?.province ||
+                          "Lanao del Sur"}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-5">
-<<<<<<< HEAD
-                  {regularItems.slice(0, 2).map((item) => {
-                    const isFav = favorites.some((fav) => String(fav.id) === String(item.id));
-
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => navigate(`/destination/${item.id}`)}
-                        className="group cursor-pointer relative bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex-1"
-                      >
-                        <div className="relative h-[160px] overflow-hidden">
-                          <img
-                            src={item.imageURL || "/default.jpg"}
-                            alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-
-                          <div className="absolute top-3 left-3">
-                            <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                              {item.type || item.category || "Landmark"}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={(e) => handleToggleFavorite(e, item)}
-                            className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md z-10 hover:bg-white transition"
-                          >
-                            {isFav ? (
-                              <FaHeart className="text-[#2563eb] text-sm" />
-                            ) : (
-                              <FiHeart className="text-gray-500 text-sm" />
-                            )}
-                          </button>
-
-                          {showHeart === item.id && (
-                            <FaHeart className="absolute inset-0 m-auto text-[#2563eb] text-5xl pointer-events-none z-20 animate-ping" />
-                          )}
-                        </div>
-
-                        <div className="p-4">
-                          <h3 className="font-bold text-[#2563eb] text-[15px] group-hover:text-blue-700 transition line-clamp-1">
-                            {item.title}
-                          </h3>
-                          {item.rating && (
-                            <div className="flex items-center gap-1.5 mt-1.5">
-                              <StarRating rating={item.rating} />
-                              <span className="text-xs text-gray-400">{item.rating.toFixed(1)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-=======
                   {regularItems.slice(0, 2).map((item) => (
                     <MiniCard key={item.id} item={item} />
                   ))}
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
                 </div>
               </div>
             )}
 
             {regularItems.length > 2 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-<<<<<<< HEAD
-                {regularItems.slice(2).map((item) => {
-                  const isFav = favorites.some((fav) => String(fav.id) === String(item.id));
-
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => navigate(`/destination/${item.id}`)}
-                      className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-                    >
-                      <div className="relative h-[180px] overflow-hidden">
-                        <img
-                          src={item.imageURL || "/default.jpg"}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-
-                        <div className="absolute top-3 left-3">
-                          <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                            {item.type || item.category || "Landmark"}
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={(e) => handleToggleFavorite(e, item)}
-                          className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md z-10 hover:bg-white transition"
-                        >
-                          {isFav ? (
-                            <FaHeart className="text-[#2563eb] text-sm" />
-                          ) : (
-                            <FiHeart className="text-gray-500 text-sm" />
-                          )}
-                        </button>
-
-                        {showHeart === item.id && (
-                          <FaHeart className="absolute inset-0 m-auto text-[#2563eb] text-5xl pointer-events-none z-20 animate-ping" />
-                        )}
-                      </div>
-
-                      <div className="p-4">
-                        <h3 className="font-bold text-[#2563eb] text-[15px] group-hover:text-blue-700 transition line-clamp-1">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 font-light leading-relaxed">
-                          {item.description || item.summary || "Explore this landmark in Lanao."}
-                        </p>
-                        {item.rating && (
-                          <div className="flex items-center gap-1.5 mt-2">
-                            <StarRating rating={item.rating} />
-                            <span className="text-xs text-gray-400">{item.rating.toFixed(1)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-=======
                 {regularItems.slice(2).map((item) => (
                   <MiniCard key={item.id} item={item} />
                 ))}
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
               </div>
             )}
           </div>
         )}
       </main>
 
-<<<<<<< HEAD
-      <section className="mt-20 px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="p-10 md:p-14 flex flex-col justify-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-[#2563eb] mb-5 w-fit">
-                Landmarks
-              </span>
-
-              <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight leading-tight">
-                Visit iconic landmarks<br className="hidden md:block" /> across Lanao
-              </h2>
-
-              <p className="mt-5 text-sm text-gray-500 leading-relaxed max-w-md">
-                Explore historic places, public sites, and notable landmarks that help tell the story of Lanao del Sur.
-              </p>
-
-              <div className="flex gap-6 mt-6">
-                <div>
-                  <p className="text-2xl font-bold text-[#2563eb]">{filteredData.length}+</p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Landmarks</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[#2563eb]">Historic</p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Places</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[#2563eb]">Iconic</p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Views</p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="mt-8 rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition w-fit flex items-center gap-2"
-              >
-                Explore landmarks <FiChevronRight />
-              </button>
-            </div>
-
-            <div className="relative h-[280px] lg:h-auto overflow-hidden bg-[#f8fbff]">
-              <div className="absolute inset-0 grid grid-cols-2 gap-3 p-4">
-                <div className="rounded-[18px] overflow-hidden">
-                  <img
-                    src={filteredData[0]?.imageURL || "/default.jpg"}
-                    alt={filteredData[0]?.title || "Landmark"}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <div className="grid grid-rows-2 gap-3">
-                  <div className="rounded-[18px] overflow-hidden">
-                    <img
-                      src={filteredData[1]?.imageURL || "/default.jpg"}
-                      alt={filteredData[1]?.title || "Historic landmark"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="rounded-[18px] overflow-hidden">
-                    <img
-                      src={filteredData[2]?.imageURL || "/default.jpg"}
-                      alt={filteredData[2]?.title || "Public landmark"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-=======
-      {/* Top Landmarks Section */}
       {topPlaces.length > 0 && (
         <section className="mt-20 px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-[#2563eb] tracking-tight">Top Rated Landmarks</h2>
-              <p className="text-sm text-gray-500 mt-1">Discover the most highly recommended sites to visit.</p>
+              <h2 className="text-2xl font-bold text-[#2563eb] tracking-tight">
+                Top Rated Landmarks
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Discover the most highly recommended sites to visit.
+              </p>
             </div>
-            <button 
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); handleClearFilters(); }} 
+            <button
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                handleClearFilters();
+              }}
               className="text-sm font-semibold text-[#2563eb] hover:underline hidden sm:block"
             >
               View all
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {topPlaces.map((item) => <MiniCard key={item.id} item={item} />)}
+            {topPlaces.map((item) => (
+              <MiniCard key={item.id} item={item} />
+            ))}
           </div>
         </section>
       )}
-
->>>>>>> 53a648f2bf4e6b45106ae51e099d013989930609
     </div>
   );
 }
