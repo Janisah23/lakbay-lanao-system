@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -22,6 +22,14 @@ function Login() {
   const navigate = useNavigate();
   const provider = new GoogleAuthProvider();
 
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -29,17 +37,13 @@ function Login() {
     setInfoMsg("");
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
       await user.getIdToken(true);
       await redirectUser(user);
     } catch (error) {
-      console.error(error);
+      console.error("Login error:", error);
 
       if (error.code === "auth/user-not-found") {
         setErrorMsg("No account found with this email.");
@@ -48,7 +52,7 @@ function Login() {
       } else if (error.code === "auth/invalid-credential") {
         setErrorMsg("Invalid email or password.");
       } else {
-        setErrorMsg("Login failed.");
+        setErrorMsg("Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -58,6 +62,7 @@ function Login() {
   const handleGoogleLogin = async () => {
     setErrorMsg("");
     setInfoMsg("");
+    setLoading(true);
 
     try {
       const result = await signInWithPopup(auth, provider);
@@ -67,7 +72,7 @@ function Login() {
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        await setDoc(doc(db, "users", user.uid), {
+        await setDoc(docRef, {
           email: user.email,
           username: user.displayName || "",
           role: "tourist",
@@ -76,8 +81,10 @@ function Login() {
 
       await redirectUser(user);
     } catch (error) {
-      console.error(error);
+      console.error("Google sign-in error:", error);
       setErrorMsg("Google sign-in failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,18 +101,23 @@ function Login() {
       await sendPasswordResetEmail(auth, email);
       setInfoMsg("Password reset email sent. Please check your inbox.");
     } catch (error) {
-      console.error(error);
+      console.error("Reset password error:", error);
       setErrorMsg("Could not send reset email.");
     }
   };
 
   const redirectUser = async (user) => {
-    const docRef = doc(db, "users", user.uid);
-    const docSnap = await getDoc(docRef);
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
+      if (!docSnap.exists()) {
+        setErrorMsg("User profile not found in database.");
+        return;
+      }
+
       const userData = docSnap.data();
-      const role = userData.role;
+      const role = String(userData.role || "").toLowerCase().trim();
       const name = userData.username || userData.name || user.email || "User";
 
       if (rememberMe) {
@@ -114,16 +126,23 @@ function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      if (role === "admin") navigate("/admin");
-      else if (role === "staff") navigate("/staff");
-      else navigate("/home");
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (role === "staff") {
+        navigate("/staff/manage");
+      } else {
+        navigate("/home");
+      }
 
       await logAction({
         action: "Login",
         userName: name,
         performedBy: name,
-        role: role,
+        role: role || "tourist",
       });
+    } catch (error) {
+      console.error("Redirect error:", error);
+      setErrorMsg("Login succeeded, but role-based redirect failed.");
     }
   };
 
@@ -138,24 +157,9 @@ function Login() {
         Back to Home
       </button>
 
-      <div
-        className="
-          w-full max-w-[390px]
-          rounded-[28px]
-          border border-white/60
-          bg-white/75
-          p-10
-          text-center
-          backdrop-blur-[18px]
-          shadow-[0_6px_20px_rgba(0,0,0,0.06)]
-          transition-all duration-200
-          hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]
-        "
-      >
+      <div className="w-full max-w-[390px] rounded-[28px] border border-white/60 bg-white/75 p-10 text-center backdrop-blur-[18px] shadow-[0_6px_20px_rgba(0,0,0,0.06)] transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
         <h2 className="mb-1 text-[30px] font-bold text-[#2563eb]">Sign In</h2>
-        <p className="mb-5 text-sm text-gray-500">
-          Welcome back to Lakbay Lanao
-        </p>
+        <p className="mb-5 text-sm text-gray-500">Welcome back to Lakbay Lanao</p>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
@@ -168,14 +172,7 @@ function Login() {
               setInfoMsg("");
             }}
             required
-            className="
-              w-full rounded-[12px] border border-gray-200
-              bg-white/90 px-4 py-3 text-sm outline-none
-              transition-all duration-200
-              hover:border-[#2563eb]
-              focus:border-[#2563eb]
-              focus:ring-2 focus:ring-blue-100
-            "
+            className="w-full rounded-[12px] border border-gray-200 bg-white/90 px-4 py-3 text-sm outline-none transition-all duration-200 hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
           />
 
           <input
@@ -188,14 +185,7 @@ function Login() {
               setInfoMsg("");
             }}
             required
-            className="
-              w-full rounded-[12px] border border-gray-200
-              bg-white/90 px-4 py-3 text-sm outline-none
-              transition-all duration-200
-              hover:border-[#2563eb]
-              focus:border-[#2563eb]
-              focus:ring-2 focus:ring-blue-100
-            "
+            className="w-full rounded-[12px] border border-gray-200 bg-white/90 px-4 py-3 text-sm outline-none transition-all duration-200 hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
           />
 
           <div className="flex items-center justify-between text-sm">
@@ -233,16 +223,7 @@ function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="
-              flex w-full items-center justify-center
-              rounded-[12px]
-              bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]
-              py-3 text-[15px] font-semibold text-white
-              transition-all duration-200
-              hover:shadow-md
-              active:scale-[0.98]
-              disabled:cursor-not-allowed disabled:opacity-80
-            "
+            className="flex w-full items-center justify-center rounded-[12px] bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-3 text-[15px] font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-80"
           >
             {loading ? (
               <div className="h-[18px] w-[18px] animate-spin rounded-full border-[3px] border-white border-t-transparent" />
@@ -257,13 +238,8 @@ function Login() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="
-            flex w-full items-center justify-center gap-3
-            rounded-[12px] border border-gray-200 bg-white
-            px-4 py-3 text-sm font-medium text-gray-700
-            transition-all duration-150
-            hover:bg-gray-50 hover:shadow-sm
-          "
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-3 rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all duration-150 hover:bg-gray-50 hover:shadow-sm disabled:opacity-70"
         >
           <img
             src="/google-icon.png"
