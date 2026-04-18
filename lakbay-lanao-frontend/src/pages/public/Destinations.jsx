@@ -519,40 +519,73 @@ function Destinations() {
         )}
       </main>
 
-      {/* Discover Lanao Section with reduced margins */}
+            {/* Explore More Section */}
       <section className="mt-20 px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="p-10 md:p-14 flex flex-col justify-center">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-[#2563eb] mb-5 w-fit">
-                Discover Lanao
+                Explore Lanao
               </span>
+
               <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight leading-tight">
-                Find the best places<br className="hidden md:block" /> to visit in Lanao
+                Discover more of<br className="hidden md:block" /> Lanao del Sur
               </h2>
+
               <p className="mt-5 text-sm text-gray-500 leading-relaxed max-w-md">
-                Whether you want to treat the family to non-stop thrills, admire incomparable views, or experience the living culture of the Meranao people — there&apos;s always something spectacular to discover around Lake Lanao.
+                Explore scenic attractions, natural wonders, and memorable places that reflect the beauty and identity of Lanao del Sur.
               </p>
+
+              <div className="flex gap-6 mt-6">
+                <div>
+                  <p className="text-2xl font-bold text-[#2563eb]">{filteredData.length}+</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Places</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[#2563eb]">Local</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Experiences</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[#2563eb]">Rich</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Scenery</p>
+                </div>
+              </div>
+
               <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="mt-8 rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition w-fit flex items-center gap-2"
               >
-                Discover all places <FiChevronRight />
+                Explore all places <FiChevronRight />
               </button>
             </div>
 
-            <div className="relative h-[280px] lg:h-auto overflow-hidden">
-              <div className="absolute inset-0 grid grid-cols-2 gap-2 p-4">
-                <img
-                  src="https://images.unsplash.com/photo-1546412414-e1885259563a?q=80&w=600&auto=format&fit=crop"
-                  alt="Lanao scenery"
-                  className="w-full h-full object-cover rounded-[16px]"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1582672060624-ac925d1560f8?q=80&w=600&auto=format&fit=crop"
-                  alt="Lake Lanao"
-                  className="w-full h-full object-cover rounded-[16px]"
-                />
+            <div className="relative h-[280px] lg:h-auto overflow-hidden bg-[#f8fbff]">
+              <div className="absolute inset-0 grid grid-cols-2 gap-3 p-4">
+                <div className="rounded-[18px] overflow-hidden">
+                  <img
+                    src={filteredData[0]?.imageURL || "/default.jpg"}
+                    alt={filteredData[0]?.title || "Lanao destination"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="grid grid-rows-2 gap-3">
+                  <div className="rounded-[18px] overflow-hidden">
+                    <img
+                      src={filteredData[1]?.imageURL || "/default.jpg"}
+                      alt={filteredData[1]?.title || "Lanao attraction"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="rounded-[18px] overflow-hidden">
+                    <img
+                      src={filteredData[2]?.imageURL || "/default.jpg"}
+                      alt={filteredData[2]?.title || "Scenic place"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
