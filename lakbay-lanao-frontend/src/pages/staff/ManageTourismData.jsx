@@ -90,13 +90,13 @@ const handleRestore = async (id) => {
   Destination: ["Beach", "Mountain", "Waterfall", "Island"],
   Establishment: ["Hotel", "Restaurant", "Resort", "Cafe"],
   Landmark: ["Historical", "Natural", "Architectural"],
-  "Cultural Heritage Site": ["Museum", "Ancestral House", "Festival Site"],
+  "Cultural Heritage Site": ["Museum", "Crafts", "Tradition", "Heritage", "Historical"],
 };
 
   const municipalities = [
   "Amai Manabilang", "Bacolod-Kalawi", "Balabagan", "Balindong", "Bayang", "Binidayan", "Buadiposo-Buntong", "Bubong",
   "Butig", "Calanogas", "Ditsaan-Ramain", "Ganassi", "Kapai", "Kapatagan", "Lumba-Bayabao", "Lumbaca-Unayan", "Lumbatan", "Lumbayanague",
-  "Madalum", "Madamba", "Maguing", "Malabang", "Marantao", "Marogong", "Masiu", "Mulondo", "Pagayawan", "Piagapo",
+  "Madalum", "Madamba", "Maguing", "Malabang", "Marantao", "Marawi", "Marogong", "Masiu", "Mulondo", "Pagayawan", "Piagapo",
   "Picong", "Poona Bayabao", "Pualas", "Saguiaran", "Sultan Dumalondong", "Tagoloan II", "Tamparan", "Taraka", "Tubaran", "Tugaya", "Wao"
   ];
 

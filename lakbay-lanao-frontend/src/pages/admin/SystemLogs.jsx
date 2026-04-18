@@ -14,9 +14,8 @@ function SystemLogs() {
   const [todayCount, setTodayCount] = useState(0);
 
   useEffect(() => {
-    // Note: For a production app with thousands of logs, you might want to add limit(100) to this query
     const q = query(
-      collection(db, "logs"), // Or "systemLogs" depending on your actual DB naming
+      collection(db, "logs"), 
       orderBy("timestamp", "desc")
     );
 

@@ -385,12 +385,6 @@ function Home() {
                     <h3 className="text-sm font-bold text-[#1e3a8a] leading-snug line-clamp-2 group-hover:text-blue-700 transition-colors">
                       {evt.title}
                     </h3>
-
-                    {/* Description */}
-                    <p className="text-[12.5px] text-gray-400 leading-relaxed line-clamp-2">
-                      {evt.description || "No description available."}
-                    </p>
-
                     {/* Date */}
                     <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold uppercase tracking-wide text-blue-300">
                       <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

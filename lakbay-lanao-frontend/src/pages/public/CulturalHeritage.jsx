@@ -7,8 +7,8 @@ import { FaHeart } from "react-icons/fa";
 import { FiHeart, FiSearch, FiChevronRight, FiMapPin, FiGrid, FiList } from "react-icons/fi";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
-// Reverted to your clean, predefined categories for the top filter tabs
-const CATEGORIES = ["All", "Hotel", "Restaurant", "Resort", "Cafe"];
+// Defined categories specific to Cultural Heritage
+const CATEGORIES = ["All", "Traditions", "Arts & Crafts", "Museums", "Historical Sites"];
 
 const normalize = (value) => String(value || "").trim().toLowerCase();
 
@@ -36,9 +36,9 @@ const StarRating = ({ rating }) => {
   );
 };
 
-function HotelsAndRestaurants() {
+function CulturalHeritage() {
   const [data, setData] = useState([]);
-  const [topPlaces, setTopPlaces] = useState([]); // New state for Top Places
+  const [topPlaces, setTopPlaces] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
@@ -66,19 +66,21 @@ function HotelsAndRestaurants() {
 
         const combined = [...tourismDataItems, ...tourismContentItems];
 
-        const establishmentOnly = combined.filter((item) => {
+        // Filter strictly for Cultural Heritage based on relevant types
+        const heritageOnly = combined.filter((item) => {
           const type = normalize(item.type);
 
-          const isEstablishmentLike =
-            type === "hotel" ||
-            type === "restaurant" ||
-            type === "resort" ||
-            type === "cafe" ;
-          return isEstablishmentLike;
+          const isHeritageLike =
+            type === "heritage" ||
+            type === "tradition" ||
+            type === "arts & crafts" ||
+            type === "museum" ||
+            type === "historical";            
+          return isHeritageLike;
         });
 
         const uniqueById = Array.from(
-          new Map(establishmentOnly.map((item) => [item.id, item])).values()
+          new Map(heritageOnly.map((item) => [item.id, item])).values()
         );
 
         setData(uniqueById);
@@ -88,7 +90,7 @@ function HotelsAndRestaurants() {
         setTopPlaces(sortedTop.slice(0, 4));
 
       } catch (error) {
-        console.error("Error fetching establishments:", error);
+        console.error("Error fetching cultural heritage:", error);
       }
     };
 
@@ -102,10 +104,22 @@ function HotelsAndRestaurants() {
       const itemType = normalize(item.type);
       const itemCategory = normalize(item.category);
 
-      const matchesCategory =
-        activeCategory === "All" ||
-        itemType === normalize(activeCategory) ||
-        itemCategory === normalize(activeCategory);
+      // --- FIX: Intelligent Category Mapping ---
+      let matchesCategory = false;
+      if (activeCategory === "All") {
+        matchesCategory = true;
+      } else if (activeCategory === "Museums") {
+        matchesCategory = itemType.includes("museum") || itemCategory.includes("museum");
+      } else if (activeCategory === "Traditions") {
+        matchesCategory = itemType.includes("tradition") || itemCategory.includes("tradition");
+      } else if (activeCategory === "Historical Sites") {
+        matchesCategory = itemType.includes("historic") || itemCategory.includes("historic") || itemType.includes("heritage");
+      } else if (activeCategory === "Arts & Crafts") {
+        matchesCategory = itemType.includes("art") || itemType.includes("craft") || itemCategory.includes("art");
+      } else {
+        // Fallback for strict matching
+        matchesCategory = itemType === normalize(activeCategory) || itemCategory === normalize(activeCategory);
+      }
 
       const matchesSearch =
         !query ||
@@ -153,7 +167,7 @@ function HotelsAndRestaurants() {
   const featuredItem = filteredData[0];
   const regularItems = filteredData.slice(1);
 
-  // Reusable MiniCard for side grids and bottom section
+  // Reusable MiniCard
   const MiniCard = ({ item }) => {
     const isFav = favorites.some((fav) => String(fav.id) === String(item.id));
     return (
@@ -171,7 +185,7 @@ function HotelsAndRestaurants() {
           
           <div className="absolute top-3 left-3">
             <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-              {item.type || item.category || "Establishment"}
+              {item.type || item.category || "Heritage"}
             </span>
           </div>
 
@@ -212,11 +226,9 @@ function HotelsAndRestaurants() {
 
       <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 font-medium uppercase tracking-wider">
-          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/")}>
-            Discover
-          </span>
+          <span className="cursor-pointer hover:text-[#2563eb] transition" onClick={() => navigate("/")}>Discover</span>
           <span>/</span>
-          <span className="text-gray-500">Hotels & Restaurants</span>
+          <span className="text-gray-500">Cultural Heritage</span>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -225,10 +237,10 @@ function HotelsAndRestaurants() {
               <FiMapPin className="text-xs" /> Lanao del Sur
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] leading-tight tracking-tight">
-              Hotels &<br className="hidden md:block" /> Restaurants
+              Cultural &<br className="hidden md:block" /> Living Heritage
             </h1>
             <p className="mt-3 text-gray-500 max-w-md text-base font-light leading-relaxed">
-              Find the perfect place to stay and dine. Explore top-rated hotels, cozy resorts, and local culinary hotspots.
+              Immerse yourself in the rich traditions, vibrant arts, and deep-rooted history of the Meranao people.
             </p>
           </div>
 
@@ -236,7 +248,7 @@ function HotelsAndRestaurants() {
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
             <input
               type="text"
-              placeholder="Search establishments..."
+              placeholder="Search heritage sites..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-[12px] border border-gray-200 bg-white pl-10 pr-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 shadow-sm"
@@ -267,9 +279,7 @@ function HotelsAndRestaurants() {
             <button
               onClick={() => setViewMode("grid")}
               className={`p-2 rounded-full transition ${
-                viewMode === "grid"
-                  ? "bg-white shadow-sm text-[#2563eb]"
-                  : "text-gray-400 hover:text-gray-600"
+                viewMode === "grid" ? "bg-white shadow-sm text-[#2563eb]" : "text-gray-400 hover:text-gray-600"
               }`}
             >
               <FiGrid className="text-sm" />
@@ -277,9 +287,7 @@ function HotelsAndRestaurants() {
             <button
               onClick={() => setViewMode("list")}
               className={`p-2 rounded-full transition ${
-                viewMode === "list"
-                  ? "bg-white shadow-sm text-[#2563eb]"
-                  : "text-gray-400 hover:text-gray-600"
+                viewMode === "list" ? "bg-white shadow-sm text-[#2563eb]" : "text-gray-400 hover:text-gray-600"
               }`}
             >
               <FiList className="text-sm" />
@@ -287,7 +295,7 @@ function HotelsAndRestaurants() {
           </div>
 
           <p className="text-xs text-gray-400 font-medium flex-shrink-0 hidden md:block">
-            {filteredData.length} {filteredData.length === 1 ? "place" : "places"}
+            {filteredData.length} {filteredData.length === 1 ? "site" : "sites"}
           </p>
         </div>
       </div>
@@ -295,11 +303,8 @@ function HotelsAndRestaurants() {
       <main className="max-w-7xl mx-auto px-6 pt-10">
         {filteredData.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-[28px] border border-dashed border-gray-200">
-            <p className="text-gray-400 text-sm font-medium">No establishments found.</p>
-            <button
-              onClick={handleClearFilters}
-              className="mt-4 text-sm text-[#2563eb] font-semibold hover:underline"
-            >
+            <p className="text-gray-400 text-sm font-medium">No cultural heritage sites found.</p>
+            <button onClick={handleClearFilters} className="mt-4 text-sm text-[#2563eb] font-semibold hover:underline">
               Clear filters
             </button>
           </div>
@@ -324,13 +329,13 @@ function HotelsAndRestaurants() {
 
                   <div className="flex-1 min-w-0">
                     <span className="inline-block rounded-full bg-[#2563eb] px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm mb-1.5">
-                      {item.type || item.category || "Establishment"}
+                      {item.type || item.category || "Heritage"}
                     </span>
                     <h3 className="font-bold text-[#2563eb] text-base group-hover:text-blue-700 transition line-clamp-1">
                       {item.title}
                     </h3>
                     <p className="text-sm text-gray-400 mt-1 line-clamp-1 font-light">
-                      {item.description || item.summary || "Discover this amazing place in Lanao."}
+                      {item.description || item.summary || "Discover this cultural treasure."}
                     </p>
                     {item.rating && <StarRating rating={item.rating} />}
                   </div>
@@ -339,11 +344,7 @@ function HotelsAndRestaurants() {
                     onClick={(e) => handleToggleFavorite(e, item)}
                     className="flex-shrink-0 p-2.5 bg-gray-50 rounded-full hover:bg-blue-50 transition mr-2"
                   >
-                    {isFav ? (
-                      <FaHeart className="text-[#2563eb] text-sm" />
-                    ) : (
-                      <FiHeart className="text-gray-400 text-sm" />
-                    )}
+                    {isFav ? <FaHeart className="text-[#2563eb] text-sm" /> : <FiHeart className="text-gray-400 text-sm" />}
                   </button>
 
                   <FiChevronRight className="text-gray-300 flex-shrink-0 hidden md:block" />
@@ -368,7 +369,7 @@ function HotelsAndRestaurants() {
 
                   <div className="absolute top-5 left-5">
                     <span className="rounded-full bg-[#2563eb] px-3 py-1 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
-                      {featuredItem.type || featuredItem.category || "Establishment"}
+                      {featuredItem.type || featuredItem.category || "Heritage"}
                     </span>
                   </div>
 
@@ -400,7 +401,7 @@ function HotelsAndRestaurants() {
                       {featuredItem.title}
                     </h3>
                     <p className="text-white/70 text-sm line-clamp-2 font-light">
-                      {featuredItem.description || featuredItem.summary || "Discover this amazing place in Lanao."}
+                      {featuredItem.description || featuredItem.summary || "Discover this cultural treasure."}
                     </p>
                     <div className="flex items-center gap-2 mt-3">
                       <FiMapPin className="text-white/60 text-xs flex-shrink-0" />
@@ -430,13 +431,13 @@ function HotelsAndRestaurants() {
         )}
       </main>
 
-      {/* Top Places Section - Replacing Discover Lanao */}
+      {/* Top Heritage Sites Section */}
       {topPlaces.length > 0 && (
         <section className="mt-20 px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-[#2563eb] tracking-tight">Top Rated Establishments</h2>
-              <p className="text-sm text-gray-500 mt-1">Discover the highest-rated hotels and restaurants in Lanao del Sur.</p>
+              <h2 className="text-2xl font-bold text-[#2563eb] tracking-tight">Top Rated Heritage Sites</h2>
+              <p className="text-sm text-gray-500 mt-1">Discover the most highly recommended cultural experiences.</p>
             </div>
             <button 
               onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); handleClearFilters(); }} 
@@ -456,4 +457,4 @@ function HotelsAndRestaurants() {
   );
 }
 
-export default HotelsAndRestaurants;
+export default CulturalHeritage;
