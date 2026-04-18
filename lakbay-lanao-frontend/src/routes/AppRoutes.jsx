@@ -33,7 +33,6 @@ import ProtectedRoute from "../components/common/ProtectedRoute";
 import Itinerary from "../pages/public/Itinerary";
 import TourismChatbot from "../components/chatbot/TourismChatbot";
 import Favorites from "../pages/public/Favorites";
-import Establishments from "../pages/public/Establishments";
 
 function AppRoutes() {
   return (
@@ -55,6 +54,9 @@ function AppRoutes() {
         <Route path="/blog" element={<TourismBlog />} />
         <Route path="/chatbot" element={<TourismChatbot />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/cultural" element={<Cultural />} />
+        <Route path="/establishments" element={<Establishments />} />
+        <Route path="/landmarks" element={<Landmarks />} />
 
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />
