@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Home from "../pages/public/Home";
-import Destinations from "../pages/public/Destinations";
+import Home from "../pages/public/Home";;
 import CulturalHeritage from "../pages/public/CulturalHeritage";
 import Landmarks from "../pages/public/Landmark";
 import MapView from "../pages/public/MapView";
@@ -9,8 +8,6 @@ import Gallery from "../pages/public/Gallery";
 import TourismBlog from "../pages/public/TourismBlog";
 import ArticleDetails from "../pages/public/ArticleDetails";
 import EventDetails from "../pages/public/EventDetails";
-import PlacesDetails from "../pages/public/PlacesDetails";
-
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -19,7 +16,7 @@ import FeedbackRatings from "../pages/staff/FeedbackRatings";
 import ManageGallery from "../pages/staff/ManageGallery";
 
 import AdminLayout from "../layout/AdminLayout";
-import AccountManagement from "../pages/admin/AccountManagement";
+import AccountManagement from "../pages/admin/AdminDashboard";
 import RatingsSummary from "../pages/admin/RatingsSummary";
 import SystemLogs from "../pages/admin/SystemLogs";
 import AIKnowledge from "../pages/admin/AIKnowledge";
@@ -55,13 +52,6 @@ function AppRoutes() {
         <Route path="/blog" element={<TourismBlog />} />
         <Route path="/chatbot" element={<TourismChatbot />} />
         <Route path="/favorites" element={<Favorites />} />
-<<<<<<< Updated upstream
-        <Route path="/cultural" element={<Cultural />} />
-        <Route path="/establishments" element={<Establishments />} />
-        <Route path="/landmarks" element={<Landmarks />} />
-=======
-       
->>>>>>> Stashed changes
 
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />
