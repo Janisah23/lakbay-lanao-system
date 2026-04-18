@@ -36,9 +36,14 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
 
   // Updated Admin Navigation Structure
   const adminNav = [
+<<<<<<< Updated upstream
     { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
     { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
     { name: "Account Management", path: "/admin/accounts", icon: <FiUsers /> },
+=======
+    { name: "Admin Dashboard", path: "/admin/dashboard", icon: <FiUsers /> },
+    { name: "Ratings Summary", path: "/admin/ratings", icon: <FiStar /> },
+>>>>>>> Stashed changes
     { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
     { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
   ];

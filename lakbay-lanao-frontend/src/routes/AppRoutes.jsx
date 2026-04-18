@@ -11,6 +11,7 @@ import ArticleDetails from "../pages/public/ArticleDetails";
 import EventDetails from "../pages/public/EventDetails";
 import PlacesDetails from "../pages/public/PlacesDetails";
 
+
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
 import TourismContent from "../pages/staff/TourismContent";
@@ -54,9 +55,13 @@ function AppRoutes() {
         <Route path="/blog" element={<TourismBlog />} />
         <Route path="/chatbot" element={<TourismChatbot />} />
         <Route path="/favorites" element={<Favorites />} />
+<<<<<<< Updated upstream
         <Route path="/cultural" element={<Cultural />} />
         <Route path="/establishments" element={<Establishments />} />
         <Route path="/landmarks" element={<Landmarks />} />
+=======
+       
+>>>>>>> Stashed changes
 
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />
