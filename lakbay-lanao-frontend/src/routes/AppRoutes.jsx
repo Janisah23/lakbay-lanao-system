@@ -85,7 +85,7 @@ function AppRoutes() {
           }
         >
           <Route index element={<AdminDashboard />} />
-          <Route path="accounts" element={<AccountManagement />} />
+      
           <Route path="ratings" element={<RatingsSummary />} />
           <Route path="logs" element={<SystemLogs />} />
           <Route path="knowledge" element={<AIKnowledge />} />

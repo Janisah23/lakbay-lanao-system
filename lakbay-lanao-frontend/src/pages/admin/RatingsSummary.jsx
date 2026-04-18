@@ -453,8 +453,8 @@ function RatingsSummary() {
                 <div key={place.id} className="flex items-center justify-between group">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-red-50 overflow-hidden flex items-center justify-center text-red-500">
-                      <FiAlertCircle className="text-xl" />
-                    </div>
+                      <FiAlertCircle className="text-xl" /> 
+                    </div> 
                     <div>
                       <p className="font-bold text-gray-900 text-sm line-clamp-1">{place.title || place.name}</p>
                       <p className="text-[11px] text-gray-500 font-medium mt-0.5 flex items-center gap-1">
