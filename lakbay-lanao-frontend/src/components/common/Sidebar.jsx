@@ -7,9 +7,7 @@ import {
   FiMenu,
   FiChevronDown,
   FiLogOut,
-  FiCpu,
-  FiHome,
-  FiBarChart2
+  FiCpu
 } from "react-icons/fi";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -34,7 +32,6 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
     { name: "Manage Gallery", path: "/staff/gallery", icon: <FiFolder /> }
   ];
 
-  // Updated Admin Navigation Structure
   const adminNav = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
     { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
@@ -42,7 +39,6 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
     { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
     { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
   ];
-
   const navItems = role === "admin" ? adminNav : staffNav;
 
   return (
@@ -57,25 +53,25 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
           {!collapsed && (
             <img
               src={lakbayLogo}
-              alt="Lakbay Lanao Logo"
+              alt=""
               className="h-9 object-contain"
             />
           )}
 
           <FiMenu
-            className="text-xl text-[#2563EB] cursor-pointer flex-shrink-0"
+            className="text-xl text-[#2563EB] cursor-pointer"
             onClick={() => setCollapsed(!collapsed)}
           />
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 space-y-2 px-4 text-sm">
+        <nav className="mt-6 space-y-6 px-4 text-sm">
           {navItems.map((item, index) => (
             <NavLink
               key={index}
               to={item.path}
               className={({ isActive }) =>
-                `relative group flex items-center gap-3 px-3 py-3 rounded-lg transition-all
+                `relative group flex items-center gap-3 px-3 py-2 rounded-lg transition-all
                 ${
                   isActive
                     ? "text-[#2563EB] font-medium bg-blue-50"
@@ -87,14 +83,13 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
 
               {!collapsed && <span>{item.name}</span>}
 
-              {/* Tooltip for collapsed state */}
               {collapsed && (
                 <span
                   className="absolute left-[70px] whitespace-nowrap
-                  bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md
+                  bg-gray-900 text-white text-xs px-3 py-1 rounded-md
                   opacity-0 group-hover:opacity-100
                   translate-x-2 group-hover:translate-x-0
-                  transition-all duration-200 pointer-events-none shadow-lg z-50"
+                  transition-all duration-200 pointer-events-none shadow-lg"
                 >
                   {item.name}
                 </span>
@@ -118,7 +113,7 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-gray-900 line-clamp-1">
+                <p className="text-sm font-semibold">
                   {name || "Loading..."}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">
@@ -129,7 +124,7 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
 
             {/* Arrow */}
             <FiChevronDown
-              className={`text-gray-500 transition-transform duration-300 ${
+              className={`transition-transform duration-300 ${
                 openProfile ? "rotate-180" : ""
               }`}
             />
@@ -137,12 +132,12 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
 
           {/* Dropdown */}
           {openProfile && (
-            <div className="absolute bottom-20 left-4 right-4 bg-white border border-gray-200 rounded-xl shadow-lg mt-2 overflow-hidden animate-fadeIn">
+            <div className="absolute bottom-20 left-0 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-2 overflow-hidden animate-fadeIn">
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition"
               >
-                <FiLogOut className="text-lg" />
+                <FiLogOut />
                 Logout
               </button>
             </div>

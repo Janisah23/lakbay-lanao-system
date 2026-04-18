@@ -281,7 +281,7 @@ function Navbar() {
                 { label: "Destination", value: "destination" },
                 { label: "Event", value: "event" },
                 { label: "Establishment", value: "establishment" },
-                { label: "Cultural & Heritage", value: "cultural" },
+                { label: "Cultural & Heritage", value: "culturalheritage" },
                 { label: "Landmarks", value: "landmark" }
               ].map((filter) => (
                 <button
