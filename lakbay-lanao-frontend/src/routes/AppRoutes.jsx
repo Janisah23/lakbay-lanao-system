@@ -13,6 +13,7 @@ import EventDetails from "../pages/public/EventDetails";
 import PlacesDetails from "../pages/public/PlacesDetails";
 import Favorites from "../pages/public/Favorites";
 import Itinerary from "../pages/public/Itinerary";
+import EventsCalendar from "../pages/public/EventsCalendar";
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -54,6 +55,7 @@ function AppRoutes() {
         <Route path="/blog" element={<TourismBlog />} />
         <Route path="/chatbot" element={<TourismChatbot />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/events" element={<EventsCalendar />} />
 
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />
