@@ -1,6 +1,6 @@
 .hero {
   min-height: 100vh;
-  background-image: url("/Public/hero-bg.png");
+  background-image: url("src/assets/hero-bg.png");
   background-size: cover;
   background-position: center;
   display: flex;

@@ -109,7 +109,7 @@ function Navbar() {
             className="flex items-center gap-3 cursor-pointer group"
           >
             <img
-              src="/pto.png"
+              src="src/assets/pto.png"
               alt="logo"
               className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
             />
@@ -196,15 +196,15 @@ function Navbar() {
             ) : (
               // LOGGED IN AVATAR
               <div className="relative">
-                <img
-                  src={user.photoURL || "/default-avatar.png"}
-                  alt="profile"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenMenu(!openMenu);
-                  }}
-                  className="w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
-                />
+               <img
+                src={user.photoURL || "src/assets/default-avatar.png"}
+                alt="profile"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenu(!openMenu);
+                }}
+                className="w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
+              />
                 
                 {openMenu && (
                   <div className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-xl py-2 z-50 border border-gray-100 animate-dropdown">
@@ -396,7 +396,8 @@ function Navbar() {
               </div>
             </div>
             <div className="flex flex-col items-center justify-center text-center">
-              <img src="/explore-preview.png" className="w-60 h-24 object-cover rounded-xl shadow" alt="Explore Preview" />
+                  
+              <img src="src/assets/explore-preview.png" className="w-60 h-24 object-cover rounded-xl shadow" alt="Explore Preview" />
               <span className="text-sm text-gray-500 mt-4">Explore Lanao</span>
             </div>
           </div>
@@ -461,7 +462,7 @@ function Navbar() {
               </div>
             </div>
             <div className="flex flex-col items-center justify-center text-center">
-              <img src="/feature-preview.png" className="w-64 rounded-xl shadow" alt="Features Preview" />
+              <img src="src/assets/feature-preview.png" className="w-64 rounded-xl shadow" alt="Features Preview" />
               <span className="text-sm text-gray-500 mt-4">Explore smarter with Lakbay Lanao</span>
             </div>
           </div>
@@ -495,7 +496,7 @@ function Navbar() {
               )}
             </div>
             <div className="flex flex-col items-center justify-center text-center">
-              <img src="/event-preview.png" className="w-64 rounded-xl shadow" alt="Event Preview" />
+              <img src="src/assets/event-preview.png" className="w-64 rounded-xl shadow" alt="Event Preview" />
               <span className="text-sm text-gray-500 mt-4">Discover recent events</span>
             </div>
           </div>
