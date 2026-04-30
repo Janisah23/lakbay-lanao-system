@@ -28,9 +28,9 @@ function Home() {
   const [content, setContent] = useState([]);
 
   const heroImages = [
-    "/hero1.png",
-    "/hero2.png",
-    "/hero3.png"
+    "src/assets/hero1.png",
+    "src/assets/hero2.png",
+    "src/assets/hero3.png"
   ];
 
   useEffect(() => {
@@ -149,7 +149,7 @@ function Home() {
 
         <div className="hero-content">
           <div className="hero-title">
-            <img src="/lakbay-logo.png" alt="Lakbay Lanao Logo" className="hero-logo" />
+            <img src="src/assets/lakbay-logo.png" alt="Lakbay Lanao Logo" className="hero-logo" />
             <h1>LAKBAY LANAO</h1>
           </div>
           <p>

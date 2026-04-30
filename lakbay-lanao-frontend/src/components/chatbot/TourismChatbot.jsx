@@ -190,7 +190,7 @@ function TourismChatbot() {
           "
         >
           <img
-            src="/chatbot-icon.png"
+            src="src/assets/chatbot-icon.png"
             alt="Chatbot"
             className="h-16 w-16 rounded-full object-cover md:h-[72px] md:w-[72px]"
           />
@@ -244,7 +244,7 @@ function TourismChatbot() {
           <div className="relative flex items-center gap-3">
             <div className="rounded-2xl ring-white/20">
               <img
-                src="/chatbot-logo.png"
+                src="src/assets/chatbot-logo.png"
                 alt="Assistant Logo"
                 className="w-10 h-10 rounded-full object-cover"
               />
