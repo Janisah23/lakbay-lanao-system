@@ -6,19 +6,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { FiTrash2 } from "react-icons/fi";
 
-
 const DEFAULT_MESSAGES = [
   {
-    sender: "bot",
-    text: "Welcome to Lakbay Lanao Assistant! I can help you explore destinations, events, hotels, and travel tips in Lanao del Sur.",
+    sender: "welcome",
   },
   {
     sender: "suggestions",
     options: [
-      "What is Lakbay Lanao?",
-      "Top tourist destinations in Lanao del Sur",
-      "Where can I find hotels in Marawi?",
-      "What events are happening this month?",
+      "Tell me about Maranao history",
+      "What is Lanao del Sur known for?",
+      "Suggest cultural sites to visit",
+      "Help me plan a Lanao trip",
     ],
   },
 ];
@@ -37,30 +35,57 @@ function TourismChatbot() {
   const chatRef = useRef(null);
   const buttonRef = useRef(null);
   const messagesEndRef = useRef(null);
+
   const [manuallyOpen, setManuallyOpen] = useState(false);
   const [lastPath, setLastPath] = useState(location.pathname);
-
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
 
-  // Sync to firestore whenever messages change
+  // Sync to Firestore whenever messages change
   useEffect(() => {
     if (!user) return;
-    // Skip saving if it's purely default
-    if (messages === DEFAULT_MESSAGES || (messages.length === 2 && messages[0].text.includes("Welcome"))) return;
+
+    const isDefaultChat =
+      messages.length === 2 &&
+      messages[0]?.sender === "welcome" &&
+      messages[1]?.sender === "suggestions";
+
+    if (isDefaultChat) return;
 
     setDoc(doc(db, "userChats", user.uid), { messages }).catch(console.error);
   }, [messages, user]);
 
+  // Open chatbot from Navbar / external trigger
+  useEffect(() => {
+    const openChatbot = () => {
+      if (!auth.currentUser) {
+        navigate("/login");
+        return;
+      }
+
+      setOpen(true);
+      setManuallyOpen(true);
+    };
+
+    window.addEventListener("open-tourism-chatbot", openChatbot);
+
+    return () => {
+      window.removeEventListener("open-tourism-chatbot", openChatbot);
+    };
+  }, [navigate]);
+
+  // Recover chat history
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+
       if (currentUser) {
         try {
           const docRef = doc(db, "userChats", currentUser.uid);
           const docSnap = await getDoc(docRef);
+
           if (docSnap.exists() && docSnap.data().messages) {
             setMessages(docSnap.data().messages);
-            setSuggestionsVisible(false); // Hide suggestions if history exists
+            setSuggestionsVisible(false);
           } else {
             setMessages(DEFAULT_MESSAGES);
             setSuggestionsVisible(true);
@@ -77,19 +102,23 @@ function TourismChatbot() {
     return () => unsubscribe();
   }, []);
 
+  // Reset manual state after route change
   if (lastPath !== location.pathname) {
     setLastPath(location.pathname);
+
     if (manuallyOpen) {
       setManuallyOpen(false);
     }
   }
 
+  // Close chatbot when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!open) return;
 
       const clickedInsideChat =
         chatRef.current && chatRef.current.contains(event.target);
+
       const clickedButton =
         buttonRef.current && buttonRef.current.contains(event.target);
 
@@ -105,6 +134,7 @@ function TourismChatbot() {
     };
   }, [open]);
 
+  // Auto-scroll to latest message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
@@ -117,6 +147,7 @@ function TourismChatbot() {
   const clearChatHistory = async () => {
     setMessages(DEFAULT_MESSAGES);
     setSuggestionsVisible(true);
+
     if (user) {
       try {
         await deleteDoc(doc(db, "userChats", user.uid));
@@ -170,7 +201,7 @@ function TourismChatbot() {
   return (
     <>
       {/* FLOATING BUTTON */}
-      <div className="fixed bottom-6 right-6 z-[9999] group">
+      <div className="fixed bottom-10 right-10 z-[999] md:bottom-12 md:right-12">
         <button
           ref={buttonRef}
           onClick={() => {
@@ -178,11 +209,12 @@ function TourismChatbot() {
               navigate("/login");
               return;
             }
+
             setOpen((prev) => !prev);
+            setManuallyOpen(true);
           }}
           className="
             relative rounded-full p-1.5
-           
             shadow-[0_12px_28px_rgba(37,99,235,0.18)]
             backdrop-blur-sm
             transition-all duration-300
@@ -215,99 +247,109 @@ function TourismChatbot() {
       {/* CHAT WINDOW */}
       <div
         ref={chatRef}
-       className={`
-        fixed bottom-24 right-6 z-[9999]
-        flex w-[360px] max-w-[calc(100vw-24px)] flex-col overflow-hidden
-        rounded-[26px] border border-gray-200/80
-        bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)]
-        transition-all duration-300 ease-out
-          ${open
-            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none translate-y-4 scale-95 opacity-0"
+        className={`
+          fixed bottom-[118px] right-6 z-[9999]
+          flex w-[340px] max-w-[calc(100vw-28px)] flex-col overflow-hidden
+          rounded-[26px] border border-gray-200/80
+          bg-white shadow-[0_18px_45px_rgba(15,23,42,0.14)]
+          transition-all duration-300 ease-out
+          md:bottom-[125px] md:right-10 md:w-[360px]
+          ${
+            open
+              ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+              : "pointer-events-none translate-y-4 scale-95 opacity-0"
           }
         `}
-        style={{ height: "500px" }}
+        style={{ height: "485px" }}
       >
-      {/* HEADER */}
-      <div className="px-3 pt-3 pb-2 bg-transparent">
-        <div
-          className="
-            relative flex items-center justify-between
-            rounded-[22px]
-            bg-gradient-to-r from-[#2563eb] to-[#3b82f6]
-            px-4 py-3 text-white
-            shadow-[0_6px_18px_rgba(37,99,235,0.14)]
-          "
-        >
-          <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-white/5" />
+        {/* HEADER */}
+        <div className="bg-transparent px-3 pb-2 pt-3">
+          <div
+            className="
+              relative flex items-center justify-between
+              rounded-[22px]
+              bg-gradient-to-r from-[#2563eb] to-[#3b82f6]
+              px-4 py-3 text-white
+              shadow-[0_6px_18px_rgba(37,99,235,0.14)]
+            "
+          >
+            <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-white/5" />
 
-          <div className="relative flex items-center gap-3">
-            <div className="rounded-2xl ring-white/20">
-              <img
-                src="src/assets/chatbot-logo.png"
-                alt="Assistant Logo"
-                className="w-10 h-10 rounded-full object-cover"
-              />
+            <div className="relative flex items-center gap-3">
+              <div className="rounded-2xl ring-white/20">
+                <img
+                  src="src/assets/chatbot-icons.png"
+                  alt="Assistant Logo"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              </div>
+
+              <div>
+                <p className="text-[13.5px] font-semibold leading-tight tracking-[0.2px] ">
+                  iRanao
+                </p>
+                <p className="text-[11.5px] leading-tight text-blue-100/90">
+                  Smart Tourism Guide
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-[13.5px] font-semibold tracking-[0.2px] leading-tight">
-                Lakbay Lanao Assistant
-              </p>
-              <p className="text-[11.5px] text-blue-100/90 leading-tight">
-                Smart Tourism Guide
-              </p>
-            </div>
-          </div>
+            <div className="relative flex items-center gap-1">
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                title="Clear Chat History"
+                className="
+                  relative rounded-lg p-1.5 text-[17px] text-white/80
+                  transition hover:bg-white/10 hover:text-white
+                "
+              >
+                <FiTrash2 />
+              </button>
 
-          <div className="relative flex items-center gap-1">
-            <button
-              onClick={() => setShowClearConfirm(true)}
-              title="Clear Chat History"
-              className="
-                relative text-[17px] text-white/80 p-1.5 rounded-lg
-                transition hover:bg-white/10 hover:text-white
-              "
-            >
-              <FiTrash2 />
-            </button>
-            <button
-              onClick={() => setOpen(false)}
-              className="
-                relative text-xl text-white/90 p-1.5 rounded-lg leading-none
-                transition hover:bg-white/10 hover:text-white
-              "
-            >
-              ✕
-            </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="
+                  relative rounded-lg p-1.5 text-xl leading-none text-white/90
+                  transition hover:bg-white/10 hover:text-white
+                "
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-        {/* CUSTOM CONFIRMATION MODAL OVERLAY */}
+        {/* CLEAR CONFIRMATION MODAL */}
         {showClearConfirm && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm p-6 animate-fadeIn">
-            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 p-6 w-full max-w-[280px] text-center">
-              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 p-6 backdrop-blur-sm animate-fadeIn">
+            <div className="w-full max-w-[280px] rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
                 <FiTrash2 className="text-2xl" />
               </div>
-              <h3 className="text-[17px] font-bold text-gray-900 mb-1.5">Clear Chat?</h3>
-              <p className="text-[13px] text-gray-500 mb-6 leading-relaxed">
-                Are you sure you want to delete this conversation? This cannot be undone.
+
+              <h3 className="mb-1.5 text-[17px] font-bold text-gray-900">
+                Clear Chat?
+              </h3>
+
+              <p className="mb-6 text-[13px] leading-relaxed text-gray-500">
+                Are you sure you want to delete this conversation? This cannot
+                be undone.
               </p>
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowClearConfirm(false)}
-                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition-colors duration-200"
+                  className="flex-1 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:bg-gray-200"
                 >
                   Cancel
                 </button>
+
                 <button
                   onClick={() => {
                     setShowClearConfirm(false);
                     clearChatHistory();
                   }}
-                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl shadow-[0_4px_12px_rgba(239,68,68,0.2)] transition-all duration-200"
+                  className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(239,68,68,0.2)] transition-all duration-200 hover:bg-red-600"
                 >
                   Delete
                 </button>
@@ -317,22 +359,51 @@ function TourismChatbot() {
         )}
 
         {/* CHAT BODY */}
-       <div className="flex-1 space-y-3 overflow-y-auto bg-[#f8fafc] px-3.5 py-4">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-[#f8fbff] to-[#f8fafc] px-3.5 py-4">
           {messages.map((msg, index) => {
+            if (msg.sender === "welcome") {
+              return (
+                <div
+                  key={index}
+                  className="flex flex-col items-center px-4 pb-3 pt-5 text-center"
+                >
+             <div className="mb-4 flex items-center justify-center">
+                <img
+                  src="src/assets/lakbay-logos.png"
+                  alt="Lakbay Lanao Assistant"
+                  className="h-20 w-auto object-contain"
+                />
+              </div>
+
+          
+
+                  <p className="mt-1 text-[13px] font-semibold text-[#2563eb]">
+                    Sallam, how can we help you?
+                  </p>
+
+                  <p className="mt-3 max-w-[285px] text-[12.5px] leading-[1.6] text-gray-500">
+                    Ask about destinations, events, hotels, food spots, cultural
+                    heritage, travel tips, and the rich Maranao history of Lanao
+                    del Sur.
+                  </p>
+                </div>
+              );
+            }
+
             if (msg.sender === "suggestions") {
               if (!suggestionsVisible) return null;
+
               return (
-                <div key={index} className="space-y-2 flex flex-col items-start">
+                <div key={index} className="flex flex-col items-center gap-2.5 pb-2">
                   {msg.options.map((q, i) => (
                     <button
                       key={i}
                       onClick={() => sendMessage(q)}
                       className="
-                       block max-w-[85%] rounded-2xl border border-gray-200
-                      bg-white px-5 py-2 text-left text-[12px] font-medium text-gray-700
-                      shadow-sm transition-all duration-200
-                      hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700
-                       
+                        block w-full max-w-[88%] rounded-2xl border border-gray-200
+                        bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-700
+                        shadow-sm transition-all duration-200
+                        hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb]
                       "
                     >
                       {q}
@@ -343,6 +414,7 @@ function TourismChatbot() {
             }
 
             const isUser = msg.sender === "user";
+
             return (
               <div
                 key={index}
@@ -350,85 +422,87 @@ function TourismChatbot() {
               >
                 <div
                   className={`max-w-[85%] px-4 py-3 text-sm shadow-sm ${
-                  isUser
-                    ? "rounded-[18px] rounded-br-md bg-[#2563eb] text-white leading-6"
-                    : "rounded-[18px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
-                }`}
+                    isUser
+                      ? "rounded-[18px] rounded-br-md bg-[#2563eb] leading-6 text-white"
+                      : "rounded-[18px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
+                  }`}
                 >
                   {isUser ? (
                     msg.text
                   ) : (
-                   <ReactMarkdown
-                    components={{
-                      p: ({ children }) => (
-                        <p className="mb-1 last:mb-0 text-[13px] leading-[1.5]">
-                          {children}
-                        </p>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-semibold text-gray-900">{children}</strong>
-                      ),
-                      em: ({ children }) => (
-                        <em className="italic text-gray-700">{children}</em>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="mb-1 ml-4 list-disc space-y-0.5 text-[13px] leading-[1.5]">
-                          {children}
-                        </ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="mb-1 ml-4 list-decimal space-y-0.5 text-[13px] leading-[1.5]">
-                          {children}
-                        </ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="leading-[1.5]">{children}</li>
-                      ),
-                      h1: ({ children }) => (
-                        <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-900">
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-900">
-                          {children}
-                        </h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-800">
-                          {children}
-                        </h3>
-                      ),
-                      code: ({ inline, children }) =>
-                        inline ? (
-                          <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] text-blue-700">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <p className="mb-1 text-[13px] leading-[1.5] last:mb-0">
                             {children}
-                          </code>
-                        ) : (
-                          <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[11px] text-gray-800">
-                            <code>{children}</code>
-                          </pre>
+                          </p>
                         ),
-                      blockquote: ({ children }) => (
-                        <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 italic text-[13px] leading-[1.5] text-gray-600">
-                          {children}
-                        </blockquote>
-                      ),
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 underline hover:text-blue-800"
-                        >
-                          {children}
-                        </a>
-                      ),
-                      hr: () => <hr className="my-2 border-gray-200" />,
-                    }}
-                  >
-                    {msg.text}
-                  </ReactMarkdown>
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-gray-900">
+                            {children}
+                          </strong>
+                        ),
+                        em: ({ children }) => (
+                          <em className="italic text-gray-700">{children}</em>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="mb-1 ml-4 list-disc space-y-0.5 text-[13px] leading-[1.5]">
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="mb-1 ml-4 list-decimal space-y-0.5 text-[13px] leading-[1.5]">
+                            {children}
+                          </ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="leading-[1.5]">{children}</li>
+                        ),
+                        h1: ({ children }) => (
+                          <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-900">
+                            {children}
+                          </h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-900">
+                            {children}
+                          </h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-800">
+                            {children}
+                          </h3>
+                        ),
+                        code: ({ inline, children }) =>
+                          inline ? (
+                            <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] text-blue-700">
+                              {children}
+                            </code>
+                          ) : (
+                            <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[11px] text-gray-800">
+                              <code>{children}</code>
+                            </pre>
+                          ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 text-[13px] italic leading-[1.5] text-gray-600">
+                            {children}
+                          </blockquote>
+                        ),
+                        a: ({ href, children }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            {children}
+                          </a>
+                        ),
+                        hr: () => <hr className="my-2 border-gray-200" />,
+                      }}
+                    >
+                      {msg.text || ""}
+                    </ReactMarkdown>
                   )}
                 </div>
               </div>
@@ -452,7 +526,7 @@ function TourismChatbot() {
 
         {/* INPUT AREA */}
         <div className="border-t border-gray-100 bg-white px-3 py-2.5">
-         <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
             <input
               type="text"
               value={input}
@@ -462,7 +536,7 @@ function TourismChatbot() {
               }}
               placeholder="Ask about destinations, hotels, events..."
               className="
-                flex-1 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none
+                min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none
                 placeholder:text-gray-500
               "
             />

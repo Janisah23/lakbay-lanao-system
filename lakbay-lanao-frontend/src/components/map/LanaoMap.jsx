@@ -26,9 +26,11 @@ function FixMapSize() {
   const map = useMap();
 
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       map.invalidateSize();
     }, 300);
+
+    return () => clearTimeout(timer);
   }, [map]);
 
   return null;
@@ -51,6 +53,7 @@ function LanaoMap({ selectedSpot, onSpotClick }) {
               item.coordinates?.lat &&
               item.coordinates?.lng
           );
+
         setSpots(data);
       },
       (error) => console.error("Map load error:", error)
@@ -74,14 +77,17 @@ function LanaoMap({ selectedSpot, onSpotClick }) {
   };
 
   return (
-  <MapContainer
-  center={center}
-  zoom={10}
-  minZoom={8}
-  maxZoom={17}
-  className="h-[680px] w-full rounded-[32px]"
->
-     <TileLayer
+    <MapContainer
+      center={center}
+      zoom={10}
+      minZoom={8}
+      maxZoom={17}
+      zoomControl={false}
+      className="h-[680px] w-full"
+    >
+      <FixMapSize />
+
+      <TileLayer
         attribution="© OpenStreetMap contributors © CARTO"
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
@@ -105,24 +111,24 @@ function LanaoMap({ selectedSpot, onSpotClick }) {
               <img
                 src={spot.imageURL || "/default.jpg"}
                 alt={spot.name}
-                className="w-full h-30 object-cover rounded-lg mb-4"
+                className="mb-4 h-[120px] w-full rounded-lg object-cover"
               />
 
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-600">
                 {spot.category}
               </span>
 
-              <h4 className="font-bold mt-1.5 text-blue-600 text-sm leading-tight">
+              <h4 className="mt-1.5 text-sm font-bold leading-tight text-blue-600">
                 {spot.name}
               </h4>
 
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="mt-0.5 text-xs text-gray-400">
                 {spot.location?.municipality}, {spot.location?.province}
               </p>
 
               <button
-                onClick={() => navigate(`/place/${spot.id}`)}
-                className="mt-3 w-full text-xs bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition font-medium"
+                onClick={() => navigate(`/destination/${spot.id}`)}
+                className="mt-3 w-full rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
               >
                 Explore →
               </button>

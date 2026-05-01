@@ -531,9 +531,9 @@ function Itinerary() {
     <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] pb-24">
       <Navbar />
 
-      <section className="relative w-full h-[340px] overflow-hidden">
+      <section className="relative mx-4 md:mx-8 mt-0 h-[340px] overflow-hidden rounded-b-[48px]">
         <img
-          src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop"
+          src="/src/assets/itinerary-hero.png"
           alt="Itinerary"
           className="absolute inset-0 w-full h-full object-cover"
         />
