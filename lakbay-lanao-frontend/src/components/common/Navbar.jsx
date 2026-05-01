@@ -496,7 +496,7 @@ function Navbar() {
               )}
             </div>
             <div className="flex flex-col items-center justify-center text-center">
-              <img src="src/assets/event-preview.png" className="w-64 rounded-xl shadow" alt="Event Preview" />
+              <img src="src/assets/event3.png" className="w-64 rounded-xl shadow" alt="Event Preview" />
               <span className="text-sm text-gray-500 mt-4">Discover recent events</span>
             </div>
           </div>
