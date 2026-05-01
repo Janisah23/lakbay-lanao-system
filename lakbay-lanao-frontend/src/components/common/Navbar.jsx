@@ -3,7 +3,14 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { collection, onSnapshot } from "firebase/firestore";
-import { FiSearch, FiHeart, FiMap, FiLogOut } from "react-icons/fi";
+import {
+  FiSearch,
+  FiHeart,
+  FiMap,
+  FiLogOut,
+  FiMenu,
+  FiX,
+} from "react-icons/fi";
 import "./Navbar.css";
 
 function Navbar() {
@@ -20,6 +27,7 @@ function Navbar() {
   const [searchItems, setSearchItems] = useState([]);
   const [openMenu, setOpenMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const normalize = (text = "") =>
     text.toString().toLowerCase().replaceAll(" ", "").replaceAll("&", "");
@@ -44,7 +52,11 @@ function Navbar() {
   });
 
   useEffect(() => {
-    const handleClickOutside = () => setOpenMenu(false);
+    const handleClickOutside = () => {
+      setOpenMenu(false);
+      setShowMobileMenu(false);
+    };
+
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
@@ -64,13 +76,12 @@ function Navbar() {
 
       setEventsData(contentData);
 
-      
       const searchableContent = contentData
         .filter(
           (item) =>
             item.status !== "archived" &&
             item.contentType !== "Highlight"
-      )
+        )
         .map((item) => ({
           id: item.id,
           title: item.title,
@@ -142,9 +153,16 @@ function Navbar() {
     setActiveFilter("all");
   };
 
+  const closePanels = () => {
+    setShowMobileMenu(false);
+    setShowExplore(false);
+    setShowFeatures(false);
+    setShowEvents(false);
+  };
+
   const handleResultClick = (item) => {
     if (item.routeType === "place") {
-      navigate(`/place/${item.id}`);
+      navigate(`/destination/${item.id}`);
     } else if (item.routeType === "article") {
       navigate(`/article/${item.id}`);
     } else if (item.routeType === "event") {
@@ -166,26 +184,32 @@ function Navbar() {
         }`}
       >
         <div
-          className={`w-[95%] max-w-7xl bg-white/95 backdrop-blur-md border border-gray-200 rounded-full flex items-center justify-between transition-all duration-300 ${
+          onClick={(e) => e.stopPropagation()}
+          className={`w-[92%] max-w-7xl bg-white/95 backdrop-blur-md border border-gray-200 rounded-full flex items-center justify-between transition-all duration-300 ${
             isScrolled
-              ? "shadow-lg py-2.5 px-6 md:px-8"
-              : "shadow-md py-3 px-6 md:px-10"
+              ? "shadow-lg py-2 px-4 md:py-2.5 md:px-8"
+              : "shadow-md py-2.5 px-4 md:py-3 md:px-10"
           }`}
         >
           <div
-            onClick={() => navigate("/")}
-            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => {
+              navigate("/");
+              closePanels();
+            }}
+            className="flex items-center gap-2 md:gap-3 cursor-pointer group min-w-0"
           >
             <img
               src="src/assets/pto.png"
               alt="logo"
-              className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
+              className="w-8 h-8 md:w-9 md:h-9 object-contain group-hover:scale-105 transition-transform flex-shrink-0"
             />
-            <span className="font-bold text-blue-600 text-sm whitespace-nowrap tracking-tight">
+
+            <span className="hidden sm:block font-bold text-blue-600 text-xs md:text-sm whitespace-nowrap tracking-tight truncate">
               Provincial Tourism Office
             </span>
           </div>
 
+          {/* DESKTOP MENU - WEBVIEW UNAFFECTED */}
           <div className="hidden lg:flex items-center gap-8">
             <span onClick={() => navigate("/")} className={navLinkClass}>
               Home
@@ -229,19 +253,38 @@ function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
+            {/* MOBILE MENU BUTTON ONLY */}
             <button
-              onClick={() => setShowSearch(true)}
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition px-3 py-2 rounded-full hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMobileMenu((prev) => !prev);
+                setOpenMenu(false);
+              }}
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              aria-label="Open menu"
+            >
+              {showMobileMenu ? <FiX size={21} /> : <FiMenu size={21} />}
+            </button>
+
+            <button
+              onClick={() => {
+                setShowSearch(true);
+                setShowMobileMenu(false);
+              }}
+              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition px-2 md:px-3 py-2 rounded-full hover:bg-gray-50"
             >
               <FiSearch size={20} className="stroke-[2.5]" />
-              <span className="text-sm font-semibold hidden sm:block">Search</span>
+              <span className="text-sm font-semibold hidden md:block">Search</span>
             </button>
 
             {!user ? (
               <button
-                onClick={() => navigate("/login")}
-                className="border-[1.5px] border-blue-600 text-blue-700 px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-50 transition shadow-sm whitespace-nowrap"
+                onClick={() => {
+                  navigate("/login");
+                  closePanels();
+                }}
+                className="border-[1.5px] border-blue-600 text-blue-700 px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-bold hover:bg-blue-50 transition shadow-sm whitespace-nowrap"
               >
                 Sign In
               </button>
@@ -253,8 +296,9 @@ function Navbar() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setOpenMenu(!openMenu);
+                    setShowMobileMenu(false);
                   }}
-                  className="w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
                 />
 
                 {openMenu && (
@@ -300,6 +344,68 @@ function Navbar() {
           </div>
         </div>
       </nav>
+
+      {/* MOBILE MENU - ONLY BELOW LG */}
+      {showMobileMenu && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="fixed top-[82px] left-0 z-[999] flex w-full justify-center px-4 lg:hidden"
+        >
+          <div className="w-[92%] rounded-[24px] border border-gray-200 bg-white/95 p-4 shadow-xl backdrop-blur-md">
+            <div className="grid gap-2">
+              <button
+                onClick={() => {
+                  navigate("/");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Home
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/destinations");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Discover
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/map");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Features
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/gallery");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Gallery
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/events");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Events
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SEARCH MODAL */}
       {showSearch && (
@@ -398,10 +504,10 @@ function Navbar() {
         </div>
       )}
 
-      {/* EXPLORE PANEL */}
+      {/* EXPLORE PANEL - DESKTOP ONLY */}
       {showExplore && (
         <div
-          className="fixed top-[90px] left-0 w-full z-[990] flex justify-center animate-fadeIn"
+          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
           onMouseLeave={() => setShowExplore(false)}
         >
           <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
@@ -432,7 +538,7 @@ function Navbar() {
 
               <div
                 onClick={() => {
-                  navigate("/establishment");
+                  navigate("/establishments");
                   setShowExplore(false);
                 }}
                 className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
@@ -465,10 +571,10 @@ function Navbar() {
         </div>
       )}
 
-      {/* FEATURES PANEL */}
+      {/* FEATURES PANEL - DESKTOP ONLY */}
       {showFeatures && (
         <div
-          className="fixed top-[90px] left-0 w-full z-[990] flex justify-center animate-fadeIn"
+          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
           onMouseLeave={() => setShowFeatures(false)}
         >
           <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
@@ -488,8 +594,12 @@ function Navbar() {
 
               <div
                 onClick={() => {
-                  if (!user) navigate("/login");
-                  else navigate("/chatbot");
+                  if (!user) {
+                    navigate("/login");
+                  } else {
+                    window.dispatchEvent(new Event("open-tourism-chatbot"));
+                  }
+
                   setShowFeatures(false);
                 }}
                 className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
@@ -542,10 +652,10 @@ function Navbar() {
         </div>
       )}
 
-      {/* EVENTS PANEL */}
+      {/* EVENTS PANEL - DESKTOP ONLY */}
       {showEvents && (
         <div
-          className="fixed top-[90px] left-0 w-full z-[990] flex justify-center animate-fadeIn"
+          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
           onMouseLeave={() => setShowEvents(false)}
         >
           <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">

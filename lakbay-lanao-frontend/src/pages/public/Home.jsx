@@ -187,7 +187,7 @@ function Home() {
             className="explore-btn transition-all duration-300 ease-out hover:scale-[1.03] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(37,99,235,0.25)] active:scale-[0.98]"
             onClick={() => (window.location.href = "/login")}
           >
-            Explore Now
+            Explore Lanao
           </button>
         </div>
       </section>
@@ -338,6 +338,8 @@ function Home() {
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                     />
 
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
+
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -363,20 +365,32 @@ function Home() {
                   </div>
 
                   <div className="flex flex-1 flex-col p-6">
-                    <span className="inline-block self-start rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
-                      {article.contentType || "Article"}
-                    </span>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
+                        {article.category || article.contentType || "Article"}
+                      </span>
 
-                    <h3 className="mt-4 text-base font-bold leading-snug text-[#1e3a8a] line-clamp-3 group-hover:text-[#2563eb] transition-colors">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                        Article
+                      </span>
+                    </div>
+
+                    <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#2563eb] transition group-hover:text-blue-700">
                       {article.title}
                     </h3>
 
                     <p className="mt-2 text-sm leading-relaxed text-gray-500 line-clamp-2">
-                      {article.summary ||
-                        "Discover more stories from Lanao del Sur."}
+                      {article.summary || "Discover more stories from Lanao del Sur."}
                     </p>
 
-                    <button className="mt-auto self-start rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/article/${article.id}`);
+                      }}
+                      className="mt-auto self-start rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+                    >
                       Read more →
                     </button>
                   </div>
@@ -388,6 +402,19 @@ function Home() {
                   No articles available yet.
                 </div>
               )}
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-gray-100 pt-6">
+              <span className="text-sm text-gray-400">
+                Showing {Math.min(articles.length, 3)} of {articles.length} articles
+              </span>
+
+              <button
+                onClick={() => navigate("/articles")}
+                className="rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+              >
+                See more articles →
+              </button>
             </div>
           </div>
         </div>
@@ -411,9 +438,11 @@ function Home() {
             </p>
           </div>
 
-         <div className="overflow-hidden rounded-[10px] border border-gray-200 bg-white p-3 shadow-sm">
-          <LanaoMap />
-         </div>
+       <div className="overflow-hidden rounded-[28px] border border-gray-200 bg-white p-2 shadow-sm">
+          <div className="overflow-hidden rounded-[24px]">
+            <LanaoMap />
+          </div>
+        </div>
         </div>
       </motion.section>
 
@@ -504,7 +533,7 @@ function Home() {
                       </span>
                     </div>
 
-                    <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#1e3a8a] transition group-hover:text-[#2563eb]">
+                    <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#2563eb] transition group-hover:text-[#2563eb]">
                       {evt.title}
                     </h3>
 
