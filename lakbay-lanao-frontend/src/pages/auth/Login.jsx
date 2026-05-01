@@ -242,7 +242,7 @@ function Login() {
           className="flex w-full items-center justify-center gap-3 rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all duration-150 hover:bg-gray-50 hover:shadow-sm disabled:opacity-70"
         >
           <img
-            src="/google-icon.png"
+            src="src/assets/google-icon.png"
             alt="Google logo"
             className="h-[18px] w-[18px] object-contain"
           />

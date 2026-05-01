@@ -7,10 +7,12 @@ import {
   doc,
   getDocs,
   serverTimestamp,
+  Timestamp
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+
 
 // 1. Updated Dynamic Categories based on your new Schema
 const CATEGORY_OPTIONS = {
@@ -62,15 +64,16 @@ const ManageTourismContent = () => {
     setTimeout(() => setToast(""), 3000);
   };
 
-  const [formData, setFormData] = useState({
-    title: "",
-    contentType: "",
-    category: "", 
-    summary: "",
-    content: "",
-    status: "draft",
-    imageURL: "",
-  });
+const [formData, setFormData] = useState({
+  title: "",
+  contentType: "",
+  category: "", 
+  summary: "",
+  content: "",
+  status: "draft",
+  imageURL: "",
+  eventDate: "",
+});
 
   const filteredContent = contentList.filter((item) => {
     const matchesSearch =
@@ -126,6 +129,10 @@ const ManageTourismContent = () => {
         finalData.summary = "";
         finalData.content = "";
       }
+
+    if (finalData.contentType === "Event" && finalData.eventDate) {
+      finalData.eventDate = Timestamp.fromDate(new Date(finalData.eventDate));
+    }
 
       if (editingId) {
         await updateDoc(doc(db, "tourismContent", editingId), {
@@ -241,6 +248,7 @@ const ManageTourismContent = () => {
                 content: "",
                 status: "draft",
                 imageURL: "",
+                eventDate: "",
               });
               setOpenModal(true);
             }}
@@ -379,6 +387,23 @@ const ManageTourismContent = () => {
                   <option value="Gallery">Gallery</option>
                 </select>
 
+
+                
+              {formData.contentType === "Event" && (
+                <input
+                  type="date"
+                  value={formData.eventDate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      eventDate: e.target.value,
+                    })
+                  }
+                  className="w-full border p-2 mb-3"
+                />
+              )}
+
+          
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
