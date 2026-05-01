@@ -22,6 +22,18 @@ function FlyToSpot({ spot }) {
   return null;
 }
 
+function FixMapSize() {
+  const map = useMap();
+
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+  }, [map]);
+
+  return null;
+}
+
 function LanaoMap({ selectedSpot, onSpotClick }) {
   const [spots, setSpots] = useState([]);
   const navigate = useNavigate();
@@ -62,16 +74,16 @@ function LanaoMap({ selectedSpot, onSpotClick }) {
   };
 
   return (
-    <MapContainer
-      center={center}
-      zoom={10}
-      minZoom={8}
-      maxZoom={17}
-      style={{ height: "600px", width: "100%" }}
-    >
-      <TileLayer
-        attribution="© OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  <MapContainer
+  center={center}
+  zoom={10}
+  minZoom={8}
+  maxZoom={17}
+  className="h-[680px] w-full rounded-[32px]"
+>
+     <TileLayer
+        attribution="© OpenStreetMap contributors © CARTO"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
 
       {selectedSpot && <FlyToSpot spot={selectedSpot} />}
