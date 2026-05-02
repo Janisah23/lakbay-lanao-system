@@ -286,7 +286,7 @@ function TourismChatbot() {
 
               <div>
                 <p className="text-[13.5px] font-semibold leading-tight tracking-[0.2px] ">
-                  iRanao
+                  iRanao Guide
                 </p>
                 <p className="text-[11.5px] leading-tight text-blue-100/90">
                   Smart Tourism Guide
