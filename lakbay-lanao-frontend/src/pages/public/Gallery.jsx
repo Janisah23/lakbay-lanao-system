@@ -7,6 +7,7 @@ function Gallery() {
   const [selected, setSelected] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [filter, setFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [media, setMedia] = useState([]);
 
   useEffect(() => {
@@ -51,9 +52,11 @@ function Gallery() {
             ...doc.data(),
             source: "gallery",
             category: (doc.data().category || "").toLowerCase(),
+            type: (doc.data().type || "image").toLowerCase(),
           }))
           .filter(
             (item) =>
+              item.src &&
               item.status !== "archived" &&
               [
                 "destination",
@@ -86,10 +89,18 @@ function Gallery() {
     "cultural heritage site",
   ];
 
-  const filteredMedia =
-    filter === "all"
-      ? media
-      : media.filter((item) => item.category === filter);
+  const mediaTypes = [
+    { label: "All Media", value: "all" },
+    { label: "Images", value: "image" },
+    { label: "Videos", value: "video" },
+  ];
+
+  const filteredMedia = media.filter((item) => {
+    const matchesCategory = filter === "all" || item.category === filter;
+    const matchesType = typeFilter === "all" || item.type === typeFilter;
+
+    return matchesCategory && matchesType;
+  });
 
   const openMedia = (item, index) => {
     setSelected(item);
@@ -98,6 +109,7 @@ function Gallery() {
 
   const nextMedia = () => {
     if (filteredMedia.length === 0) return;
+
     const next = (currentIndex + 1) % filteredMedia.length;
     setSelected(filteredMedia[next]);
     setCurrentIndex(next);
@@ -105,6 +117,7 @@ function Gallery() {
 
   const prevMedia = () => {
     if (filteredMedia.length === 0) return;
+
     const prev = (currentIndex - 1 + filteredMedia.length) % filteredMedia.length;
     setSelected(filteredMedia[prev]);
     setCurrentIndex(prev);
@@ -125,27 +138,49 @@ function Gallery() {
           </p>
 
           {/* FILTER */}
-          <div className="flex justify-center flex-wrap gap-3 mt-10">
-            {categories.map((cat, index) => (
-              <button
-                key={index}
-                onClick={() => setFilter(cat)}
-                className={`px-4 py-2 rounded-full text-sm border transition ${
-                  filter === cat
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white hover:bg-blue-50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="mt-10 rounded-[28px] border border-gray-200 bg-white p-5 shadow-sm">
+            {/* MEDIA TYPE FILTER */}
+            <div className="flex justify-center flex-wrap gap-3">
+              {mediaTypes.map((type) => (
+                <button
+                  key={type.value}
+                  onClick={() => setTypeFilter(type.value)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                    typeFilter === type.value
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100"
+                  }`}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="my-4 border-t border-gray-100" />
+
+            {/* CATEGORY FILTER */}
+            <div className="flex justify-center flex-wrap gap-3">
+              {categories.map((cat, index) => (
+                <button
+                  key={index}
+                  onClick={() => setFilter(cat)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border capitalize transition ${
+                    filter === cat
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* GALLERY GRID */}
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {filteredMedia.length === 0 ? (
               <div className="md:col-span-3 text-center text-gray-400 py-20">
-                No media available for this category.
+                No media available for this filter.
               </div>
             ) : (
               filteredMedia.map((item, index) => (
@@ -155,32 +190,36 @@ function Gallery() {
                   className="relative rounded-2xl overflow-hidden bg-white border shadow-sm hover:shadow-lg transition duration-300 cursor-pointer group"
                 >
                   {item.type === "image" ? (
-                  <img
-                    src={item.src || "/default.jpg"}
-                    alt={item.title}
-                    className="w-full h-72 object-cover group-hover:scale-105 transition duration-300"
-                  />
-                ) : (
-                  <div className="relative">
-                    <video
-                      src={item.src || "/default-video.mp4"}
-                      className="w-full h-72 object-cover bg-black"
-                      muted
-                      playsInline
-                      preload="metadata"
+                    <img
+                      src={item.src || "/default.jpg"}
+                      alt={item.title}
+                      className="w-full h-72 object-cover group-hover:scale-105 transition duration-300"
                     />
+                  ) : (
+                    <div className="relative">
+                      <video
+                        src={item.src || "/default-video.mp4"}
+                        className="w-full h-72 object-cover bg-black"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
 
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                        <span className="text-white text-xl ml-1">▶</span>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                          <span className="text-white text-xl ml-1">▶</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                
 
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-end">
                     <div className="text-white p-4 opacity-0 group-hover:opacity-100 transition">
-                      <p className="text-sm opacity-80">{item.category}</p>
+                      <p className="text-sm opacity-80 capitalize">
+                        {item.category}
+                      </p>
                       <h3 className="font-semibold">{item.title}</h3>
                     </div>
                   </div>
@@ -201,19 +240,23 @@ function Gallery() {
             ✕
           </button>
 
-          <button
-            onClick={prevMedia}
-            className="absolute left-6 text-white text-4xl"
-          >
-            ‹
-          </button>
+          {filteredMedia.length > 1 && (
+            <>
+              <button
+                onClick={prevMedia}
+                className="absolute left-6 text-white text-4xl"
+              >
+                ‹
+              </button>
 
-          <button
-            onClick={nextMedia}
-            className="absolute right-6 text-white text-4xl"
-          >
-            ›
-          </button>
+              <button
+                onClick={nextMedia}
+                className="absolute right-6 text-white text-4xl"
+              >
+                ›
+              </button>
+            </>
+          )}
 
           <div className="max-w-5xl w-full px-6 text-center">
             {selected.type === "image" ? (

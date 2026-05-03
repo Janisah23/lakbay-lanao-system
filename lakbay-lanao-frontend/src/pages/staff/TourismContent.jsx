@@ -26,7 +26,7 @@ const CATEGORY_OPTIONS = {
   ],
   Highlight: [
     "Featured Destinations",
-    "Featured Events",
+    "Featured Videos",
     "Featured Articles",
     "Trending Locations",
     "Editor’s Picks",
@@ -59,19 +59,22 @@ const ManageTourismContent = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
+
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(""), 3000);
   };
 
 const [formData, setFormData] = useState({
-  title: "",
+  
   contentType: "",
-  category: "", 
+  category: "",
+  title: "",
   summary: "",
   content: "",
   status: "draft",
   imageURL: "",
+  videoURL: "",
   eventDate: "",
 });
 
@@ -247,6 +250,7 @@ const [formData, setFormData] = useState({
                 summary: "",
                 content: "",
                 status: "draft",
+                videoURL: "",
                 imageURL: "",
                 eventDate: "",
               });
@@ -356,21 +360,45 @@ const [formData, setFormData] = useState({
                 className="w-full border rounded-lg px-4 py-3 text-sm"
               />
               
+        {!(formData.contentType === "Highlight" && formData.videoURL) && (
+          <>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const url = await uploadImage(file);
+                setFormData({ ...formData, imageURL: url });
+              }}
+              className="w-full border rounded-lg px-4 py-3 text-sm"
+            />
+
+            {formData.imageURL && (
+              <img
+                src={formData.imageURL}
+                alt="Preview"
+                className="h-32 rounded-lg object-cover"
+              />
+            )}
+          </>
+        )}
+
+              {formData.contentType === "Highlight" && (
               <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  const url = await uploadImage(file);
-                  setFormData({ ...formData, imageURL: url });
-                }}
+                type="text"
+                placeholder="YouTube Video Link"
+                value={formData.videoURL}
+               onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    videoURL: e.target.value,
+                    imageURL: e.target.value ? "" : formData.imageURL,
+                  })
+                }
                 className="w-full border rounded-lg px-4 py-3 text-sm"
               />
-              
-              {formData.imageURL && (
-                 <img src={formData.imageURL} alt="Preview" className="h-32 rounded-lg object-cover" />
-              )}
+            )}
 
               <div className="grid grid-cols-2 gap-4">
                 <select

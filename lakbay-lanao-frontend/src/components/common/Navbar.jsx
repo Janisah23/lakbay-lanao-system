@@ -3,12 +3,29 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { collection, onSnapshot } from "firebase/firestore";
-import { FiSearch, FiHeart, FiMap, FiLogOut } from "react-icons/fi";
+import {
+  FiSearch,
+  FiHeart,
+  FiMap,
+  FiLogOut,
+  FiMenu,
+  FiX,
+  FiMapPin,
+  FiHome,
+  FiLayers,
+  FiMessageCircle,
+  FiCalendar,
+  FiCompass,
+  FiBriefcase,
+} from "react-icons/fi";
 import "./Navbar.css";
 
 function Navbar() {
   const navigate = useNavigate();
 
+  // ─────────────────────────────────────
+  // STATE
+  // ─────────────────────────────────────
   const [user, setUser] = useState(null);
   const [showFeatures, setShowFeatures] = useState(false);
   const [showEvents, setShowEvents] = useState(false);
@@ -17,117 +34,228 @@ function Navbar() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [showExplore, setShowExplore] = useState(false);
   const [eventsData, setEventsData] = useState([]);
+  const [searchItems, setSearchItems] = useState([]);
   const [openMenu, setOpenMenu] = useState(false);
-  
-  // State for scroll effect
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // ─────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────
+  const normalize = (text = "") =>
+    text.toString().toLowerCase().replaceAll(" ", "").replaceAll("&", "");
+
+  const navLinkClass =
+    "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 hover:drop-shadow-[0_0_10px_rgba(37,99,235,0.4)] after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
 
   const recentEvents = eventsData
-    .filter(item => item.contentType === "Event") 
-    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)) 
-    .slice(0, 4); 
+    .filter((item) => item.contentType === "Event")
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+    .slice(0, 4);
 
-  const filteredResults = eventsData.filter((item) => {
-    const matchSearch = item.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchFilter = activeFilter === "all" || item.contentType?.toLowerCase() === activeFilter.toLowerCase();
-    return matchSearch && matchFilter;
+  const filteredResults = searchItems.filter((item) => {
+    const term = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      item.title?.toLowerCase().includes(term) ||
+      item.summary?.toLowerCase().includes(term) ||
+      item.searchType?.toLowerCase().includes(term);
+
+    const matchesFilter =
+      activeFilter === "all" ||
+      normalize(item.searchType).includes(activeFilter);
+
+    return matchesSearch && matchesFilter;
   });
 
-  // Handle outside click for avatar menu
-  useEffect(() => {
-    const handleClickOutside = () => setOpenMenu(false);
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  const closeSearch = () => {
+    setShowSearch(false);
+    setSearchTerm("");
+    setActiveFilter("all");
+  };
 
-  // Handle scroll for professional sticky navbar effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Fetch data
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "tourismContent"),
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setEventsData(data);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  // Auth state
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Lock body scroll when search is open
-  useEffect(() => {
-    if (showSearch) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [showSearch]);
+  const closePanels = () => {
+    setShowMobileMenu(false);
+    setShowExplore(false);
+    setShowFeatures(false);
+    setShowEvents(false);
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
   };
 
-  // Reusable professional hover class for Nav Links (Glow + Underline)
-  const navLinkClass = "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 hover:drop-shadow-[0_0_10px_rgba(37,99,235,0.4)] after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
+  const handleResultClick = (item) => {
+    if (item.routeType === "place") {
+      navigate(`/destination/${item.id}`);
+    } else if (item.routeType === "article") {
+      navigate(`/article/${item.id}`);
+    } else if (item.routeType === "event") {
+      navigate(`/event/${item.id}`);
+    }
+
+    closeSearch();
+  };
+
+  // ─────────────────────────────────────
+  // CLOSE DROPDOWNS ON OUTSIDE CLICK
+  // ─────────────────────────────────────
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenMenu(false);
+      setShowMobileMenu(false);
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // ─────────────────────────────────────
+  // NAVBAR SCROLL EFFECT
+  // ─────────────────────────────────────
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ─────────────────────────────────────
+  // FETCH TOURISM CONTENT + SEARCH ITEMS
+  // ─────────────────────────────────────
+  useEffect(() => {
+    const unsubContent = onSnapshot(
+      collection(db, "tourismContent"),
+      (snapshot) => {
+        const contentData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setEventsData(contentData);
+
+        const searchableContent = contentData
+          .filter(
+            (item) =>
+              item.status !== "archived" && item.contentType !== "Highlight"
+          )
+          .map((item) => ({
+            id: item.id,
+            title: item.title,
+            summary: item.summary,
+            imageURL: item.imageURL,
+            searchType: item.contentType || "Content",
+            routeType: item.contentType?.toLowerCase() || "event",
+          }));
+
+        setSearchItems((prev) => {
+          const placesOnly = prev.filter((item) => item.routeType === "place");
+          return [...placesOnly, ...searchableContent];
+        });
+      }
+    );
+
+    const unsubTourismData = onSnapshot(
+      collection(db, "tourismData"),
+      (snapshot) => {
+        const placesData = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .filter((item) => item.status !== "archived")
+          .map((item) => ({
+            id: item.id,
+            title: item.name || item.title,
+            summary:
+              item.description ||
+              `${item.location?.municipality || ""} ${
+                item.location?.province || ""
+              }`,
+            imageURL: item.imageURL,
+            searchType: item.category || "Destination",
+            routeType: "place",
+          }));
+
+        setSearchItems((prev) => {
+          const contentOnly = prev.filter((item) => item.routeType !== "place");
+          return [...contentOnly, ...placesData];
+        });
+      }
+    );
+
+    return () => {
+      unsubContent();
+      unsubTourismData();
+    };
+  }, []);
+
+  // ─────────────────────────────────────
+  // AUTH STATE
+  // ─────────────────────────────────────
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ─────────────────────────────────────
+  // LOCK BODY WHEN SEARCH MODAL IS OPEN
+  // ─────────────────────────────────────
+  useEffect(() => {
+    document.body.style.overflow = showSearch ? "hidden" : "auto";
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showSearch]);
 
   return (
     <>
+      {/* ──────────────────────────────── */}
       {/* NAVBAR */}
+      {/* ──────────────────────────────── */}
       <nav
         className={`fixed top-0 left-0 w-full z-[1000] flex justify-center transition-all duration-300 ${
           isScrolled ? "pt-2 md:pt-4" : "pt-4 md:pt-6"
         }`}
       >
-        <div 
-          className={`w-[95%] max-w-7xl bg-white/95 backdrop-blur-md border border-gray-200 rounded-full flex items-center justify-between transition-all duration-300 ${
-            isScrolled ? "shadow-lg py-2.5 px-6 md:px-8" : "shadow-md py-3 px-6 md:px-10"
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`w-[92%] max-w-7xl bg-white/95 backdrop-blur-md border border-gray-200 rounded-full flex items-center justify-between transition-all duration-300 ${
+            isScrolled
+              ? "shadow-lg py-2 px-4 md:py-2.5 md:px-8"
+              : "shadow-md py-2.5 px-4 md:py-3 md:px-10"
           }`}
         >
-
-          {/* LEFT LOGO */}
+          {/* BRAND / LOGO */}
           <div
-            onClick={() => navigate("/")}
-            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => {
+              navigate("/");
+              closePanels();
+            }}
+            className="flex items-center gap-2 md:gap-3 cursor-pointer group min-w-0"
           >
             <img
               src="src/assets/pto.png"
               alt="logo"
-              className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
+              className="w-8 h-8 md:w-9 md:h-9 object-contain group-hover:scale-105 transition-transform flex-shrink-0"
             />
-            <span className="font-bold text-blue-600 text-sm whitespace-nowrap tracking-tight">
+
+            <span className="hidden sm:block font-bold text-blue-600 text-xs md:text-sm whitespace-nowrap tracking-tight truncate">
               Provincial Tourism Office
             </span>
           </div>
 
-          {/* CENTER NAVIGATION (Updated with Glowing Underline) */}
+          {/* DESKTOP MENU */}
           <div className="hidden lg:flex items-center gap-8">
-            <span
-              onClick={() => navigate("/")}
-              className={navLinkClass}
-            >
+            <span onClick={() => navigate("/")} className={navLinkClass}>
               Home
             </span>
 
-            {/* EXPLORE */}
             <div
               className={navLinkClass}
               onMouseEnter={() => {
@@ -139,7 +267,6 @@ function Navbar() {
               <span>Discover</span>
             </div>
 
-            {/* FEATURES */}
             <div
               className={navLinkClass}
               onMouseEnter={() => {
@@ -151,15 +278,10 @@ function Navbar() {
               <span>Features</span>
             </div>
 
-            {/* GALLERY */}
-            <span
-              onClick={() => navigate("/gallery")}
-              className={navLinkClass}
-            >
+            <span onClick={() => navigate("/gallery")} className={navLinkClass}>
               Gallery
             </span>
 
-            {/* EVENTS */}
             <div
               className={navLinkClass}
               onMouseEnter={() => {
@@ -172,40 +294,59 @@ function Navbar() {
             </div>
           </div>
 
-          {/* RIGHT SIDE (Search & Auth matching the image) */}
-          <div className="flex items-center gap-2 md:gap-4">
-            
-            {/* SEARCH */}
+          {/* RIGHT ACTIONS */}
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
+            {/* MOBILE MENU BUTTON */}
             <button
-              onClick={() => setShowSearch(!showSearch)}
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition px-3 py-2 rounded-full hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMobileMenu((prev) => !prev);
+                setOpenMenu(false);
+              }}
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              aria-label="Open menu"
             >
-              <FiSearch size={20} className="stroke-[2.5]" />
-              <span className="text-sm font-semibold hidden sm:block">Search</span>
+              {showMobileMenu ? <FiX size={21} /> : <FiMenu size={21} />}
             </button>
 
+            {/* SEARCH BUTTON */}
+            <button
+              onClick={() => {
+                setShowSearch(true);
+                setShowMobileMenu(false);
+              }}
+              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition px-2 md:px-3 py-2 rounded-full hover:bg-gray-50"
+            >
+              <FiSearch size={20} className="stroke-[2.5]" />
+              <span className="text-sm font-semibold hidden md:block">
+                Search
+              </span>
+            </button>
+
+            {/* AUTH BUTTON / PROFILE MENU */}
             {!user ? (
-              // NOT LOGGED IN
               <button
-                onClick={() => navigate("/login")}
-                className="border-[1.5px] border-blue-600 text-blue-700 px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-50 transition shadow-sm whitespace-nowrap"
+                onClick={() => {
+                  navigate("/login");
+                  closePanels();
+                }}
+                className="border-[1.5px] border-blue-600 text-blue-700 px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-bold hover:bg-blue-50 transition shadow-sm whitespace-nowrap"
               >
                 Sign In
               </button>
-
             ) : (
-              // LOGGED IN AVATAR
               <div className="relative">
-               <img
-                src={user.photoURL || "src/assets/default-avatar.png"}
-                alt="profile"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenMenu(!openMenu);
-                }}
-                className="w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
-              />
-                
+                <img
+                  src={user.photoURL || "/default-avatar.png"}
+                  alt="profile"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenMenu(!openMenu);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
+                />
+
                 {openMenu && (
                   <div className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-xl py-2 z-50 border border-gray-100 animate-dropdown">
                     <button
@@ -230,7 +371,7 @@ function Navbar() {
                       Itineraries
                     </button>
 
-                    <div className="border-t border-gray-100 my-1"></div>
+                    <div className="border-t border-gray-100 my-1" />
 
                     <button
                       onClick={() => {
@@ -250,229 +391,408 @@ function Navbar() {
         </div>
       </nav>
 
-      {/* SEARCH MODAL */}
-      {showSearch && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1100] flex justify-center items-start pt-28 animate-fadeIn">
-          <div className="bg-white w-[95%] max-w-2xl rounded-3xl shadow-2xl p-8 border border-gray-100">
-            
-            {/* SEARCH INPUT */}
-            <div className="flex items-center gap-3 border-2 border-blue-100 focus-within:border-blue-500 rounded-full px-5 py-3.5 shadow-sm transition-colors">
-              <FiSearch className="text-blue-500 text-xl"/>
-              <input
-                type="text"
-                placeholder="Search destinations, events, establishments..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 outline-none text-base font-medium text-gray-800 placeholder-gray-400 bg-transparent"
-                autoFocus
-              />
+      {/* ──────────────────────────────── */}
+      {/* MOBILE MENU */}
+      {/* ──────────────────────────────── */}
+      {showMobileMenu && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="fixed top-[82px] left-0 z-[999] flex w-full justify-center px-4 lg:hidden"
+        >
+          <div className="w-[92%] rounded-[24px] border border-gray-200 bg-white/95 p-4 shadow-xl backdrop-blur-md">
+            <div className="grid gap-2">
               <button
-                onClick={() => setShowSearch(false)}
-                className="text-gray-400 hover:text-red-500 text-lg font-bold bg-gray-50 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center transition"
+                onClick={() => {
+                  navigate("/");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
               >
-                ✕
+                Home
               </button>
-            </div>
 
-            {/* FILTERS */}
-            <div className="flex gap-2 mt-6 flex-wrap">
-              {[
-                { label: "All", value: "all" },
-                { label: "Destination", value: "destination" },
-                { label: "Event", value: "event" },
-                { label: "Establishment", value: "establishment" },
-                { label: "Cultural & Heritage", value: "culturalheritage" },
-                { label: "Landmarks", value: "landmark" }
-              ].map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => setActiveFilter(filter.value)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition
-                    ${activeFilter === filter.value
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                    }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
+              <button
+                onClick={() => {
+                  navigate("/destinations");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Discover
+              </button>
 
-            {/* RESULTS */}
-            <div className="space-y-2 mt-8 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-              {searchTerm === "" && (
-                <div className="text-center py-10">
-                  <p className="text-gray-400 font-medium">Start typing to search Lanao del Sur</p>
-                </div>
-              )}
+              <button
+                onClick={() => {
+                  navigate("/map");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Features
+              </button>
 
-              {searchTerm !== "" && filteredResults.length === 0 && (
-                <div className="text-center py-10">
-                  <p className="text-gray-400 font-medium">No results found for "{searchTerm}"</p>
-                </div>
-              )}
+              <button
+                onClick={() => {
+                  navigate("/gallery");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Gallery
+              </button>
 
-              {filteredResults.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => {
-                    navigate(`/${item.contentType?.toLowerCase() || 'event'}/${item.id}`);
-                    setShowSearch(false);
-                  }}
-                  className="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition cursor-pointer"
-                >
-                  <img
-                    src={item.imageURL || "/default-image.png"}
-                    alt={item.title}
-                    className="w-20 h-20 object-cover rounded-xl shadow-sm"
-                  />
-                  <div>
-                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">
-                      {item.contentType || "General"}
-                    </span>
-                    <h3 className="font-bold text-gray-900 mt-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-1 mt-0.5">
-                      {item.summary || "No description available."}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <button
+                onClick={() => {
+                  navigate("/events");
+                  setShowMobileMenu(false);
+                }}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              >
+                Events
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- DROPDOWN PANELS (Original Design, Fixed Positioning) --- */}
+      {/* ──────────────────────────────── */}
+      {/* SEARCH MODAL */}
+      {/* ──────────────────────────────── */}
+      {showSearch && (
+        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-black/35 px-4 pt-28 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-3xl rounded-[32px] border border-gray-200 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] p-4 shadow-xl md:p-6">
+            <div className="rounded-[28px] border border-gray-200 bg-white p-5 shadow-sm md:p-6">
+              <div className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-5 py-3.5 transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
+                <FiSearch className="text-[#2563eb] text-xl" />
 
-      {/* EXPLORE PANEL */}
+                <input
+                  type="text"
+                  placeholder="Search destinations, events, establishments..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
+                  autoFocus
+                />
+
+                <button
+                  onClick={closeSearch}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* SEARCH FILTERS */}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {[
+                  { label: "All", value: "all" },
+                  { label: "Destination", value: "destination" },
+                  { label: "Event", value: "event" },
+                  { label: "Establishment", value: "establishment" },
+                  {
+                    label: "Cultural & Heritage",
+                    value: "culturalheritagesite",
+                  },
+                  { label: "Landmark", value: "landmark" },
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setActiveFilter(filter.value)}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                      activeFilter === filter.value
+                        ? "bg-[#2563eb] text-white shadow-sm"
+                        : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* SEARCH RESULTS */}
+              <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+                {searchTerm === "" && (
+                  <div className="rounded-[24px] bg-blue-50/60 py-14 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      Start typing to search Lanao del Sur
+                    </p>
+                  </div>
+                )}
+
+                {searchTerm !== "" && filteredResults.length === 0 && (
+                  <div className="rounded-[24px] bg-blue-50/60 py-14 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      No results found for "{searchTerm}"
+                    </p>
+                  </div>
+                )}
+
+                {searchTerm !== "" &&
+                  filteredResults.map((item) => (
+                    <div
+                      key={`${item.routeType}-${item.id}`}
+                      onClick={() => handleResultClick(item)}
+                      className="flex cursor-pointer items-center gap-4 rounded-[24px] border border-gray-100 bg-white p-3 transition hover:border-blue-100 hover:bg-blue-50/50"
+                    >
+                      <img
+                        src={item.imageURL || "/default-image.png"}
+                        alt={item.title}
+                        className="h-20 w-20 rounded-[20px] object-cover bg-blue-50"
+                      />
+
+                      <div className="min-w-0">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
+                          {item.searchType || "General"}
+                        </span>
+
+                        <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-1 line-clamp-1 text-sm text-gray-500">
+                          {item.summary || "No description available."}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────── */}
+      {/* DISCOVER PANEL */}
+      {/* ──────────────────────────────── */}
       {showExplore && (
         <div
-          className="fixed top-[90px] left-0 w-full z-[990] flex justify-center animate-fadeIn"
+          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
           onMouseLeave={() => setShowExplore(false)}
         >
           <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-5">
+              {/* Destinations */}
               <div
                 onClick={() => {
                   navigate("/destinations");
                   setShowExplore(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Destinations</h4>
-                <p className="text-sm text-gray-500">Tourist spots</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiMapPin className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Destinations
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">Tourist spots</p>
+                </div>
               </div>
+
+              {/* Cultural & Heritage */}
               <div
                 onClick={() => {
                   navigate("/cultural");
                   setShowExplore(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Cultural & Heritage</h4>
-                <p className="text-sm text-gray-500">Traditions & culture</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiLayers className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Cultural & Heritage
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Traditions & culture
+                  </p>
+                </div>
               </div>
+
+              {/* Establishments */}
               <div
                 onClick={() => {
-                  navigate("/establishment");
+                  navigate("/establishments");
                   setShowExplore(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Establishments</h4>
-                <p className="text-sm text-gray-500">Hotels & restaurants</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiBriefcase className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Establishments
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Hotels & restaurants
+                  </p>
+                </div>
               </div>
+
+              {/* Landmarks */}
               <div
                 onClick={() => {
                   navigate("/landmarks");
                   setShowExplore(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Landmarks</h4>
-                <p className="text-sm text-gray-500">Famous places</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiHome className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">Landmarks</h4>
+                  <p className="mt-1 text-sm text-gray-500">Famous places</p>
+                </div>
               </div>
             </div>
+
+            {/* Discover Preview */}
             <div className="flex flex-col items-center justify-center text-center">
-                  
-              <img src="src/assets/explore-preview.png" className="w-60 h-24 object-cover rounded-xl shadow" alt="Explore Preview" />
-              <span className="text-sm text-gray-500 mt-4">Explore Lanao</span>
+              <img
+                src="src/assets/explore-preview.png"
+                className="w-80 h-38 object-cover rounded-xl shadow"
+                alt="Explore Preview"
+              />
+              <span className="text-sm text-gray-500 mt-">
+                Explore Lanao
+              </span>
             </div>
           </div>
         </div>
       )}
 
+      {/* ──────────────────────────────── */}
       {/* FEATURES PANEL */}
+      {/* ──────────────────────────────── */}
       {showFeatures && (
         <div
-          className="fixed top-[90px] left-0 w-full z-[990] flex justify-center animate-fadeIn"
+          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
           onMouseLeave={() => setShowFeatures(false)}
         >
           <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-5">
+              {/* Interactive Map */}
               <div
                 onClick={() => {
                   navigate("/map");
                   setShowFeatures(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Interactive Map</h4>
-                <p className="text-sm text-gray-500">Explore destinations visually</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiMap className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Interactive Map
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Explore destinations visually
+                  </p>
+                </div>
               </div>
+
+              {/* AI Chatbot */}
               <div
                 onClick={() => {
                   if (!user) {
                     navigate("/login");
                   } else {
-                    navigate("/chatbot");
+                    window.dispatchEvent(new Event("open-tourism-chatbot"));
                   }
+
                   setShowFeatures(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">AI Chatbot</h4>
-                <p className="text-sm text-gray-500">Instant travel assistance</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiMessageCircle className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">AI Chatbot</h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Instant travel assistance
+                  </p>
+                </div>
               </div>
+
+              {/* Itinerary Builder */}
               <div
                 onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                  } else {
-                    navigate("/itinerary");
-                  }
+                  if (!user) navigate("/login");
+                  else navigate("/itinerary");
                   setShowFeatures(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Itinerary Builder</h4>
-                <p className="text-sm text-gray-500">Plan your trip smartly</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiCompass className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Itinerary Builder
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Plan your trip smartly
+                  </p>
+                </div>
               </div>
+
+              {/* Events Calendar */}
               <div
                 onClick={() => {
                   navigate("/events");
                   setShowFeatures(false);
                 }}
-                className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
+                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
               >
-                <h4 className="font-semibold text-blue-600">Events Calendar</h4>
-                <p className="text-sm text-gray-500">Stay updated with festivals</p>
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiCalendar className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Events Calendar
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Stay updated with festivals
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* Features Preview */}
             <div className="flex flex-col items-center justify-center text-center">
-              <img src="src/assets/feature-preview.png" className="w-64 rounded-xl shadow" alt="Features Preview" />
-              <span className="text-sm text-gray-500 mt-4">Explore smarter with Lakbay Lanao</span>
+              <img
+                src="src/assets/feature-preview.png"
+                className="w-80 h-38 object-cover rounded-2xl shadow-md"
+                alt="Features Preview"
+              />
+              <span className="text-sm text-gray-500 mt-4">
+                Explore smarter with Lakbay Lanao
+              </span>
             </div>
           </div>
         </div>
       )}
 
+      {/* ──────────────────────────────── */}
       {/* EVENTS PANEL */}
+      {/* ──────────────────────────────── */}
       {showEvents && (
         <div
-          className="fixed top-[90px] left-0 w-full z-[990] flex justify-center animate-fadeIn"
+          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
           onMouseLeave={() => setShowEvents(false)}
         >
           <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
@@ -481,7 +801,7 @@ function Navbar() {
                 <p className="text-gray-400 text-sm">No events available</p>
               ) : (
                 recentEvents.map((event) => (
-                  <div 
+                  <div
                     key={event.id}
                     onClick={() => {
                       navigate(`/event/${event.id}`);
@@ -489,15 +809,27 @@ function Navbar() {
                     }}
                     className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
                   >
-                    <h4 className="font-semibold text-blue-600 line-clamp-1">{event.title}</h4>
-                    <p className="text-sm text-gray-500 line-clamp-2">{event.summary || "No description"}</p>
+                    <h4 className="font-semibold text-blue-600 line-clamp-1">
+                      {event.title}
+                    </h4>
+                    <p className="text-sm text-gray-500 line-clamp-2">
+                      {event.summary || "No description"}
+                    </p>
                   </div>
                 ))
               )}
             </div>
+
+            {/* Events Preview */}
             <div className="flex flex-col items-center justify-center text-center">
-              <img src="src/assets/event-preview.png" className="w-64 rounded-xl shadow" alt="Event Preview" />
-              <span className="text-sm text-gray-500 mt-4">Discover recent events</span>
+              <img
+                src="src/assets/event-preview.png"
+                className="w-80 h-38 object-cover rounded-2xl shadow-md"
+                alt="Event Preview"
+              />
+              <span className="text-sm text-gray-500 mt-4">
+                Discover recent events
+              </span>
             </div>
           </div>
         </div>

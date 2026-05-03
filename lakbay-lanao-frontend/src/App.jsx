@@ -17,25 +17,23 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  if (loading)
+if (loading)
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff]">
       <div className="relative flex flex-col items-center px-8">
-        
-    
-        <div className="absolute h-56 w-56 rounded-full bg-blue-100/40 blur-3xl" />
 
-       
-        <div className="relative flex h-40 w-40 items-center justify-center rounded-[40px] border border-gray-200 bg-white/95 shadow-[0_25px_70px_rgba(37,99,235,0.12)] backdrop-blur-xl">
-          
-         
+        {/* Soft background glow */}
+        <div className="absolute h-56 w-56 rounded-full bg-blue-100/30 blur-3xl" />
+
+        {/* Spinner ring */}
+        <div className="relative flex items-center justify-center">
           <div className="absolute h-32 w-32 animate-spin rounded-full border-[4px] border-gray-100 border-t-[#2563eb]" />
 
-         
+          {/* PTO Logo only */}
           <img
             src="src/assets/pto.png"
             alt="Lakbay Lanao"
-            className="h-24 w-24 object-contain"
+            className="relative h-24 w-24 object-contain"
           />
         </div>
 
@@ -47,7 +45,7 @@ function App() {
           Preparing your travel experience...
         </p>
 
-        
+        {/* Loading dots */}
         <div className="mt-6 flex gap-3">
           <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-[#2563eb]" />
           <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-[#2563eb] [animation-delay:150ms]" />

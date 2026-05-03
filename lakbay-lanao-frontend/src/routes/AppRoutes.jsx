@@ -14,6 +14,8 @@ import PlacesDetails from "../pages/public/PlacesDetails";
 import Favorites from "../pages/public/Favorites";
 import Itinerary from "../pages/public/Itinerary";
 import EventsCalendar from "../pages/public/EventsCalendar";
+import Articles from "../pages/public/Articles";
+
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -53,6 +55,7 @@ function AppRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/article/:id" element={<ArticleDetails />} />
+        <Route path="/articles" element={<Articles />} />
         <Route path="/blog" element={<TourismBlog />} />
         <Route path="/chatbot" element={<TourismChatbot />} />
         <Route path="/favorites" element={<Favorites />} />

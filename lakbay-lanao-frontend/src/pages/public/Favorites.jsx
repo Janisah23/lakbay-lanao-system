@@ -193,12 +193,12 @@ function Favorites() {
     <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] pb-24">
       <Navbar />
 
-      <section className="relative w-full h-[340px] overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?q=80&w=2070&auto=format&fit=crop"
-          alt="Favorites"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+    <section className="relative mx-4 md:mx-8 mt-0 h-[340px] overflow-hidden rounded-b-[48px]">
+      <img
+        src="/src/assets/favorites-hero.png"
+        alt="Favorites"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/70" />
 
         <div className="relative z-10 h-full flex flex-col justify-end pb-14 px-6 max-w-7xl mx-auto">
