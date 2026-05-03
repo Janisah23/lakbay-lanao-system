@@ -20,6 +20,7 @@ import ManageTourismData from "../pages/staff/ManageTourismData";
 import TourismContent from "../pages/staff/TourismContent";
 import FeedbackRatings from "../pages/staff/FeedbackRatings";
 import ManageGallery from "../pages/staff/ManageGallery";
+import StaffDashboard from "../pages/staff/StaffDashboard";
 
 import AdminLayout from "../layout/AdminLayout";
 import RatingsSummary from "../pages/admin/RatingsSummary";
@@ -77,6 +78,7 @@ function AppRoutes() {
           <Route path="content" element={<TourismContent />} />
           <Route path="feedback" element={<FeedbackRatings />} />
           <Route path="gallery" element={<ManageGallery />} />
+          <Route path="dashboard" element={<StaffDashboard />} />
         </Route>
 
         {/* Admin Routes */}

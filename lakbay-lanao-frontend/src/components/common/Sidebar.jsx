@@ -28,69 +28,77 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
   };
 
   const staffNav = [
+    { name: "Dashboard", path: "/staff/dashboard", icon: <FiHome /> },
     { name: "Manage Tourism Data", path: "/staff/manage", icon: <FiFolder /> },
     { name: "Tourism Content", path: "/staff/content", icon: <FiFileText /> },
     { name: "Feedback & Ratings", path: "/staff/feedback", icon: <FiStar /> },
     { name: "Manage Gallery", path: "/staff/gallery", icon: <FiFolder /> }
   ];
-const adminNav = [
-  { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
-  { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
-  { name: "Account Management", path: "/admin/accounts", icon: <FiUsers /> },
-  { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
-  { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
-];
+
+  const adminNav = [
+    { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
+    { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
+    { name: "Account Management", path: "/admin/accounts", icon: <FiUsers /> },
+    { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
+    { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
+  ];
+
   const navItems = role === "admin" ? adminNav : staffNav;
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200
-      transition-all duration-300 ease-in-out flex flex-col justify-between
-      ${collapsed ? "w-[80px]" : "w-[260px]"}`}
+      className={`fixed left-0 top-0 h-full bg-white border-r border-gray-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)]
+      transition-all duration-300 ease-in-out flex flex-col justify-between z-50
+      ${collapsed ? "w-[88px]" : "w-[280px]"}`}
     >
-      {/* Header */}
+      {/* Top Section: Logo & Nav */}
       <div>
-        <div className="flex items-center justify-between px-5 py-6">
+        <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} px-6 py-8`}>
           {!collapsed && (
             <img
               src={lakbayLogo}
-              alt=""
+              alt="Lakbay Lanao"
               className="h-9 object-contain"
             />
           )}
 
-          <FiMenu
-            className="text-xl text-[#2563EB] cursor-pointer"
+          <button
             onClick={() => setCollapsed(!collapsed)}
-          />
+            className="p-2 rounded-full hover:bg-blue-50 text-gray-400 hover:text-[#2563eb] transition-colors"
+          >
+            <FiMenu className="text-xl" />
+          </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="mt-6 space-y-6 px-4 text-sm">
+        <nav className="mt-2 space-y-2 px-4">
           {navItems.map((item, index) => (
             <NavLink
               key={index}
               to={item.path}
               className={({ isActive }) =>
-                `relative group flex items-center gap-3 px-3 py-2 rounded-lg transition-all
+                `relative group flex items-center gap-4 px-4 py-3.5 rounded-[16px] transition-all duration-200
                 ${
                   isActive
-                    ? "text-[#2563EB] font-medium bg-blue-50"
-                    : "text-gray-500 hover:text-[#2563EB] hover:bg-gray-100"
+                    ? "bg-blue-50 text-[#2563EB] font-bold shadow-sm"
+                    : "text-gray-500 font-medium hover:text-[#2563EB] hover:bg-gray-50"
                 }`
               }
             >
-              <span className="text-lg">{item.icon}</span>
+              <span className={`text-xl ${collapsed ? "mx-auto" : ""}`}>
+                {item.icon}
+              </span>
 
-              {!collapsed && <span>{item.name}</span>}
+              {!collapsed && (
+                <span className="text-sm tracking-wide">{item.name}</span>
+              )}
 
               {collapsed && (
                 <span
-                  className="absolute left-[70px] whitespace-nowrap
-                  bg-gray-900 text-white text-xs px-3 py-1 rounded-md
+                  className="absolute left-[80px] whitespace-nowrap
+                  bg-gray-800 text-white text-xs font-semibold px-3 py-2 rounded-lg
                   opacity-0 group-hover:opacity-100
                   translate-x-2 group-hover:translate-x-0
-                  transition-all duration-200 pointer-events-none shadow-lg"
+                  transition-all duration-200 pointer-events-none shadow-md z-50"
                 >
                   {item.name}
                 </span>
@@ -100,51 +108,55 @@ const adminNav = [
         </nav>
       </div>
 
-      {/* Profile Section */}
-      {!collapsed && (
-        <div className="p-4 relative">
-          <div
-            onClick={() => setOpenProfile(!openProfile)}
-            className="flex items-center justify-between border border-blue-200 rounded-xl px-4 py-3 shadow-sm cursor-pointer hover:bg-blue-50 transition"
-          >
-            <div className="flex items-center gap-3">
-              {/* Avatar Circle */}
-              <div className="w-10 h-10 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-semibold">
-                {name ? name.charAt(0).toUpperCase() : "U"}
-              </div>
+      {/* Bottom Section: Profile */}
+      <div className="p-4 relative">
+        {/* Dropdown Menu */}
+        {openProfile && !collapsed && (
+          <div className="absolute bottom-[84px] left-4 right-4 bg-white border border-gray-100 rounded-[16px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+            >
+              <FiLogOut className="text-lg" />
+              Sign Out
+            </button>
+          </div>
+        )}
 
-              <div>
-                <p className="text-sm font-semibold">
+        <div
+          onClick={() => !collapsed && setOpenProfile(!openProfile)}
+          className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}
+          rounded-[20px] bg-white border border-gray-100 shadow-sm
+          ${!collapsed ? 'px-4 py-3 cursor-pointer hover:border-blue-200 hover:shadow-md' : 'py-4'}
+          transition-all duration-300`}
+        >
+          <div className="flex items-center gap-3">
+            {/* Changed from rounded-[12px] to rounded-full */}
+            <div className="w-10 h-10 rounded-full bg-blue-50 text-[#2563EB] flex items-center justify-center font-bold text-lg flex-shrink-0 border border-blue-100">
+              {name ? name.charAt(0).toUpperCase() : "U"}
+            </div>
+
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-gray-900 truncate">
                   {name || "Loading..."}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">
+                <p className="text-xs text-gray-500 capitalize font-medium">
                   {role}
                 </p>
               </div>
-            </div>
-
-            {/* Arrow */}
-            <FiChevronDown
-              className={`transition-transform duration-300 ${
-                openProfile ? "rotate-180" : ""
-              }`}
-            />
+            )}
           </div>
 
-          {/* Dropdown */}
-          {openProfile && (
-            <div className="absolute bottom-20 left-0 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-2 overflow-hidden animate-fadeIn">
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition"
-              >
-                <FiLogOut />
-                Logout
-              </button>
-            </div>
+          {!collapsed && (
+            <FiChevronDown
+              className={`text-gray-400 transition-transform duration-300 ${
+                openProfile ? "rotate-180 text-[#2563eb]" : ""
+              }`}
+            />
           )}
         </div>
-      )}
+      </div>
     </aside>
   );
 }

@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../../firebase/config";
-import { collection, getDocs, collectionGroup } from "firebase/firestore";
+import { 
+  collection, 
+  getDocs, 
+  collectionGroup, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  getCountFromServer,
+  getAggregateFromServer,
+  average,
+  count
+} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import {
   FiUsers,
@@ -9,10 +21,11 @@ import {
   FiFileText,
   FiStar,
   FiMessageSquare,
-  FiChevronLeft,
-  FiChevronRight,
   FiActivity,
   FiClipboard,
+  FiServer,
+  FiShield,
+  FiCheckCircle
 } from "react-icons/fi";
 import {
   AreaChart,
@@ -44,72 +57,52 @@ function AdminDashboard() {
     chartData: [],
   });
 
-  const [calDate, setCalDate] = useState(new Date());
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [usersSnap, dataSnap, contentSnap, reviewsSnap, logsSnap] =
-          await Promise.all([
-            getDocs(collection(db, "users")),
-            getDocs(collection(db, "tourismData")),
-            getDocs(collection(db, "tourismContent")),
-            getDocs(collectionGroup(db, "reviews")),
-            getDocs(collection(db, "logs")),
-          ]);
+        const usersCol = collection(db, "users");
+        const destinationsCol = collection(db, "tourismData");
+        const contentCol = collection(db, "tourismContent");
+        
+        const [
+          usersCount, 
+          destinationsCount, 
+          eventsCount, 
+          articlesCount
+        ] = await Promise.all([
+          getCountFromServer(usersCol),
+          getCountFromServer(destinationsCol),
+          getCountFromServer(query(contentCol, where("contentType", "==", "event"))),
+          getCountFromServer(query(contentCol, where("contentType", "==", "article")))
+        ]);
 
-        const usersData = [];
-        usersSnap.forEach((doc) => {
-          usersData.push({ id: doc.id, ...doc.data() });
+        const recentUsersQuery = query(usersCol, orderBy("createdAt", "desc"), limit(5));
+        const recentUsersSnap = await getDocs(recentUsersQuery);
+        const usersData = recentUsersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setRecentUsers(usersData);
+
+        const reviewsCol = collectionGroup(db, "reviews");
+        const reviewsAgg = await getAggregateFromServer(reviewsCol, {
+          avgRating: average("rating"),
+          totalReviews: count()
         });
-
-        const totalUsers = usersData.length;
-
-        const sortedUsers = usersData
-          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
-          .slice(0, 5);
-
-        setRecentUsers(sortedUsers);
-
-        const totalDestinations = dataSnap.size;
-
-        let totalEvents = 0;
-        let totalArticles = 0;
-
-        contentSnap.forEach((doc) => {
-          const data = doc.data();
-          const type = (data.contentType || "").toLowerCase();
-
-          if (type === "event") totalEvents++;
-          else if (type === "article") totalArticles++;
-        });
-
-        let sumRating = 0;
-        let validRatings = 0;
-
-        reviewsSnap.forEach((doc) => {
-          const rating = doc.data().rating;
-          if (typeof rating === "number" && rating >= 1 && rating <= 5) {
-            sumRating += rating;
-            validRatings++;
-          }
-        });
-
-        const totalReviews = validRatings;
-        const avgRating = validRatings > 0 ? sumRating / validRatings : 0;
-
-        let totalLogsCount = logsSnap.size;
-        let todayLogsCount = 0;
 
         const now = new Date();
-        const todayStr = now.toDateString();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const logsQuery = query(collection(db, "logs"), where("timestamp", ">=", sevenDaysAgo));
+        const logsSnap = await getDocs(logsQuery);
 
         const last7DaysMap = {};
         const daysOrder = [];
+        const todayStr = now.toDateString();
+        let todayLogsCount = 0;
 
         for (let i = 6; i >= 0; i--) {
           const d = new Date();
-          d.setDate(d.getDate() - i);
+          d.setDate(now.getDate() - i);
           const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
           last7DaysMap[dayName] = 0;
           daysOrder.push(dayName);
@@ -119,21 +112,11 @@ function AdminDashboard() {
           const data = doc.data();
           if (data.timestamp) {
             const logDate = data.timestamp.toDate();
-
-            if (logDate.toDateString() === todayStr) {
-              todayLogsCount++;
-            }
-
-            const diffTime = Math.abs(now - logDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays <= 7) {
-              const dayName = logDate.toLocaleDateString("en-US", {
-                weekday: "short",
-              });
-              if (last7DaysMap[dayName] !== undefined) {
-                last7DaysMap[dayName]++;
-              }
+            if (logDate.toDateString() === todayStr) todayLogsCount++;
+            
+            const dayName = logDate.toLocaleDateString("en-US", { weekday: "short" });
+            if (last7DaysMap[dayName] !== undefined) {
+              last7DaysMap[dayName]++;
             }
           }
         });
@@ -144,16 +127,16 @@ function AdminDashboard() {
         }));
 
         setMetrics({
-          totalUsers,
-          totalDestinations,
-          totalEvents,
-          totalArticles,
-          avgRating,
-          totalReviews,
+          totalUsers: usersCount.data().count,
+          totalDestinations: destinationsCount.data().count,
+          totalEvents: eventsCount.data().count,
+          totalArticles: articlesCount.data().count,
+          avgRating: reviewsAgg.data().avgRating || 0,
+          totalReviews: reviewsAgg.data().totalReviews || 0,
         });
 
         setLogStats({
-          total: totalLogsCount,
+          total: logsSnap.size,
           today: todayLogsCount,
           chartData,
         });
@@ -168,316 +151,178 @@ function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  const nextMonth = () =>
-    setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() + 1, 1));
-
-  const prevMonth = () =>
-    setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1));
-
-  const renderCalendar = () => {
-    const year = calDate.getFullYear();
-    const month = calDate.getMonth();
-    const today = new Date();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
-    ];
-
-    const days = [];
-    for (let i = 0; i < firstDay; i++) days.push(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(i);
-
-    return (
-      <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="font-bold text-gray-800 text-lg">
-            {monthNames[month]} <span className="text-gray-500 font-medium">{year}</span>
-          </h3>
-
-          <div className="flex gap-2">
-            <button
-              onClick={prevMonth}
-              className="p-2 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-[#2563eb] transition"
-            >
-              <FiChevronLeft />
-            </button>
-            <button
-              onClick={nextMonth}
-              className="p-2 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-[#2563eb] transition"
-            >
-              <FiChevronRight />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 text-center text-xs font-bold text-gray-400 mb-3">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-            <div key={d}>{d}</div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 text-center text-sm gap-y-2">
-          {days.map((d, i) => {
-            if (!d) return <div key={i}></div>;
-
-            const isToday =
-              d === today.getDate() &&
-              month === today.getMonth() &&
-              year === today.getFullYear();
-
-            return (
-              <div key={i} className="flex justify-center items-center">
-                <span
-                  className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-medium transition-all ${
-                    isToday
-                      ? "bg-[#2563eb] text-white shadow-sm"
-                      : "text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] cursor-pointer"
-                  }`}
-                >
-                  {d}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] text-gray-500">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] text-gray-500">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563eb] mb-4"></div>
-        Loading Dashboard...
+        <p className="font-medium text-sm">Loading System Data...</p>
       </div>
     );
   }
 
   return (
+        <div className="w-full">
+          <div className="max-w-7xl mx-auto pt-10 pb-20 px-6 lg:px-10">
+          {/* HEADER AREA */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
+              Platform Overview
+            </h2>
+            <p className="text-gray-500 mt-2">
+              Live tourism metrics, system health, and staff activities.
+            </p>
+          </div>
+          <div className="rounded-full bg-[#2563eb] px-4 py-2 text-sm font-medium text-white flex items-center gap-2 shadow-sm w-fit">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-300 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            System Online
+          </div>
+        </div>
 
-  <div className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] font-sans text-gray-800 rounded-2xl">
-    <div className="max-w-7xl mx-auto pt-6 pb-20 px-6">
-      {/* HEADER */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#2563EB] tracking-tight">
-          Dashboard Overview
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Live overview of your tourism platform, system activity, and recent users.
-        </p>
-      </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-2 xl:col-span-3 space-y-6">
-            {/* METRICS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {/* Total Users */}
-              <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
-                <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
-                  <FiUsers />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-500 font-medium mb-1 truncate">Total Users</p>
-                  <h4 className="text-3xl font-extrabold text-[#2563eb] truncate">
-                    {metrics.totalUsers}
-                  </h4>
-                </div>
-              </div>
-
-              {/* Total Destinations */}
-              <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
-                <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
-                  <FiMapPin />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-500 font-medium mb-1 truncate">Total Destinations</p>
-                  <h4 className="text-3xl font-extrabold text-[#2563eb] truncate">
-                    {metrics.totalDestinations}
-                  </h4>
-                </div>
-              </div>
-
-              {/* Total Events */}
-              <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
-                <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
-                  <FiCalendar />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-500 font-medium mb-1 truncate">Total Events</p>
-                  <h4 className="text-3xl font-extrabold text-[#2563eb] truncate">
-                    {metrics.totalEvents}
-                  </h4>
-                </div>
-              </div>
-
-              {/* Total Articles */}
-              <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
-                <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
-                  <FiFileText />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-500 font-medium mb-1 truncate">Total Articles</p>
-                  <h4 className="text-3xl font-extrabold text-[#2563eb] truncate">
-                    {metrics.totalArticles}
-                  </h4>
-                </div>
-              </div>
-
-              {/* Average Rating */}
-              <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
-                <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
-                  <FiStar className="fill-[#2563eb]" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-500 font-medium mb-1 truncate">Average Rating</p>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-3xl font-extrabold text-[#2563eb] truncate">
-                      {metrics.avgRating.toFixed(1)}
-                    </h4>
-                    <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                      / 5.0
-                    </span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          
+          {/* LEFT CONTENT BLOCK */}
+          <div className="lg:col-span-2 xl:col-span-3 space-y-8">
+            
+            {/* METRICS CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[
+                { label: "Total Users", value: metrics.totalUsers, icon: <FiUsers />, color: "text-[#2563eb]", bg: "bg-blue-50" },
+                { label: "Destinations", value: metrics.totalDestinations, icon: <FiMapPin />, color: "text-[#2563eb]", bg: "bg-blue-50" },
+                { label: "Active Events", value: metrics.totalEvents, icon: <FiCalendar />, color: "text-[#2563eb]", bg: "bg-blue-50" },
+                { label: "Published Articles", value: metrics.totalArticles, icon: <FiFileText />, color: "text-[#2563eb]", bg: "bg-blue-50" },
+                { label: "Total Reviews", value: metrics.totalReviews, icon: <FiMessageSquare />, color: "text-[#2563eb]", bg: "bg-blue-50" },
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl flex-shrink-0 ${item.bg} ${item.color}`}>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-1 truncate">{item.label}</p>
+                    <h4 className="text-3xl font-bold text-gray-900">{item.value}</h4>
                   </div>
                 </div>
-              </div>
+              ))}
 
-              {/* Total Reviews */}
-              <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
-                <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
-                  <FiMessageSquare />
+              {/* RATING HIGHLIGHT CARD */}
+              <div className="bg-[#2563eb] rounded-[28px] border border-blue-600 shadow-sm p-6 flex items-center gap-5 text-white hover:shadow-md transition">
+                <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-xl flex-shrink-0 text-white">
+                  <FiStar className="fill-white" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-gray-500 font-medium mb-1 truncate">Total Reviews</p>
-                  <h4 className="text-3xl font-extrabold text-[#2563eb] truncate">
-                    {metrics.totalReviews}
-                  </h4>
+                <div>
+                  <p className="text-sm text-blue-100 font-medium mb-1 truncate">Avg Rating</p>
+                  <div className="flex items-baseline gap-1">
+                    <h4 className="text-3xl font-bold">{metrics.avgRating.toFixed(1)}</h4>
+                    <span className="text-sm text-blue-200">/ 5.0</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* SYSTEM ACTIVITY */}
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            {/* ACTIVITY GRAPH PANEL */}
+            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <FiActivity className="text-[#2563eb]" /> System Activity
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <FiActivity className="text-[#2563eb]" /> 7-Day Activity Trends
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Total Logs: <span className="font-bold text-[#2563eb]">{logStats.total}</span>
-                    <span className="mx-2 text-gray-300">|</span>
-                    Activity Today: <span className="font-bold text-[#2563eb]">{logStats.today}</span>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Actions today: <span className="font-bold text-[#2563eb]">{logStats.today} logs</span>
                   </p>
                 </div>
-
                 <button
                   onClick={() => navigate("/admin/logs")}
-                  className="rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md w-fit flex items-center gap-2"
+                  className="rounded-full bg-gray-100 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-blue-50 flex items-center gap-2"
                 >
-                  <FiClipboard />
-                  View Full Logs
+                  <FiClipboard /> View Audit Trail
                 </button>
               </div>
 
-              <div className="h-[300px] min-h-[300px] w-full min-w-0">
+              <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={logStats.chartData}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  >
+                  <AreaChart data={logStats.chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorLogs" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.22} />
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
                         <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                    />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 13 }} dy={12} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 13 }} />
                     <RechartsTooltip
-                      contentStyle={{
-                        borderRadius: "14px",
-                        border: "1px solid #E5E7EB",
-                        boxShadow: "0 10px 20px rgba(0,0,0,0.06)",
-                      }}
-                      cursor={{ stroke: "#2563eb", strokeWidth: 1, strokeDasharray: "5 5" }}
+                      contentStyle={{ borderRadius: "12px", border: "1px solid #E5E7EB", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)" }}
+                      cursor={{ stroke: "#93c5fd", strokeWidth: 1, strokeDasharray: "4 4" }}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="Logs"
-                      stroke="#2563eb"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorLogs)"
-                      activeDot={{ r: 6, fill: "#2563eb", stroke: "#fff", strokeWidth: 2 }}
-                    />
+                    <Area type="monotone" dataKey="Logs" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorLogs)" activeDot={{ r: 6, strokeWidth: 0, fill: "#2563eb" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="lg:col-span-1 space-y-6">
-            {renderCalendar()}
+          {/* RIGHT SIDEBAR CONTENT */}
+          <div className="lg:col-span-1 space-y-8">
+            
+            {/* SYSTEM HEALTH PANEL */}
+            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
+              <h3 className="font-bold text-gray-900 text-lg mb-6">System Health</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px] border border-gray-100 transition hover:border-[#2563eb]">
+                  <div className="flex items-center gap-3">
+                    <FiServer className="text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700">Database Active</span>
+                  </div>
+                  <FiCheckCircle className="text-[#2563eb]" />
+                </div>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px] border border-gray-100 transition hover:border-[#2563eb]">
+                  <div className="flex items-center gap-3">
+                    <FiShield className="text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700">Security Rules</span>
+                  </div>
+                  <FiCheckCircle className="text-[#2563eb]" />
+                </div>
+              </div>
+            </div>
 
+            {/* RECENT REGISTRATIONS PANEL */}
             <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-gray-800 text-lg">Recent Users</h3>
-                <button
-                  onClick={() => navigate("/admin/accounts")}
-                  className="text-xs font-bold text-[#2563eb] hover:underline"
+                <h3 className="font-bold text-gray-900 text-lg">New Users</h3>
+                <button 
+                  onClick={() => navigate("/admin/accounts")} 
+                  className="text-sm font-medium text-[#2563eb] hover:text-blue-700 transition"
                 >
-                  See All
+                  View All
                 </button>
               </div>
 
               <div className="space-y-5">
                 {recentUsers.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">No users found.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No recent users found.</p>
                 ) : (
                   recentUsers.map((user) => {
-                    const initial = user.displayName
-                      ? user.displayName.charAt(0).toUpperCase()
-                      : user.name
-                      ? user.name.charAt(0).toUpperCase()
-                      : "U";
+                    const displayName = user.displayName || user.name || "Tourist";
+                    const initial = displayName.charAt(0).toUpperCase();
 
                     return (
-                      <div
-                        key={user.id}
-                        className="flex items-center gap-3 rounded-[16px] px-2 py-2 hover:bg-blue-50/40 transition"
-                      >
+                      <div key={user.id} className="flex items-center gap-4 group cursor-default">
                         {user.photoURL ? (
-                          <img
-                            src={user.photoURL}
-                            alt="user"
-                            className="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100"
-                          />
+                          <img src={user.photoURL} alt="user" className="w-12 h-12 rounded-full object-cover shadow-sm border border-gray-100" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold text-lg border border-blue-100 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold text-lg flex-shrink-0">
                             {initial}
                           </div>
                         )}
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-gray-800 truncate">
-                            {user.displayName || user.name || "Tourist Traveler"}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-gray-900 truncate group-hover:text-[#2563eb] transition">
+                            {displayName}
                           </p>
-                          <p className="text-xs text-gray-500 font-medium capitalize truncate">
-                            {user.role || "User"}
+                          <p className="text-xs text-gray-500 capitalize truncate mt-0.5">
+                            {user.role || "Standard User"}
                           </p>
                         </div>
                       </div>
@@ -486,6 +331,7 @@ function AdminDashboard() {
                 )}
               </div>
             </div>
+
           </div>
         </div>
       </div>

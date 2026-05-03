@@ -180,29 +180,34 @@ function AccountManagement() {
     }
   };
 
+  // Reusable Lakbay Lanao Styles
+  const inputStyle = "w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100";
+  const primaryBtnStyle = "rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md";
+  const cancelBtnStyle = "rounded-full bg-gray-100 px-6 py-3 text-sm text-gray-700 hover:bg-blue-50 transition font-medium";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] rounded-2xl">
-      <div className="max-w-7xl mx-auto pt-6 pb-20 px-6">
-        {/* Header */}
-        <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="w-full">
+          <div className="max-w-7xl mx-auto pt-10 pb-20 px-6 lg:px-10">       
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-2xl font-bold text-[#2563EB] tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
               Account Management
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            </h1>
+            <p className="text-gray-500 mt-2 text-base">
               Manage staff access, roles, and system permissions.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="relative w-full sm:w-[300px]">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+            <div className="relative w-full sm:min-w-[300px]">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
               <input
                 type="text"
                 placeholder="Search staff..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 pl-11 pr-10 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 shadow-sm"
+                className={`${inputStyle} pl-11 pr-10`}
               />
               {searchTerm && (
                 <button
@@ -216,7 +221,7 @@ function AccountManagement() {
 
             <button
               onClick={() => setShowModal(true)}
-              className="rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
+              className={`${primaryBtnStyle} w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap`}
             >
               <FiPlus className="text-lg" />
               Create Account
@@ -226,7 +231,7 @@ function AccountManagement() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
+          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-8 flex items-center gap-5 hover:shadow-md transition duration-300">
             <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
               <FiUsers />
             </div>
@@ -238,7 +243,7 @@ function AccountManagement() {
             </div>
           </div>
 
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
+          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-8 flex items-center gap-5 hover:shadow-md transition duration-300">
             <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
               <FiUserCheck />
             </div>
@@ -250,7 +255,7 @@ function AccountManagement() {
             </div>
           </div>
 
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition">
+          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-8 flex items-center gap-5 hover:shadow-md transition duration-300">
             <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-2xl flex-shrink-0">
               <FiUserX />
             </div>
@@ -264,10 +269,10 @@ function AccountManagement() {
         </div>
 
         {/* Data Table */}
-        <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition duration-300">
           <div className="overflow-x-auto">
             <div className="min-w-[900px]">
-              <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div className="grid grid-cols-12 gap-4 px-8 py-5 bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 <span className="col-span-4">User Details</span>
                 <span className="col-span-3">Role</span>
                 <span className="col-span-2 text-center">Status</span>
@@ -286,14 +291,14 @@ function AccountManagement() {
                 filteredStaff.map((user) => (
                   <div
                     key={user.id}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 text-sm border-b border-gray-50 items-center hover:bg-blue-50/30 transition-colors last:border-b-0 group"
+                    className="grid grid-cols-12 gap-4 px-8 py-5 text-sm border-b border-gray-50 items-center hover:bg-[#f8fbff] transition-colors last:border-b-0 group"
                   >
                     <div className="col-span-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-[#2563eb] flex items-center justify-center font-bold text-base flex-shrink-0 shadow-sm border border-blue-200">
+                      <div className="w-12 h-12 rounded-full bg-blue-100 text-[#2563eb] flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm border border-blue-200">
                         {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                       </div>
                       <div className="min-w-0">
-                        <span className="font-bold text-gray-800 truncate block">
+                        <span className="font-bold text-gray-900 truncate block text-base group-hover:text-[#2563eb] transition-colors">
                           {user.name}
                         </span>
                         <span className="text-xs text-gray-500 truncate block mt-0.5">
@@ -303,17 +308,17 @@ function AccountManagement() {
                     </div>
 
                     <div className="col-span-3 flex items-center">
-                      <span className="capitalize font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-full text-xs">
+                      <span className="capitalize font-semibold text-gray-600 bg-gray-100 px-4 py-1.5 rounded-full text-xs border border-gray-200">
                         {user.role}
                       </span>
                     </div>
 
                     <div className="col-span-2 flex justify-center items-center">
                       <span
-                        className={`capitalize px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-1.5 ${
+                        className={`capitalize px-4 py-1.5 rounded-full text-xs font-bold tracking-wider flex items-center gap-2 ${
                           user.status === "inactive"
-                            ? "bg-red-50 text-red-600"
-                            : "bg-green-50 text-green-600"
+                            ? "bg-red-50 text-red-600 border border-red-100"
+                            : "bg-green-50 text-green-600 border border-green-100"
                         }`}
                       >
                         <div
@@ -326,10 +331,10 @@ function AccountManagement() {
                     </div>
 
                     <div className="col-span-3 flex items-center justify-end">
-                      <div className="flex items-center bg-gray-50 border border-gray-100 rounded-full p-1 gap-1 shadow-sm">
+                      <div className="flex items-center bg-white border border-gray-200 rounded-full p-1 gap-1 shadow-sm">
                         <button
                           onClick={() => openEditModal(user)}
-                          className="p-2 text-[#2563eb] hover:bg-white hover:shadow-sm rounded-full transition"
+                          className="p-2.5 text-gray-500 hover:text-[#2563eb] hover:bg-blue-50 rounded-full transition"
                           title="Edit Account"
                         >
                           <FiEdit2 className="text-[15px]" />
@@ -339,7 +344,7 @@ function AccountManagement() {
 
                         <button
                           onClick={() => openConfirm("reset", user)}
-                          className="p-2 text-[#2563eb] hover:bg-white hover:shadow-sm rounded-full transition"
+                          className="p-2.5 text-gray-500 hover:text-[#2563eb] hover:bg-blue-50 rounded-full transition"
                           title="Reset Password"
                         >
                           <FiKey className="text-[15px]" />
@@ -355,13 +360,17 @@ function AccountManagement() {
                               openConfirm("deactivate", user);
                             }
                           }}
-                          className="p-2 text-[#2563eb] hover:bg-white hover:shadow-sm rounded-full transition"
-                          title={user.status === "inactive" ? "Activate" : "Deactivate"}
+                          className={`p-2.5 rounded-full transition ${
+                            user.status === "inactive" 
+                              ? "text-green-500 hover:bg-green-50" 
+                              : "text-red-500 hover:bg-red-50"
+                          }`}
+                          title={user.status === "inactive" ? "Activate Account" : "Deactivate Account"}
                         >
                           {user.status === "inactive" ? (
-                            <FiEyeOff className="text-[15px]" />
-                          ) : (
                             <FiEye className="text-[15px]" />
+                          ) : (
+                            <FiEyeOff className="text-[15px]" />
                           )}
                         </button>
                       </div>
@@ -373,22 +382,22 @@ function AccountManagement() {
           </div>
         </div>
 
-        {/* Create Modal */}
+        {/* Create Staff Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white p-8 rounded-[28px] w-full max-w-md shadow-xl relative animate-fadeIn">
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-8 rounded-[28px] w-full max-w-md shadow-xl relative animate-fadeIn border border-gray-100">
               <button
                 onClick={() => setShowModal(false)}
-                className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition"
+                className="absolute top-5 right-5 text-gray-400 hover:text-[#2563eb] bg-gray-50 hover:bg-blue-50 p-2 rounded-full transition"
               >
                 <FiX className="text-lg" />
               </button>
 
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-sm">
+              <h3 className="text-2xl font-bold text-[#2563eb] mb-6 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
                   <FiPlus />
                 </div>
-                Create Staff Account
+                Create Staff
               </h3>
 
               <div className="space-y-5">
@@ -401,7 +410,7 @@ function AccountManagement() {
                     placeholder="Enter full name"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
+                    className={inputStyle}
                   />
                 </div>
 
@@ -414,7 +423,7 @@ function AccountManagement() {
                     placeholder="name@example.com"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
+                    className={inputStyle}
                   />
                 </div>
 
@@ -427,22 +436,19 @@ function AccountManagement() {
                     placeholder="Minimum 6 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
+                    className={inputStyle}
                   />
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="rounded-full bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 transition"
-                >
+                <button onClick={() => setShowModal(false)} className={cancelBtnStyle}>
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateStaff}
                   disabled={!newName || !newEmail || !newPassword}
-                  className="rounded-full bg-[#2563eb] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  className={`${primaryBtnStyle} disabled:bg-blue-300 disabled:cursor-not-allowed disabled:shadow-none`}
                 >
                   Create Account
                 </button>
@@ -451,22 +457,22 @@ function AccountManagement() {
           </div>
         )}
 
-        {/* Edit Modal */}
+        {/* Edit Staff Modal */}
         {editModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white p-8 rounded-[28px] w-full max-w-md shadow-xl relative animate-fadeIn">
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-8 rounded-[28px] w-full max-w-md shadow-xl relative animate-fadeIn border border-gray-100">
               <button
                 onClick={() => setEditModal(false)}
-                className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition"
+                className="absolute top-5 right-5 text-gray-400 hover:text-[#2563eb] bg-gray-50 hover:bg-blue-50 p-2 rounded-full transition"
               >
                 <FiX className="text-lg" />
               </button>
 
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center text-sm">
+              <h3 className="text-2xl font-bold text-[#2563eb] mb-6 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
                   <FiEdit2 />
                 </div>
-                Update Staff Profile
+                Update Profile
               </h3>
 
               <div className="space-y-5">
@@ -478,7 +484,7 @@ function AccountManagement() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
+                    className={inputStyle}
                   />
                 </div>
 
@@ -490,22 +496,19 @@ function AccountManagement() {
                     type="email"
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
-                    className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
+                    className={inputStyle}
                   />
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-                <button
-                  onClick={() => setEditModal(false)}
-                  className="rounded-full bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 transition"
-                >
+                <button onClick={() => setEditModal(false)} className={cancelBtnStyle}>
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdateStaff}
                   disabled={!editName || !editEmail}
-                  className="rounded-full bg-[#2563eb] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md disabled:bg-blue-300"
+                  className={`${primaryBtnStyle} disabled:bg-blue-300 disabled:shadow-none`}
                 >
                   Save Changes
                 </button>
@@ -514,12 +517,12 @@ function AccountManagement() {
           </div>
         )}
 
-        {/* Confirm Modal */}
+        {/* Confirm Action Modal */}
         {confirmModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white p-8 rounded-[28px] w-full max-w-sm shadow-xl text-center relative animate-fadeIn">
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-8 rounded-[28px] w-full max-w-sm shadow-xl text-center relative animate-fadeIn border border-gray-100">
               <div
-                className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-5 ${
+                className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-6 ${
                   confirmAction === "reset"
                     ? "bg-blue-50 text-[#2563eb]"
                     : "bg-red-50 text-red-500"
@@ -532,39 +535,32 @@ function AccountManagement() {
                 )}
               </div>
 
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {confirmAction === "reset" ? "Reset Password?" : "Deactivate Account?"}
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                {confirmAction === "reset" ? "Reset Password" : "Deactivate Account"}
               </h3>
 
-              <p className="text-sm text-gray-500 mb-8 leading-relaxed px-4">
+              <p className="text-sm text-gray-500 mb-8 leading-relaxed">
                 {confirmAction === "reset" ? (
                   <>
-                    An email will be sent to{" "}
-                    <strong className="text-gray-700">{targetUser?.name}</strong> to
-                    securely reset their password.
+                    An email will be sent to <strong className="text-gray-800">{targetUser?.name}</strong> to securely reset their password.
                   </>
                 ) : (
                   <>
-                    Are you sure you want to mark{" "}
-                    <strong className="text-gray-700">{targetUser?.name}</strong> as
-                    inactive? They will immediately lose access to the system.
+                    Are you sure you want to mark <strong className="text-gray-800">{targetUser?.name}</strong> as inactive? They will immediately lose access to the system.
                   </>
                 )}
               </p>
 
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={() => setConfirmModal(false)}
-                  className="rounded-full bg-gray-100 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 transition w-full"
-                >
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <button onClick={() => setConfirmModal(false)} className={`${cancelBtnStyle} w-full`}>
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmAction}
-                  className={`rounded-full px-6 py-2.5 text-sm font-medium text-white shadow-sm transition w-full ${
+                  className={`rounded-full px-6 py-3 text-sm font-medium text-white shadow-sm transition w-full ${
                     confirmAction === "reset"
-                      ? "bg-[#2563eb] hover:bg-blue-700"
-                      : "bg-red-500 hover:bg-red-600"
+                      ? "bg-[#2563eb] hover:bg-blue-700 hover:shadow-md"
+                      : "bg-red-500 hover:bg-red-600 hover:shadow-md"
                   }`}
                 >
                   Confirm
@@ -573,6 +569,7 @@ function AccountManagement() {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
