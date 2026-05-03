@@ -30,15 +30,15 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
   const staffNav = [
     { name: "Dashboard", path: "/staff/dashboard", icon: <FiHome /> },
     { name: "Manage Tourism Data", path: "/staff/manage", icon: <FiFolder /> },
-    { name: "Tourism Content", path: "/staff/content", icon: <FiFileText /> },
-    { name: "Feedback & Ratings", path: "/staff/feedback", icon: <FiStar /> },
-    { name: "Manage Gallery", path: "/staff/gallery", icon: <FiFolder /> }
+    { name: "Manage Tourism Content", path: "/staff/content", icon: <FiFileText /> },
+    { name: "Manage Gallery", path: "/staff/gallery", icon: <FiFolder /> },
+    { name: "Ratings & Reviews", path: "/staff/feedback", icon: <FiStar /> },
   ];
 
   const adminNav = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <FiHome /> },
-    { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
     { name: "Account Management", path: "/admin/accounts", icon: <FiUsers /> },
+    { name: "Analytics & Ratings", path: "/admin/ratings", icon: <FiBarChart2 /> },
     { name: "System Logs", path: "/admin/logs", icon: <FiClipboard /> },
     { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
   ];

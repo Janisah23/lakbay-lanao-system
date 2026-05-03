@@ -11,7 +11,6 @@ import {
   FiMapPin,
   FiGrid,
   FiList,
-  FiChevronDown,
   FiBold,
   FiItalic,
   FiAlignLeft
@@ -51,10 +50,9 @@ function ManageTourismData() {
   const [imageFile, setImageFile] = useState(null);
   const [tourismList, setTourismList] = useState([]);
   
-  // Filters & Views State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [viewMode, setViewMode] = useState("content"); // "content" | "tiles"
+  const [viewMode, setViewMode] = useState("content"); // "content" (List) | "tiles"
   const [showArchived, setShowArchived] = useState(false);
   
   const [editingId, setEditingId] = useState(null);
@@ -127,7 +125,6 @@ function ManageTourismData() {
     return matchesSearch && matchesCategory;
   });
 
-  // REALTIME LISTENER
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "tourismData"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -143,13 +140,11 @@ function ManageTourismData() {
   const handleChange = async (e) => {
     const { name, value } = e.target;
 
-    // CATEGORY CHANGE
     if (name === "category") {
       setFormData((prev) => ({ ...prev, category: value, type: "" }));
       return;
     }
 
-    // MUNICIPALITY CHANGE (AUTO COORDINATES)
     if (name === "municipality") {
       if (!formData.name) {
         setFormData((prev) => ({ ...prev, municipality: value }));
@@ -186,7 +181,6 @@ function ManageTourismData() {
     try {
       let imageURL = null;
 
-      // IMAGE UPLOAD
       if (imageFile) {
         const formDataImage = new FormData();
         formDataImage.append("file", imageFile);
@@ -201,7 +195,6 @@ function ManageTourismData() {
         imageURL = data.secure_url;
       }
 
-      // UPDATE
       if (editingId) {
         await updateDoc(doc(db, "tourismData", editingId), {
           name: formData.name,
@@ -219,9 +212,7 @@ function ManageTourismData() {
           ...(imageURL && { imageURL }),
         });
         setToast("Entry updated successfully!");
-      } 
-      // ADD NEW
-      else {
+      } else {
         if (!imageURL) {
           alert("Please upload an image");
           setLoading(false);
@@ -306,7 +297,7 @@ function ManageTourismData() {
           </div>
         </div>
 
-{/* TOOLBAR: Search, Filters, & View Toggle */}
+        {/* TOOLBAR: Search, Filters, & View Toggle */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8 items-center">
           
           {/* Search Bar */}
@@ -329,10 +320,10 @@ function ManageTourismData() {
             )}
           </div>
 
-          {/* Category Filter */}
+          {/* Type Filter */}
           <div className="relative w-full md:col-span-4 lg:col-span-4">
             <FiFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none" />
-            <select
+              <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className={`${inputStyle} pl-11 appearance-none cursor-pointer`}
@@ -345,40 +336,29 @@ function ManageTourismData() {
             </select>
           </div>
 
-          {/* VIEW TOGGLE DROPDOWN */}
-          <div className="md:col-span-3 lg:col-span-3 flex justify-end">
-            <div className="relative group w-full sm:w-[130px]">
-              <button className="w-full flex justify-between items-center bg-white border border-gray-200 px-4 py-3 rounded-[12px] text-sm text-gray-700 font-medium hover:border-[#2563eb] transition shadow-sm">
-                <div className="flex items-center gap-2">
-                  <FiList className="text-gray-500" />
-                  <span>View</span>
-                </div>
-                <FiChevronDown className="text-gray-400 group-hover:text-[#2563eb] transition-transform group-hover:rotate-180" />
-              </button>
-              
-              {/* Dropdown Menu (Professional Style Layout) */}
-              <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-gray-100 rounded-[12px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 py-2">
-                <button 
-                  onClick={() => setViewMode('tiles')} 
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${viewMode === 'tiles' ? 'bg-[#2563eb]' : 'bg-transparent'}`}></div>
-                  <FiGrid className={`text-base flex-shrink-0 ${viewMode === 'tiles' ? 'text-[#2563eb]' : 'text-gray-500'}`} /> 
-                  <span className={viewMode === 'tiles' ? 'font-bold text-[#2563eb]' : 'font-medium'}>Tiles</span>
-                </button>
-                
-                <button 
-                  onClick={() => setViewMode('content')} 
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${viewMode === 'content' ? 'bg-[#2563eb]' : 'bg-transparent'}`}></div>
-                  <FiList className={`text-base flex-shrink-0 ${viewMode === 'content' ? 'text-[#2563eb]' : 'text-gray-500'}`} /> 
-                  <span className={viewMode === 'content' ? 'font-bold text-[#2563eb]' : 'font-medium'}>Content</span>
-                </button>
-              </div>
-            </div>
+          <div className="flex items-center bg-white border border-gray-200 rounded-[12px] p-1 shadow-sm w-full md:w-auto md:col-span-3 lg:col-span-3 md:justify-self-end justify-center">
+            <button
+              onClick={() => setViewMode("content")}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-[8px] flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                viewMode === "content" ? "bg-blue-50 text-[#2563eb] shadow-sm" : "text-gray-400 hover:text-gray-700"
+              }`}
+              title="content"
+            >
+              <FiList className="text-lg" />
+              <span className="hidden sm:inline pr-1">List</span>
+            </button>
+            <button
+              onClick={() => setViewMode("tiles")}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-[8px] flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                viewMode === "tiles" ? "bg-blue-50 text-[#2563eb] shadow-sm" : "text-gray-400 hover:text-gray-700"
+              }`}
+              title="Tiles View"
+            >
+              <FiGrid className="text-lg" />
+              <span className="hidden sm:inline pr-1">Tiles</span>
+            </button>
           </div>
-          
+
         </div>
         
         {/* ==============================================================
@@ -395,7 +375,7 @@ function ManageTourismData() {
           </div>
         ) : viewMode === "content" ? (
           /* CONTENT VIEW (TABLE) */
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
             <div className="overflow-x-auto">
               <div className="min-w-[1000px]">
                 <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -472,11 +452,10 @@ function ManageTourismData() {
           </div>
         ) : (
           /* TILES VIEW (GRID) */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-300">
             {filteredTourism.map((item) => (
-              <div key={item.id} className="bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full">
+              <div key={item.id} className="bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden hover:shadow-md hover:border-blue-200 transition-all duration-300 group flex flex-col h-full">
                 
-                {/* Image Header */}
                 <div className="h-44 bg-gray-100 relative overflow-hidden flex-shrink-0">
                   {item.imageURL ? (
                     <img src={item.imageURL} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -485,15 +464,13 @@ function ManageTourismData() {
                       <FiImage className="text-4xl" />
                     </div>
                   )}
-                  {/* Category Badge */}
                   <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm text-[10px] font-extrabold text-[#2563eb] uppercase tracking-wider border border-white/50">
                     {item.category}
                   </div>
                 </div>
 
-                {/* Card Content */}
                 <div className="p-5 flex flex-col flex-grow">
-                  <h4 className="font-bold text-gray-900 text-lg mb-1.5 line-clamp-1">{item.name}</h4>
+                  <h4 className="font-bold text-gray-900 text-lg mb-1.5 line-clamp-1 group-hover:text-[#2563eb] transition-colors">{item.name}</h4>
                   
                   <div className="flex items-center gap-1.5 text-[#2563eb] text-xs font-medium mb-3">
                      <FiMapPin /> 
@@ -504,7 +481,6 @@ function ManageTourismData() {
                     {item.description}
                   </p>
                   
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-100">
                     {!showArchived ? (
                       <>
@@ -623,7 +599,6 @@ function ManageTourismData() {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
                 <div className="border border-gray-200 rounded-[12px] overflow-hidden focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100 transition bg-white shadow-sm">
-                  {/* Mock Toolbar to make editing feel comfortable and premium */}
                   <div className="bg-gray-50 border-b border-gray-200 px-3 py-2.5 flex items-center gap-1.5 text-gray-500">
                      <button type="button" className="p-1.5 hover:bg-gray-200 hover:text-gray-800 rounded-md transition" title="Bold"><FiBold /></button>
                      <button type="button" className="p-1.5 hover:bg-gray-200 hover:text-gray-800 rounded-md transition" title="Italic"><FiItalic /></button>
@@ -707,7 +682,7 @@ function ManageTourismData() {
                   accept="image/*"
                   onChange={(e) => setImageFile(e.target.files[0])}
                   {...(!editingId && { required: true })}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-[#2563eb] hover:file:bg-blue-100 cursor-pointer"
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#2563eb] hover:file:bg-blue-100 cursor-pointer"
                 />
               </div>
 
@@ -715,14 +690,14 @@ function ManageTourismData() {
                 <button
                   type="button"
                   onClick={() => setOpenModal(false)}
-                  className="px-6 py-3 rounded-full text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                  className="px-6 py-3 rounded-full text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center justify-center px-8 py-3 rounded-full text-sm font-bold text-white bg-[#2563eb] shadow-sm hover:shadow-md hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center px-8 py-3 rounded-full text-sm font-medium text-white bg-[#2563eb] shadow-sm hover:shadow-md hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2"><FiRefreshCw className="animate-spin" /> Saving...</span>
