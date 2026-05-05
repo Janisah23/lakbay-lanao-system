@@ -194,7 +194,7 @@ function Signup() {
         Back to Sign In
       </button>
 
-      <div className="relative z-10 w-full max-w-[720px] rounded-[30px] border border-blue-100 bg-white/92 p-7 text-center shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-[4px] md:p-9">
+      <div className="relative z-10 w-full max-w-[720px] rounded-[30px] border border-blue-100 bg-white/95 p-7 text-center shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-[4px] md:p-9">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-[#2563eb] shadow-sm">
           <FiUserPlus className="text-2xl" />
         </div>

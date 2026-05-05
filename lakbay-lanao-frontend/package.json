@@ -14,6 +14,7 @@
     "date-fns": "^4.1.0",
     "firebase": "^12.9.0",
     "framer-motion": "^12.38.0",
+    "html2pdf": "^0.0.11",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
     "react-big-calendar": "^1.19.4",

@@ -20,13 +20,24 @@ const CATEGORY_COLORS = {
   "Cultural Heritage Site": "text-green-600 bg-green-50 border-green-100",
 };
 
+const formatCategoryLabel = (category) => {
+  if (category === "Cultural Heritage Site") return "Cultural";
+  if (category === "Establishment") return "Stay / Food";
+  return category || "Place";
+};
+
+const formatFilterLabel = (filter) => {
+  if (filter === "Cultural Heritage Site") return "Cultural";
+  if (filter === "Establishment") return "Stay / Food";
+  return filter;
+};
+
 function Map() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [places, setPlaces] = useState([]);
   const [selectedSpot, setSelectedSpot] = useState(null);
 
-  // Realtime listener - sidebar updates whenever ManageTourismData adds/edits
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "tourismData"),
@@ -39,6 +50,7 @@ function Map() {
               item.coordinates?.lat &&
               item.coordinates?.lng
           );
+
         setPlaces(data);
       },
       (error) => console.error("Sidebar load error:", error)
@@ -66,8 +78,6 @@ function Map() {
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
-              
-
               <h1 className="text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
                 Explore Lanao del Sur
               </h1>
@@ -83,7 +93,7 @@ function Map() {
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-4">
-            {/* ── SIDEBAR ───────────────────────────────────────── */}
+            {/* SIDEBAR */}
             <div className="flex h-[620px] flex-col rounded-[28px] border border-blue-100 bg-white p-5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] lg:col-span-1">
               {/* Search */}
               <div className="relative mb-3">
@@ -104,13 +114,13 @@ function Map() {
                   <button
                     key={f}
                     onClick={() => setActiveFilter(f)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${
                       activeFilter === f
                         ? "border-[#2563eb] bg-[#2563eb] text-white shadow-sm"
                         : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                     }`}
                   >
-                    {f}
+                    {formatFilterLabel(f)}
                   </button>
                 ))}
               </div>
@@ -149,22 +159,24 @@ function Map() {
                       </div>
 
                       <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-sm font-bold leading-snug text-[#2563eb]">
+                          {place.name}
+                        </h3>
+
+                        <p className="mt-0.5 truncate text-xs text-gray-400">
+                          {place.location?.municipality || "Lanao del Sur"}
+                        </p>
+
                         <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                          className={`mt-1.5 inline-flex max-w-[92px] rounded-full border px-2 py-[2px] text-[8px] font-bold uppercase tracking-wide ${
                             CATEGORY_COLORS[place.category] ||
                             "border-blue-100 bg-blue-50 text-blue-600"
                           }`}
                         >
-                          {place.category}
+                          <span className="truncate">
+                            {formatCategoryLabel(place.category)}
+                          </span>
                         </span>
-
-                        <h3 className="mt-1 truncate text-sm font-bold text-[#2563eb]">
-                          {place.name}
-                        </h3>
-
-                        <p className="truncate text-xs text-gray-400">
-                          {place.location?.municipality || "Lanao del Sur"}
-                        </p>
                       </div>
                     </div>
                   ))
@@ -172,7 +184,7 @@ function Map() {
               </div>
             </div>
 
-            {/* ── MAP ───────────────────────────────────────────── */}
+            {/* MAP */}
             <div className="lg:col-span-3">
               <div className="h-[620px] overflow-hidden rounded-[28px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
                 <div className="h-full overflow-hidden rounded-[24px]">
@@ -188,8 +200,8 @@ function Map() {
                 {[
                   { label: "Destination", color: "bg-red-500" },
                   { label: "Landmark", color: "bg-blue-500" },
-                  { label: "Establishment", color: "bg-yellow-500" },
-                  { label: "Cultural Heritage Site", color: "bg-green-500" },
+                  { label: "Stay / Food", color: "bg-yellow-500" },
+                  { label: "Cultural", color: "bg-green-500" },
                 ].map((l) => (
                   <div key={l.label} className="flex items-center gap-1.5">
                     <span className={`h-3 w-3 rounded-full ${l.color}`} />
