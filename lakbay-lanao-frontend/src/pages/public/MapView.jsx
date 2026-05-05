@@ -4,13 +4,20 @@ import { useState, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
-const FILTERS = ["All", "Destination", "Landmark", "Establishment", "Cultural Heritage Site"];
+
+const FILTERS = [
+  "All",
+  "Destination",
+  "Landmark",
+  "Establishment",
+  "Cultural Heritage Site",
+];
 
 const CATEGORY_COLORS = {
-  Destination: "text-red-500 bg-red-50",
-  Landmark: "text-blue-500 bg-blue-50",
-  Establishment: "text-yellow-600 bg-yellow-50",
-  "Cultural Heritage Site": "text-green-600 bg-green-50",
+  Destination: "text-red-500 bg-red-50 border-red-100",
+  Landmark: "text-blue-500 bg-blue-50 border-blue-100",
+  Establishment: "text-yellow-600 bg-yellow-50 border-yellow-100",
+  "Cultural Heritage Site": "text-green-600 bg-green-50 border-green-100",
 };
 
 function Map() {
@@ -36,6 +43,7 @@ function Map() {
       },
       (error) => console.error("Sidebar load error:", error)
     );
+
     return () => unsubscribe();
   }, []);
 
@@ -43,8 +51,10 @@ function Map() {
     const matchSearch = place.name
       ?.toLowerCase()
       .includes(search.toLowerCase());
+
     const matchFilter =
       activeFilter === "All" || place.category === activeFilter;
+
     return matchSearch && matchFilter;
   });
 
@@ -52,42 +62,52 @@ function Map() {
     <>
       <Navbar />
 
-      <section className="pt-28 px-6 pb-10 bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-semibold text-blue-600">
-            Explore Lanao del Sur
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Discover tourist spots using our interactive map.
-          </p>
+      <section className="min-h-screen bg-[#f3f9ff] px-6 pb-20 pt-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-8">
+              <h1 className="text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
+                Explore Lanao del Sur
+              </h1>
 
+              <p className="mt-2 max-w-2xl text-gray-500">
+                Discover tourist spots using our interactive map.
+              </p>
+            </div>
+
+            <div className="rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-medium text-gray-500 shadow-sm">
+              {places.length} mapped place{places.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-4">
             {/* ── SIDEBAR ───────────────────────────────────────── */}
-            <div className="lg:col-span-1 bg-white rounded-2xl shadow-md border p-5 h-[620px] flex flex-col">
-
+            <div className="flex h-[620px] flex-col rounded-[28px] border border-blue-100 bg-white p-5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] lg:col-span-1">
               {/* Search */}
               <div className="relative mb-3">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400" />
+
                 <input
                   type="text"
                   placeholder="Search destinations..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full border rounded-full pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full rounded-full border border-blue-100 bg-[#f8fbff] py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 hover:border-blue-200 focus:border-[#2563eb] focus:bg-white focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
               {/* Filter pills */}
-              <div className="flex gap-2 flex-wrap mb-4">
+              <div className="mb-4 flex flex-wrap gap-2">
                 {FILTERS.map((f) => (
                   <button
                     key={f}
                     onClick={() => setActiveFilter(f)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                       activeFilter === f
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white"
+                        ? "border-[#2563eb] bg-[#2563eb] text-white shadow-sm"
+                        : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                     }`}
                   >
                     {f}
@@ -96,46 +116,54 @@ function Map() {
               </div>
 
               {/* Count */}
-              <p className="text-xs text-gray-400 mb-3">
-                {filteredPlaces.length} place{filteredPlaces.length !== 1 ? "s" : ""} found
+              <p className="mb-3 text-xs font-medium text-gray-400">
+                {filteredPlaces.length} place
+                {filteredPlaces.length !== 1 ? "s" : ""} found
               </p>
 
               {/* List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              <div className="flex-1 space-y-3 overflow-y-auto pr-1">
                 {filteredPlaces.length === 0 ? (
-                  <p className="text-center text-gray-400 text-sm mt-10">
-                    No places found.
-                  </p>
+                  <div className="mt-10 rounded-[22px] border border-dashed border-blue-100 bg-[#f8fbff] px-4 py-10 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      No places found.
+                    </p>
+                  </div>
                 ) : (
                   filteredPlaces.map((place) => (
                     <div
                       key={place.id}
                       onClick={() => setSelectedSpot(place)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer ${
+                      className={`flex cursor-pointer items-center gap-3 rounded-[22px] border p-3 transition-all duration-300 ${
                         selectedSpot?.id === place.id
-                          ? "border-blue-400 bg-blue-50 shadow-sm"
-                          : "bg-gray-50 hover:shadow-md hover:border-blue-200"
+                          ? "border-[#2563eb]/30 bg-blue-50 shadow-sm"
+                          : "border-blue-50 bg-[#f8fbff] hover:border-blue-100 hover:bg-white hover:shadow-[0_8px_20px_rgba(37,99,235,0.07)]"
                       }`}
                     >
-                      <img
-                        src={place.imageURL || "/default.jpg"}
-                        alt={place.name}
-                        className="w-14 h-14 rounded-lg object-cover shrink-0"
-                      />
-                      <div className="min-w-0">
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[16px] border border-white bg-blue-50 shadow-sm">
+                        <img
+                          src={place.imageURL || "/default.jpg"}
+                          alt={place.name}
+                          className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.005]"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
                             CATEGORY_COLORS[place.category] ||
-                            "text-blue-600 bg-blue-50"
+                            "border-blue-100 bg-blue-50 text-blue-600"
                           }`}
                         >
                           {place.category}
                         </span>
-                        <h3 className="font-semibold text-gray-800 text-sm mt-0.5 truncate">
+
+                        <h3 className="mt-1 truncate text-sm font-bold text-[#2563eb]">
                           {place.name}
                         </h3>
-                        <p className="text-xs text-gray-400 truncate">
-                          {place.location?.municipality}
+
+                        <p className="truncate text-xs text-gray-400">
+                          {place.location?.municipality || "Lanao del Sur"}
                         </p>
                       </div>
                     </div>
@@ -146,15 +174,17 @@ function Map() {
 
             {/* ── MAP ───────────────────────────────────────────── */}
             <div className="lg:col-span-3">
-              <div className="rounded-2xl overflow-hidden shadow-lg border h-[620px]">
-                <LanaoMap
-                  selectedSpot={selectedSpot}
-                  onSpotClick={setSelectedSpot}
-                />
+              <div className="h-[620px] overflow-hidden rounded-[28px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
+                <div className="h-full overflow-hidden rounded-[24px]">
+                  <LanaoMap
+                    selectedSpot={selectedSpot}
+                    onSpotClick={setSelectedSpot}
+                  />
+                </div>
               </div>
 
               {/* Legend */}
-              <div className="mt-3 flex flex-wrap gap-4 px-1">
+              <div className="mt-4 flex flex-wrap gap-3 rounded-[22px] border border-blue-100 bg-white px-5 py-3 shadow-sm">
                 {[
                   { label: "Destination", color: "bg-red-500" },
                   { label: "Landmark", color: "bg-blue-500" },
@@ -162,13 +192,14 @@ function Map() {
                   { label: "Cultural Heritage Site", color: "bg-green-500" },
                 ].map((l) => (
                   <div key={l.label} className="flex items-center gap-1.5">
-                    <span className={`w-3 h-3 rounded-full ${l.color}`} />
-                    <span className="text-xs text-gray-500">{l.label}</span>
+                    <span className={`h-3 w-3 rounded-full ${l.color}`} />
+                    <span className="text-xs font-medium text-gray-500">
+                      {l.label}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </section>
