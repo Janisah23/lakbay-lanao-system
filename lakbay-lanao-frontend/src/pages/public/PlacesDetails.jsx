@@ -705,42 +705,65 @@ const PlacesDetails = () => {
       )}
 
       {/* LIGHTBOX */}
+      {/* LIGHTBOX */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"
+          onClick={() => setLightboxOpen(false)}
+        >
           <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute right-5 top-5 text-white/70 hover:text-white"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxOpen(false);
+            }}
+            className="absolute right-5 top-5 z-[100000] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
           >
             <FiX className="text-2xl" />
           </button>
 
-          <button
-            onClick={() => setActiveGalleryIndex((i) => Math.max(i - 1, 0))}
-            className="absolute left-4 text-white/70 hover:text-white"
-          >
-            <FiChevronLeft className="text-4xl" />
-          </button>
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveGalleryIndex((i) =>
+                    i === 0 ? galleryImages.length - 1 : i - 1
+                  );
+                }}
+                className="absolute left-4 top-1/2 z-[100000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              >
+                <FiChevronLeft className="text-4xl" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveGalleryIndex((i) =>
+                    i === galleryImages.length - 1 ? 0 : i + 1
+                  );
+                }}
+                className="absolute right-4 top-1/2 z-[100000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              >
+                <FiChevronRight className="text-4xl" />
+              </button>
+            </>
+          )}
 
           <img
-            src={galleryImages[activeGalleryIndex]}
-            alt=""
-            className="max-h-[85vh] max-w-full rounded-[16px] object-contain"
+            src={galleryImages[activeGalleryIndex] || "/default.jpg"}
+            alt={destinationDetail.title || destinationDetail.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-screen max-w-screen object-contain"
           />
 
-          <button
-            onClick={() =>
-              setActiveGalleryIndex((i) =>
-                Math.min(i + 1, galleryImages.length - 1)
-              )
-            }
-            className="absolute right-4 text-white/70 hover:text-white"
-          >
-            <FiChevronRight className="text-4xl" />
-          </button>
-
-          <p className="absolute bottom-5 left-1/2 -translate-x-1/2 text-sm text-white/60">
-            {activeGalleryIndex + 1} / {galleryImages.length}
-          </p>
+          {galleryImages.length > 1 && (
+            <p className="absolute bottom-5 left-1/2 z-[100000] -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/70">
+              {activeGalleryIndex + 1} / {galleryImages.length}
+            </p>
+          )}
         </div>
       )}
 
