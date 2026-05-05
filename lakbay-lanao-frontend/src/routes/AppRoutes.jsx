@@ -15,6 +15,8 @@ import Favorites from "../pages/public/Favorites";
 import Itinerary from "../pages/public/Itinerary";
 import EventsCalendar from "../pages/public/EventsCalendar";
 import Articles from "../pages/public/Articles";
+import Events from "../pages/public/Events";
+
 
 
 import StaffLayout from "../layout/StaffLayout";
@@ -37,11 +39,13 @@ import AdminRoute from "../components/common/AdminRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import TourismChatbot from "../components/chatbot/TourismChatbot";
 
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
+       {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
 
@@ -58,7 +62,9 @@ function AppRoutes() {
         <Route path="/blog" element={<TourismBlog />} />
         <Route path="/chatbot" element={<TourismChatbot />} />
         <Route path="/favorites" element={<Favorites />} />
-        <Route path="/events" element={<EventsCalendar />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/events-calendar" element={<EventsCalendar />} />
+      
 
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />

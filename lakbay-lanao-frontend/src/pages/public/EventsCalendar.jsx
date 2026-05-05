@@ -42,6 +42,18 @@ const formatDate = (val) => {
   });
 };
 
+const formatShortDate = (val) => {
+  const date = safeDate(val);
+
+  if (!date) return "TBA";
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 const formatLocation = (location) => {
   if (!location) return "Lanao del Sur";
 
@@ -50,6 +62,10 @@ const formatLocation = (location) => {
   return `${location.municipality || ""}${
     location.municipality && location.province ? ", " : ""
   }${location.province || "Lanao del Sur"}`;
+};
+
+const getEventTitle = (event) => {
+  return event?.title || event?.name || "Untitled Event";
 };
 
 function EventsCalendar() {
@@ -107,7 +123,7 @@ function EventsCalendar() {
   }, [events]);
 
   return (
-    <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff]">
+    <div className="font-sans min-h-screen bg-[#f3f9ff] text-gray-900">
       <style>{`
         .lakbay-calendar .react-calendar {
           width: 100%;
@@ -128,13 +144,22 @@ function EventsCalendar() {
           padding: 10px;
           font-weight: 700;
           color: #2563eb;
-          background: #f8fbff;
+          background: rgba(255, 255, 255, 0.78);
+          border: 1px solid rgba(219, 234, 254, 0.85);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);
           transition: all 0.2s ease;
         }
 
         .lakbay-calendar .react-calendar__navigation button:hover,
         .lakbay-calendar .react-calendar__navigation button:focus {
           background: #eff6ff;
+          box-shadow: 0 6px 14px rgba(37, 99, 235, 0.07);
+        }
+
+        .lakbay-calendar .react-calendar__navigation button:disabled {
+          background: rgba(248, 251, 255, 0.8);
+          color: #cbd5e1;
+          box-shadow: none;
         }
 
         .lakbay-calendar .react-calendar__month-view__weekdays {
@@ -150,8 +175,9 @@ function EventsCalendar() {
         }
 
         .lakbay-calendar .react-calendar__tile {
+          position: relative;
           height: 58px;
-          border-radius: 16px;
+          border-radius: 18px;
           color: #334155;
           transition: all 0.2s ease;
         }
@@ -171,6 +197,11 @@ function EventsCalendar() {
           background: #2563eb !important;
           color: white !important;
           font-weight: 700;
+          box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+        }
+
+        .lakbay-calendar .react-calendar__tile--active .event-dot {
+          background: white;
         }
 
         .lakbay-calendar .react-calendar__month-view__days__day--neighboringMonth {
@@ -181,63 +212,71 @@ function EventsCalendar() {
       <Navbar />
 
       {/* HEADER */}
-      <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-5 font-medium uppercase tracking-wider">
+      <section className="mx-auto max-w-7xl px-6 pb-10 pt-32">
+        <div className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-gray-400">
           <span
-            className="cursor-pointer hover:text-[#2563eb] transition"
+            className="cursor-pointer transition hover:text-[#2563eb]"
             onClick={() => navigate("/")}
           >
             Home
           </span>
+
           <span>/</span>
+
           <span className="text-gray-500">Events Calendar</span>
         </div>
 
-        <div className="flex items-start justify-between gap-8 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-semibold text-red-600 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+        <div className="flex flex-wrap items-start justify-between gap-8">
+          <div className="min-w-0 flex-1">
+            <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#2563eb] shadow-sm">
+              <FiCalendar className="text-xs" />
               Lakbay Lanao Events
             </span>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] mb-6 tracking-tight leading-tight">
+            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight text-[#2563eb] md:text-5xl">
               Events Calendar
             </h1>
 
-            <p className="text-gray-500 max-w-2xl leading-relaxed">
+            <p className="max-w-2xl leading-relaxed text-gray-500">
               Discover festivals, cultural gatherings, local celebrations, and
               tourism activities across Lanao del Sur.
             </p>
           </div>
 
-          <div className="rounded-full border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-600 shadow-sm">
+          <div className="rounded-full border border-white/80 bg-white/90 px-5 py-3 text-sm font-medium text-gray-600 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px]">
             {events.length} event{events.length !== 1 ? "s" : ""} available
           </div>
         </div>
       </section>
 
       {/* FEATURED EVENT */}
+   
       {featuredEvent && (
-        <section className="px-6 max-w-7xl mx-auto mb-12">
-          <div className="overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm">
-            <div className="grid md:grid-cols-[340px_1fr]">
-              <div className="relative h-[260px] md:h-full overflow-hidden">
+        <section className="mx-auto mb-12 max-w-7xl px-6">
+          <div className="overflow-hidden rounded-[30px] border border-white/80 bg-white/85 p-2.5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[2px]">
+            <div className="grid overflow-hidden rounded-[24px] bg-white md:grid-cols-[300px_1fr]">
+              <div className="relative h-[220px] overflow-hidden bg-blue-50 md:h-[260px]">
                 <img
                   src={featuredEvent.imageURL || "/default.jpg"}
-                  alt={featuredEvent.title}
-                  className="h-full w-full object-cover"
+                  alt={getEventTitle(featuredEvent)}
+                  className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.005]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
+
+                <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm">
+                  {featuredEvent.category || "Event"}
+                </span>
               </div>
 
-              <div className="p-8 md:p-10">
-                <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 border border-blue-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#2563eb]">
+              <div className="p-6 md:p-8">
+                <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#2563eb]">
                   <FiStar />
                   Featured Event
                 </span>
 
-                <h2 className="text-3xl font-bold text-[#2563eb] tracking-tight">
-                  {featuredEvent.title}
+                <h2 className="line-clamp-2 text-2xl font-bold tracking-tight text-[#2563eb] md:text-3xl">
+                  {getEventTitle(featuredEvent)}
                 </h2>
 
                 <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
@@ -246,7 +285,7 @@ function EventsCalendar() {
                     <span>{formatDate(featuredEvent.eventDate)}</span>
                   </div>
 
-                  <div className="w-px h-4 bg-gray-200" />
+                  <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
                   <div className="flex items-center gap-1.5">
                     <FiMapPin className="text-[#2563eb]" />
@@ -254,21 +293,21 @@ function EventsCalendar() {
                   </div>
                 </div>
 
-                <p className="mt-5 line-clamp-3 max-w-3xl text-sm leading-7 text-gray-500">
+                <p className="mt-4 line-clamp-2 max-w-3xl text-sm leading-6 text-gray-500">
                   {featuredEvent.summary || "Explore this featured local event."}
                 </p>
 
-                <div className="mt-7 flex flex-wrap gap-3">
+                <div className="mt-6 flex flex-wrap gap-3">
                   <button
                     onClick={() => setSelectedEvent(featuredEvent)}
-                    className="rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+                    className="rounded-full bg-[#2563eb] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
                   >
                     View Details
                   </button>
 
                   <button
                     onClick={() => navigate(`/event/${featuredEvent.id}`)}
-                    className="rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb]"
+                    className="rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-medium text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50"
                   >
                     Open Full Page
                   </button>
@@ -280,21 +319,22 @@ function EventsCalendar() {
       )}
 
       {/* MAIN CONTENT */}
-      <section className="pb-20 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+      <section className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3">
           {/* LEFT */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 md:p-8">
-              <div className="mb-6 pb-4 border-b border-gray-100">
+          <div className="space-y-6 lg:col-span-2">
+            <div className="rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] md:p-8">
+              <div className="mb-6 border-b border-gray-100 pb-4">
                 <h2 className="text-2xl font-bold text-[#2563eb]">
                   Choose a Date
                 </h2>
+
                 <p className="mt-1 text-sm text-gray-500">
                   Blue dots show days with available events.
                 </p>
               </div>
 
-              <div className="lakbay-calendar rounded-[24px] border border-gray-200 bg-white p-4 md:p-6 shadow-sm">
+              <div className="lakbay-calendar rounded-[24px] border border-white/80 bg-white/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.04)] backdrop-blur-[2px] md:p-6">
                 <Calendar
                   onChange={setDate}
                   value={date}
@@ -303,7 +343,7 @@ function EventsCalendar() {
 
                     return count ? (
                       <div className="mt-1 flex justify-center">
-                        <span className="h-2 w-2 rounded-full bg-[#2563eb]" />
+                        <span className="event-dot h-2 w-2 rounded-full bg-[#2563eb]" />
                       </div>
                     ) : null;
                   }}
@@ -311,18 +351,19 @@ function EventsCalendar() {
               </div>
             </div>
 
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 md:p-8">
-              <div className="mb-6 pb-4 border-b border-gray-100">
+            <div className="rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] md:p-8">
+              <div className="mb-6 border-b border-gray-100 pb-4">
                 <h2 className="text-2xl font-bold text-[#2563eb]">
                   Events on Selected Date
                 </h2>
+
                 <p className="mt-1 text-sm text-gray-500">
                   {date.toDateString()}
                 </p>
               </div>
 
               {selectedEvents.length === 0 ? (
-                <div className="rounded-[24px] border border-dashed border-gray-200 bg-[#f8fbff] p-10 text-center">
+                <div className="rounded-[24px] border border-dashed border-blue-100 bg-[#f8fbff] p-10 text-center">
                   <FiCalendar className="mx-auto mb-3 text-3xl text-gray-300" />
                   <p className="text-sm font-medium text-gray-400">
                     No events for this date.
@@ -334,12 +375,12 @@ function EventsCalendar() {
                     <button
                       key={event.id}
                       onClick={() => setSelectedEvent(event)}
-                      className="group flex w-full gap-4 rounded-[24px] border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-100 hover:bg-blue-50/50"
+                      className="group flex w-full gap-4 rounded-[24px] border border-white/80 bg-white/90 p-4 text-left shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] transition hover:border-blue-100 hover:bg-blue-50/50"
                     >
                       <img
                         src={event.imageURL || "/default.jpg"}
-                        alt={event.title}
-                        className="h-24 w-24 rounded-[20px] object-cover bg-blue-50"
+                        alt={getEventTitle(event)}
+                        className="h-24 w-24 rounded-[20px] bg-blue-50 object-cover"
                       />
 
                       <div className="min-w-0 flex-1">
@@ -348,15 +389,18 @@ function EventsCalendar() {
                         </span>
 
                         <h3 className="mt-2 line-clamp-1 font-bold text-[#2563eb]">
-                          {event.title}
+                          {getEventTitle(event)}
                         </h3>
 
-                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">
-                          {event.summary || "No description available."}
-                        </p>
+                        <div className="mt-2 flex items-center gap-2 text-xs font-medium text-gray-400">
+                          <FiMapPin className="text-[#2563eb]" />
+                          <span className="line-clamp-1">
+                            {formatLocation(event.location)}
+                          </span>
+                        </div>
                       </div>
 
-                      <FiChevronRight className="mt-9 text-gray-400 group-hover:text-[#2563eb]" />
+                      <FiChevronRight className="mt-9 text-gray-400 transition group-hover:text-[#2563eb]" />
                     </button>
                   ))}
                 </div>
@@ -366,17 +410,19 @@ function EventsCalendar() {
 
           {/* RIGHT */}
           <aside className="space-y-5 lg:sticky lg:top-24">
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-              <h3 className="font-bold text-gray-900 mb-2">Selected Date</h3>
+            <div className="rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px]">
+              <h3 className="mb-2 font-bold text-gray-900">Selected Date</h3>
               <p className="text-sm text-gray-500">{date.toDateString()}</p>
 
-              <div className="mt-5 flex items-start gap-4 bg-blue-50 border border-blue-100 p-5 rounded-[16px]">
-                <FiCalendar className="text-xl text-[#2563eb] flex-shrink-0 mt-0.5" />
+              <div className="mt-5 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5">
+                <FiCalendar className="mt-0.5 flex-shrink-0 text-xl text-[#2563eb]" />
+
                 <div>
-                  <p className="font-bold mb-1 text-[#2563eb] text-sm">
+                  <p className="mb-1 text-sm font-bold text-[#2563eb]">
                     Event Count
                   </p>
-                  <p className="text-sm text-blue-800 leading-relaxed">
+
+                  <p className="text-sm leading-relaxed text-blue-800">
                     {selectedEvents.length} event
                     {selectedEvents.length !== 1 ? "s" : ""} available
                   </p>
@@ -384,17 +430,19 @@ function EventsCalendar() {
               </div>
             </div>
 
-            <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px]">
+              <div className="mb-5 flex items-center justify-between">
                 <h3 className="font-bold text-gray-900">All Events</h3>
-                <span className="text-xs font-semibold text-[#2563eb] bg-blue-50 px-3 py-1 rounded-full">
+
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#2563eb]">
                   {events.length}
                 </span>
               </div>
 
               {events.length === 0 ? (
-                <div className="rounded-[20px] border border-dashed border-gray-200 bg-[#f8fbff] p-6 text-center">
+                <div className="rounded-[20px] border border-dashed border-blue-100 bg-[#f8fbff] p-6 text-center">
                   <FiCalendar className="mx-auto mb-3 text-2xl text-gray-300" />
+
                   <p className="text-sm text-gray-400">
                     No events found. Check contentType, status, and eventDate.
                   </p>
@@ -405,15 +453,15 @@ function EventsCalendar() {
                     <button
                       key={event.id}
                       onClick={() => setSelectedEvent(event)}
-                      className="w-full rounded-[18px] border border-gray-200 bg-white p-4 text-left transition hover:border-blue-200 hover:bg-blue-50"
+                      className="w-full rounded-[18px] border border-white/80 bg-white/90 p-4 text-left shadow-sm ring-1 ring-white/60 transition hover:border-blue-100 hover:bg-blue-50/60"
                     >
-                      <p className="text-sm font-semibold text-[#2563eb] line-clamp-2">
-                        {event.title}
+                      <p className="line-clamp-2 text-sm font-semibold text-[#2563eb]">
+                        {getEventTitle(event)}
                       </p>
 
                       <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
-                        <FiCalendar />
-                        <span>{formatDate(event.eventDate)}</span>
+                        <FiCalendar className="text-[#2563eb]" />
+                        <span>{formatShortDate(event.eventDate)}</span>
                       </div>
                     </button>
                   ))}
@@ -427,27 +475,29 @@ function EventsCalendar() {
       {/* MODAL */}
       {selectedEvent && (
         <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/40 px-6 backdrop-blur-sm">
-          <div className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-xl">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/80 bg-white/95 p-2.5 shadow-xl ring-1 ring-white/60 backdrop-blur-[2px]">
             <button
               onClick={() => setSelectedEvent(null)}
-              className="absolute right-4 top-4 z-10 rounded-full bg-white/90 p-2 text-gray-600 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb]"
+              className="absolute right-5 top-5 z-10 rounded-full bg-white/90 p-2 text-gray-600 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb]"
             >
               <FiX />
             </button>
 
-            <img
-              src={selectedEvent.imageURL || "/default.jpg"}
-              alt={selectedEvent.title}
-              className="h-44 w-full object-cover"
-            />
+            <div className="overflow-hidden rounded-[22px] bg-blue-50">
+              <img
+                src={selectedEvent.imageURL || "/default.jpg"}
+                alt={getEventTitle(selectedEvent)}
+                className="h-44 w-full object-cover"
+              />
+            </div>
 
-            <div className="p-6">
-              <span className="mb-3 inline-flex rounded-full bg-blue-50 border border-blue-100 px-4 py-2 text-xs font-semibold text-[#2563eb]">
+            <div className="px-4 pb-5 pt-5">
+              <span className="mb-3 inline-flex rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-semibold text-[#2563eb]">
                 {selectedEvent.category || "Lakbay Lanao Event"}
               </span>
 
-              <h2 className="text-2xl font-bold text-[#2563eb]">
-                {selectedEvent.title}
+              <h2 className="line-clamp-2 text-2xl font-bold text-[#2563eb]">
+                {getEventTitle(selectedEvent)}
               </h2>
 
               <div className="mt-4 flex flex-col gap-2 text-sm text-gray-500">
@@ -462,7 +512,7 @@ function EventsCalendar() {
                 </div>
               </div>
 
-              <p className="mt-4 line-clamp-5 text-sm leading-6 text-gray-500">
+              <p className="mt-4 line-clamp-4 text-sm leading-6 text-gray-500">
                 {selectedEvent.summary || "No event summary available."}
               </p>
 
@@ -477,7 +527,7 @@ function EventsCalendar() {
         </div>
       )}
 
-      <TourismChatbot />
+      
       <Footer />
     </div>
   );

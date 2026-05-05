@@ -20,15 +20,15 @@ import {
 } from "react-icons/fi";
 import "./Navbar.css";
 
+import ptoLogo from "../../assets/pto.png";
+import explorePreview from "../../assets/explore-preview.png";
+import featurePreview from "../../assets/feature-preview.png";
+
 function Navbar() {
   const navigate = useNavigate();
 
-  // ─────────────────────────────────────
-  // STATE
-  // ─────────────────────────────────────
   const [user, setUser] = useState(null);
   const [showFeatures, setShowFeatures] = useState(false);
-  const [showEvents, setShowEvents] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
@@ -39,14 +39,11 @@ function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  // ─────────────────────────────────────
-  // HELPERS
-  // ─────────────────────────────────────
   const normalize = (text = "") =>
     text.toString().toLowerCase().replaceAll(" ", "").replaceAll("&", "");
 
   const navLinkClass =
-    "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 hover:drop-shadow-[0_0_10px_rgba(37,99,235,0.4)] after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
+    "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
 
   const recentEvents = eventsData
     .filter((item) => item.contentType === "Event")
@@ -62,8 +59,7 @@ function Navbar() {
       item.searchType?.toLowerCase().includes(term);
 
     const matchesFilter =
-      activeFilter === "all" ||
-      normalize(item.searchType).includes(activeFilter);
+      activeFilter === "all" || normalize(item.searchType).includes(activeFilter);
 
     return matchesSearch && matchesFilter;
   });
@@ -78,7 +74,6 @@ function Navbar() {
     setShowMobileMenu(false);
     setShowExplore(false);
     setShowFeatures(false);
-    setShowEvents(false);
   };
 
   const handleLogout = async () => {
@@ -98,9 +93,6 @@ function Navbar() {
     closeSearch();
   };
 
-  // ─────────────────────────────────────
-  // CLOSE DROPDOWNS ON OUTSIDE CLICK
-  // ─────────────────────────────────────
   useEffect(() => {
     const handleClickOutside = () => {
       setOpenMenu(false);
@@ -111,9 +103,6 @@ function Navbar() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // ─────────────────────────────────────
-  // NAVBAR SCROLL EFFECT
-  // ─────────────────────────────────────
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
 
@@ -121,9 +110,6 @@ function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ─────────────────────────────────────
-  // FETCH TOURISM CONTENT + SEARCH ITEMS
-  // ─────────────────────────────────────
   useEffect(() => {
     const unsubContent = onSnapshot(
       collection(db, "tourismContent"),
@@ -191,9 +177,6 @@ function Navbar() {
     };
   }, []);
 
-  // ─────────────────────────────────────
-  // AUTH STATE
-  // ─────────────────────────────────────
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -202,9 +185,6 @@ function Navbar() {
     return () => unsubscribe();
   }, []);
 
-  // ─────────────────────────────────────
-  // LOCK BODY WHEN SEARCH MODAL IS OPEN
-  // ─────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = showSearch ? "hidden" : "auto";
 
@@ -215,20 +195,18 @@ function Navbar() {
 
   return (
     <>
-      {/* ──────────────────────────────── */}
       {/* NAVBAR */}
-      {/* ──────────────────────────────── */}
       <nav
-        className={`fixed top-0 left-0 w-full z-[1000] flex justify-center transition-all duration-300 ${
+        className={`fixed left-0 top-0 z-[1000] flex w-full justify-center transition-all duration-300 ${
           isScrolled ? "pt-2 md:pt-4" : "pt-4 md:pt-6"
         }`}
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`w-[92%] max-w-7xl bg-white/95 backdrop-blur-md border border-gray-200 rounded-full flex items-center justify-between transition-all duration-300 ${
+          className={`flex w-[92%] max-w-7xl items-center justify-between rounded-full border border-blue-100 bg-white transition-all duration-300 ${
             isScrolled
-              ? "shadow-lg py-2 px-4 md:py-2.5 md:px-8"
-              : "shadow-md py-2.5 px-4 md:py-3 md:px-10"
+              ? "px-4 py-2 shadow-[0_10px_30px_rgba(37,99,235,0.10)] md:px-8 md:py-2.5"
+              : "px-4 py-2.5 shadow-[0_8px_24px_rgba(37,99,235,0.08)] md:px-10 md:py-3"
           }`}
         >
           {/* BRAND / LOGO */}
@@ -237,21 +215,21 @@ function Navbar() {
               navigate("/");
               closePanels();
             }}
-            className="flex items-center gap-2 md:gap-3 cursor-pointer group min-w-0"
+            className="group flex min-w-0 cursor-pointer items-center gap-2 md:gap-3"
           >
             <img
-              src="src/assets/pto.png"
+              src={ptoLogo}
               alt="logo"
-              className="w-8 h-8 md:w-9 md:h-9 object-contain group-hover:scale-105 transition-transform flex-shrink-0"
+              className="h-8 w-8 flex-shrink-0 object-contain transition-transform group-hover:scale-105 md:h-9 md:w-9"
             />
 
-            <span className="hidden sm:block font-bold text-blue-600 text-xs md:text-sm whitespace-nowrap tracking-tight truncate">
+            <span className="hidden truncate whitespace-nowrap text-xs font-bold tracking-tight text-blue-600 sm:block md:text-sm">
               Provincial Tourism Office
             </span>
           </div>
 
           {/* DESKTOP MENU */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden items-center gap-8 lg:flex">
             <span onClick={() => navigate("/")} className={navLinkClass}>
               Home
             </span>
@@ -261,7 +239,6 @@ function Navbar() {
               onMouseEnter={() => {
                 setShowExplore(true);
                 setShowFeatures(false);
-                setShowEvents(false);
               }}
             >
               <span>Discover</span>
@@ -272,7 +249,6 @@ function Navbar() {
               onMouseEnter={() => {
                 setShowFeatures(true);
                 setShowExplore(false);
-                setShowEvents(false);
               }}
             >
               <span>Features</span>
@@ -282,55 +258,52 @@ function Navbar() {
               Gallery
             </span>
 
-            <div
-              className={navLinkClass}
-              onMouseEnter={() => {
-                setShowEvents(true);
+            <span
+              onClick={() => {
+                navigate("/events");
                 setShowExplore(false);
                 setShowFeatures(false);
               }}
+              className={navLinkClass}
             >
-              <span>Events</span>
-            </div>
+              Events
+            </span>
           </div>
 
           {/* RIGHT ACTIONS */}
-          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
-            {/* MOBILE MENU BUTTON */}
+          <div className="flex flex-shrink-0 items-center gap-1.5 md:gap-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMobileMenu((prev) => !prev);
                 setOpenMenu(false);
               }}
-              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb] lg:hidden"
               aria-label="Open menu"
             >
               {showMobileMenu ? <FiX size={21} /> : <FiMenu size={21} />}
             </button>
 
-            {/* SEARCH BUTTON */}
             <button
               onClick={() => {
                 setShowSearch(true);
                 setShowMobileMenu(false);
               }}
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition px-2 md:px-3 py-2 rounded-full hover:bg-gray-50"
+              className="flex items-center gap-2 rounded-full px-2 py-2 text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 md:px-3"
             >
               <FiSearch size={20} className="stroke-[2.5]" />
-              <span className="text-sm font-semibold hidden md:block">
+              <span className="hidden text-sm font-semibold md:block">
                 Search
               </span>
             </button>
 
-            {/* AUTH BUTTON / PROFILE MENU */}
             {!user ? (
               <button
                 onClick={() => {
                   navigate("/login");
                   closePanels();
                 }}
-                className="border-[1.5px] border-blue-600 text-blue-700 px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-bold hover:bg-blue-50 transition shadow-sm whitespace-nowrap"
+                className="whitespace-nowrap rounded-full border-[1.5px] border-blue-600 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 md:px-6 md:text-sm"
               >
                 Sign In
               </button>
@@ -344,19 +317,19 @@ function Navbar() {
                     setOpenMenu(!openMenu);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-600 transition-colors object-cover shadow-sm"
+                  className="h-9 w-9 cursor-pointer rounded-full border-2 border-transparent object-cover shadow-sm transition-colors hover:border-blue-600 md:h-10 md:w-10"
                 />
 
                 {openMenu && (
-                  <div className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-xl py-2 z-50 border border-gray-100 animate-dropdown">
+                  <div className="absolute right-0 z-50 mt-4 w-52 overflow-hidden rounded-[24px] border border-blue-100 bg-white py-2 shadow-[0_14px_35px_rgba(37,99,235,0.10)] animate-dropdown">
                     <button
                       onClick={() => {
                         navigate("/favorites");
                         setOpenMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                      className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                     >
-                      <FiHeart className="text-blue-600 text-lg" />
+                      <FiHeart className="text-lg text-blue-600" />
                       Top Picks
                     </button>
 
@@ -365,22 +338,22 @@ function Navbar() {
                         navigate("/itinerary");
                         setOpenMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                      className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                     >
-                      <FiMap className="text-blue-600 text-lg" />
+                      <FiMap className="text-lg text-blue-600" />
                       Itineraries
                     </button>
 
-                    <div className="border-t border-gray-100 my-1" />
+                    <div className="my-1 border-t border-blue-50" />
 
                     <button
                       onClick={() => {
                         handleLogout();
                         setOpenMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 px-5 py-3 text-sm font-medium text-red-500 hover:bg-red-50 transition"
+                      className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-red-500 transition hover:bg-red-50"
                     >
-                      <FiLogOut className="text-red-500 text-lg" />
+                      <FiLogOut className="text-lg text-red-500" />
                       Logout
                     </button>
                   </div>
@@ -391,22 +364,20 @@ function Navbar() {
         </div>
       </nav>
 
-      {/* ──────────────────────────────── */}
       {/* MOBILE MENU */}
-      {/* ──────────────────────────────── */}
       {showMobileMenu && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="fixed top-[82px] left-0 z-[999] flex w-full justify-center px-4 lg:hidden"
+          className="fixed left-0 top-[82px] z-[999] flex w-full justify-center px-4 lg:hidden"
         >
-          <div className="w-[92%] rounded-[24px] border border-gray-200 bg-white/95 p-4 shadow-xl backdrop-blur-md">
+          <div className="w-[92%] rounded-[26px] border border-blue-100 bg-white p-4 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
             <div className="grid gap-2">
               <button
                 onClick={() => {
                   navigate("/");
                   setShowMobileMenu(false);
                 }}
-                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
               >
                 Home
               </button>
@@ -416,7 +387,7 @@ function Navbar() {
                   navigate("/destinations");
                   setShowMobileMenu(false);
                 }}
-                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
               >
                 Discover
               </button>
@@ -426,7 +397,7 @@ function Navbar() {
                   navigate("/map");
                   setShowMobileMenu(false);
                 }}
-                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
               >
                 Features
               </button>
@@ -436,7 +407,7 @@ function Navbar() {
                   navigate("/gallery");
                   setShowMobileMenu(false);
                 }}
-                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
               >
                 Gallery
               </button>
@@ -446,7 +417,7 @@ function Navbar() {
                   navigate("/events");
                   setShowMobileMenu(false);
                 }}
-                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition"
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
               >
                 Events
               </button>
@@ -455,15 +426,13 @@ function Navbar() {
         </div>
       )}
 
-      {/* ──────────────────────────────── */}
       {/* SEARCH MODAL */}
-      {/* ──────────────────────────────── */}
       {showSearch && (
-        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-black/35 px-4 pt-28 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-3xl rounded-[32px] border border-gray-200 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] p-4 shadow-xl md:p-6">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-5 shadow-sm md:p-6">
-              <div className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-5 py-3.5 transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
-                <FiSearch className="text-[#2563eb] text-xl" />
+        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-slate-900/30 px-4 pt-28 animate-fadeIn">
+          <div className="w-full max-w-3xl rounded-[34px] border border-blue-100 bg-white p-4 shadow-[0_18px_45px_rgba(37,99,235,0.12)] md:p-6">
+            <div className="rounded-[28px] border border-blue-50 bg-white p-5 shadow-sm md:p-6">
+              <div className="flex items-center gap-3 rounded-full border border-blue-100 bg-white px-5 py-3.5 shadow-sm transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
+                <FiSearch className="text-xl text-[#2563eb]" />
 
                 <input
                   type="text"
@@ -482,7 +451,6 @@ function Navbar() {
                 </button>
               </div>
 
-              {/* SEARCH FILTERS */}
               <div className="mt-5 flex flex-wrap gap-2">
                 {[
                   { label: "All", value: "all" },
@@ -501,7 +469,7 @@ function Navbar() {
                     className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                       activeFilter === filter.value
                         ? "bg-[#2563eb] text-white shadow-sm"
-                        : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+                        : "bg-blue-50 text-gray-600 hover:bg-blue-100 hover:text-[#2563eb]"
                     }`}
                   >
                     {filter.label}
@@ -509,10 +477,9 @@ function Navbar() {
                 ))}
               </div>
 
-              {/* SEARCH RESULTS */}
-              <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="custom-scrollbar mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2">
                 {searchTerm === "" && (
-                  <div className="rounded-[24px] bg-blue-50/60 py-14 text-center">
+                  <div className="rounded-[24px] border border-blue-50 bg-[#f8fbff] py-14 text-center">
                     <p className="text-sm font-medium text-gray-400">
                       Start typing to search Lanao del Sur
                     </p>
@@ -520,7 +487,7 @@ function Navbar() {
                 )}
 
                 {searchTerm !== "" && filteredResults.length === 0 && (
-                  <div className="rounded-[24px] bg-blue-50/60 py-14 text-center">
+                  <div className="rounded-[24px] border border-blue-50 bg-[#f8fbff] py-14 text-center">
                     <p className="text-sm font-medium text-gray-400">
                       No results found for "{searchTerm}"
                     </p>
@@ -532,12 +499,12 @@ function Navbar() {
                     <div
                       key={`${item.routeType}-${item.id}`}
                       onClick={() => handleResultClick(item)}
-                      className="flex cursor-pointer items-center gap-4 rounded-[24px] border border-gray-100 bg-white p-3 transition hover:border-blue-100 hover:bg-blue-50/50"
+                      className="flex cursor-pointer items-center gap-4 rounded-[24px] border border-blue-50 bg-white p-3 shadow-sm transition hover:border-blue-100 hover:bg-blue-50/60"
                     >
                       <img
                         src={item.imageURL || "/default-image.png"}
                         alt={item.title}
-                        className="h-20 w-20 rounded-[20px] object-cover bg-blue-50"
+                        className="h-20 w-20 rounded-[20px] bg-blue-50 object-cover shadow-sm"
                       />
 
                       <div className="min-w-0">
@@ -561,43 +528,37 @@ function Navbar() {
         </div>
       )}
 
-      {/* ──────────────────────────────── */}
       {/* DISCOVER PANEL */}
-      {/* ──────────────────────────────── */}
       {showExplore && (
         <div
-          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
+          className="fixed left-0 top-[90px] z-[990] hidden w-full justify-center animate-fadeIn lg:flex"
           onMouseLeave={() => setShowExplore(false)}
         >
-          <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
+          <div className="grid w-[95%] max-w-7xl grid-cols-2 gap-8 rounded-[30px] border border-blue-100 bg-white p-8 shadow-[0_16px_42px_rgba(37,99,235,0.10)]">
             <div className="grid grid-cols-2 gap-5">
-              {/* Destinations */}
               <div
                 onClick={() => {
                   navigate("/destinations");
                   setShowExplore(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiMapPin className="text-lg" />
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-blue-600">
-                    Destinations
-                  </h4>
+                  <h4 className="font-semibold text-blue-600">Destinations</h4>
                   <p className="mt-1 text-sm text-gray-500">Tourist spots</p>
                 </div>
               </div>
 
-              {/* Cultural & Heritage */}
               <div
                 onClick={() => {
                   navigate("/cultural");
                   setShowExplore(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiLayers className="text-lg" />
@@ -613,13 +574,12 @@ function Navbar() {
                 </div>
               </div>
 
-              {/* Establishments */}
               <div
                 onClick={() => {
                   navigate("/establishments");
                   setShowExplore(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiBriefcase className="text-lg" />
@@ -635,13 +595,12 @@ function Navbar() {
                 </div>
               </div>
 
-              {/* Landmarks */}
               <div
                 onClick={() => {
                   navigate("/landmarks");
                   setShowExplore(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiHome className="text-lg" />
@@ -654,38 +613,35 @@ function Navbar() {
               </div>
             </div>
 
-            {/* Discover Preview */}
             <div className="flex flex-col items-center justify-center text-center">
-              <img
-                src="src/assets/explore-preview.png"
-                className="w-80 h-38 object-cover rounded-xl shadow"
-                alt="Explore Preview"
-              />
-              <span className="text-sm text-gray-500 mt-">
-                Explore Lanao
-              </span>
+              <div className="overflow-hidden rounded-[24px] border border-blue-100 bg-[#f8fbff] p-2 shadow-[0_8px_22px_rgba(37,99,235,0.07)]">
+                <img
+                  src={explorePreview}
+                  className="h-38 w-80 rounded-[18px] object-cover"
+                  alt="Explore Preview"
+                />
+              </div>
+
+              <span className="mt-4 text-sm text-gray-500">Explore Lanao</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* ──────────────────────────────── */}
       {/* FEATURES PANEL */}
-      {/* ──────────────────────────────── */}
       {showFeatures && (
         <div
-          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
+          className="fixed left-0 top-[90px] z-[990] hidden w-full justify-center animate-fadeIn lg:flex"
           onMouseLeave={() => setShowFeatures(false)}
         >
-          <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
+          <div className="grid w-[95%] max-w-7xl grid-cols-2 gap-8 rounded-[30px] border border-blue-100 bg-white p-8 shadow-[0_16px_42px_rgba(37,99,235,0.10)]">
             <div className="grid grid-cols-2 gap-5">
-              {/* Interactive Map */}
               <div
                 onClick={() => {
                   navigate("/map");
                   setShowFeatures(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiMap className="text-lg" />
@@ -701,7 +657,6 @@ function Navbar() {
                 </div>
               </div>
 
-              {/* AI Chatbot */}
               <div
                 onClick={() => {
                   if (!user) {
@@ -712,7 +667,7 @@ function Navbar() {
 
                   setShowFeatures(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiMessageCircle className="text-lg" />
@@ -726,14 +681,13 @@ function Navbar() {
                 </div>
               </div>
 
-              {/* Itinerary Builder */}
               <div
                 onClick={() => {
                   if (!user) navigate("/login");
                   else navigate("/itinerary");
                   setShowFeatures(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiCompass className="text-lg" />
@@ -749,13 +703,12 @@ function Navbar() {
                 </div>
               </div>
 
-              {/* Events Calendar */}
               <div
                 onClick={() => {
-                  navigate("/events");
+                  navigate("/events-calendar");
                   setShowFeatures(false);
                 }}
-                className="group flex items-start gap-4 cursor-pointer rounded-2xl p-4 transition hover:bg-blue-50"
+                className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                   <FiCalendar className="text-lg" />
@@ -772,63 +725,17 @@ function Navbar() {
               </div>
             </div>
 
-            {/* Features Preview */}
             <div className="flex flex-col items-center justify-center text-center">
-              <img
-                src="src/assets/feature-preview.png"
-                className="w-80 h-38 object-cover rounded-2xl shadow-md"
-                alt="Features Preview"
-              />
-              <span className="text-sm text-gray-500 mt-4">
+              <div className="overflow-hidden rounded-[24px] border border-blue-100 bg-[#f8fbff] p-2 shadow-[0_8px_22px_rgba(37,99,235,0.07)]">
+                <img
+                  src={featurePreview}
+                  className="h-38 w-80 rounded-[18px] object-cover"
+                  alt="Features Preview"
+                />
+              </div>
+
+              <span className="mt-4 text-sm text-gray-500">
                 Explore smarter with Lakbay Lanao
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ──────────────────────────────── */}
-      {/* EVENTS PANEL */}
-      {/* ──────────────────────────────── */}
-      {showEvents && (
-        <div
-          className="hidden lg:flex fixed top-[90px] left-0 w-full z-[990] justify-center animate-fadeIn"
-          onMouseLeave={() => setShowEvents(false)}
-        >
-          <div className="w-[95%] max-w-7xl bg-white shadow-xl border border-gray-100 rounded-2xl p-8 grid grid-cols-2 gap-8">
-            <div className="grid grid-cols-2 gap-6">
-              {recentEvents.length === 0 ? (
-                <p className="text-gray-400 text-sm">No events available</p>
-              ) : (
-                recentEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    onClick={() => {
-                      navigate(`/event/${event.id}`);
-                      setShowEvents(false);
-                    }}
-                    className="cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition"
-                  >
-                    <h4 className="font-semibold text-blue-600 line-clamp-1">
-                      {event.title}
-                    </h4>
-                    <p className="text-sm text-gray-500 line-clamp-2">
-                      {event.summary || "No description"}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Events Preview */}
-            <div className="flex flex-col items-center justify-center text-center">
-              <img
-                src="src/assets/event-preview.png"
-                className="w-80 h-38 object-cover rounded-2xl shadow-md"
-                alt="Event Preview"
-              />
-              <span className="text-sm text-gray-500 mt-4">
-                Discover recent events
               </span>
             </div>
           </div>
