@@ -426,107 +426,108 @@ function Navbar() {
         </div>
       )}
 
-      {/* SEARCH MODAL */}
-      {showSearch && (
-        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-slate-900/30 px-4 pt-28 animate-fadeIn">
-          <div className="w-full max-w-3xl rounded-[34px] border border-blue-100 bg-white p-4 shadow-[0_18px_45px_rgba(37,99,235,0.12)] md:p-6">
-            <div className="rounded-[28px] border border-blue-50 bg-white p-5 shadow-sm md:p-6">
-              <div className="flex items-center gap-3 rounded-full border border-blue-100 bg-white px-5 py-3.5 shadow-sm transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
-                <FiSearch className="text-xl text-[#2563eb]" />
 
-                <input
-                  type="text"
-                  placeholder="Search destinations, events, establishments..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
-                  autoFocus
-                />
+      
+     {showSearch && (
+      <div className="search-overlay fixed inset-0 z-[1100] flex items-start justify-center px-4 pt-28 animate-fadeIn">
+        <div className="search-glass-card w-full max-w-3xl p-4 md:p-6">
+          <div className="search-inner-card p-5 md:p-6">
+            <div className="search-input-box flex items-center gap-3 px-5 py-3.5">
+              <FiSearch className="text-[#2563eb] text-xl" />
 
+              <input
+                type="text"
+                placeholder="Search destinations, events, establishments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
+                autoFocus
+              />
+
+              <button
+                onClick={closeSearch}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* SEARCH FILTERS */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              {[
+                { label: "All", value: "all" },
+                { label: "Destination", value: "destination" },
+                { label: "Event", value: "event" },
+                { label: "Establishment", value: "establishment" },
+                {
+                  label: "Cultural & Heritage",
+                  value: "culturalheritagesite",
+                },
+                { label: "Landmark", value: "landmark" },
+              ].map((filter) => (
                 <button
-                  onClick={closeSearch}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                  key={filter.value}
+                  onClick={() => setActiveFilter(filter.value)}
+                  className={`search-filter-btn px-4 py-2 text-xs font-semibold ${
+                    activeFilter === filter.value ? "active" : ""
+                  }`}
                 >
-                  ✕
+                  {filter.label}
                 </button>
-              </div>
+              ))}
+            </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                {[
-                  { label: "All", value: "all" },
-                  { label: "Destination", value: "destination" },
-                  { label: "Event", value: "event" },
-                  { label: "Establishment", value: "establishment" },
-                  {
-                    label: "Cultural & Heritage",
-                    value: "culturalheritagesite",
-                  },
-                  { label: "Landmark", value: "landmark" },
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setActiveFilter(filter.value)}
-                    className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                      activeFilter === filter.value
-                        ? "bg-[#2563eb] text-white shadow-sm"
-                        : "bg-blue-50 text-gray-600 hover:bg-blue-100 hover:text-[#2563eb]"
-                    }`}
+            {/* SEARCH RESULTS */}
+            <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+              {searchTerm === "" && (
+                <div className="search-empty-state py-14 text-center">
+                  <p className="text-sm font-medium text-gray-400">
+                    Start typing to search Lanao del Sur
+                  </p>
+                </div>
+              )}
+
+              {searchTerm !== "" && filteredResults.length === 0 && (
+                <div className="search-empty-state py-14 text-center">
+                  <p className="text-sm font-medium text-gray-400">
+                    No results found for "{searchTerm}"
+                  </p>
+                </div>
+              )}
+
+              {searchTerm !== "" &&
+                filteredResults.map((item) => (
+                  <div
+                    key={`${item.routeType}-${item.id}`}
+                    onClick={() => handleResultClick(item)}
+                    className="search-result-card flex cursor-pointer items-center gap-4 p-3"
                   >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
+                    <img
+                      src={item.imageURL || "/default-image.png"}
+                      alt={item.title}
+                      className="search-result-img h-20 w-20"
+                    />
 
-              <div className="custom-scrollbar mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2">
-                {searchTerm === "" && (
-                  <div className="rounded-[24px] border border-blue-50 bg-[#f8fbff] py-14 text-center">
-                    <p className="text-sm font-medium text-gray-400">
-                      Start typing to search Lanao del Sur
-                    </p>
-                  </div>
-                )}
+                    <div className="min-w-0">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
+                        {item.searchType || "General"}
+                      </span>
 
-                {searchTerm !== "" && filteredResults.length === 0 && (
-                  <div className="rounded-[24px] border border-blue-50 bg-[#f8fbff] py-14 text-center">
-                    <p className="text-sm font-medium text-gray-400">
-                      No results found for "{searchTerm}"
-                    </p>
-                  </div>
-                )}
+                      <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
+                        {item.title}
+                      </h3>
 
-                {searchTerm !== "" &&
-                  filteredResults.map((item) => (
-                    <div
-                      key={`${item.routeType}-${item.id}`}
-                      onClick={() => handleResultClick(item)}
-                      className="flex cursor-pointer items-center gap-4 rounded-[24px] border border-blue-50 bg-white p-3 shadow-sm transition hover:border-blue-100 hover:bg-blue-50/60"
-                    >
-                      <img
-                        src={item.imageURL || "/default-image.png"}
-                        alt={item.title}
-                        className="h-20 w-20 rounded-[20px] bg-blue-50 object-cover shadow-sm"
-                      />
-
-                      <div className="min-w-0">
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
-                          {item.searchType || "General"}
-                        </span>
-
-                        <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
-                          {item.title}
-                        </h3>
-
-                        <p className="mt-1 line-clamp-1 text-sm text-gray-500">
-                          {item.summary || "No description available."}
-                        </p>
-                      </div>
+                      <p className="mt-1 line-clamp-1 text-sm text-gray-500">
+                        {item.summary || "No description available."}
+                      </p>
                     </div>
-                  ))}
-              </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* DISCOVER PANEL */}
       {showExplore && (

@@ -251,7 +251,7 @@ function Login() {
         Back to Home
       </button>
 
-      <div className="relative z-10 w-full max-w-[400px] rounded-[30px] border border-blue-100 bg-white/92 p-8 text-center shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-[4px] md:p-10">
+      <div className="relative z-10 w-full max-w-[400px] rounded-[30px] border border-blue-100 bg-white/95 p-8 text-center shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-[4px] md:p-10">
         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-[#2563eb] shadow-sm">
           <FiUser className="text-2xl" />
         </div>
