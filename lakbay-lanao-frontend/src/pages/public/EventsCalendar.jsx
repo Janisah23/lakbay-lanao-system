@@ -213,19 +213,7 @@ function EventsCalendar() {
 
       {/* HEADER */}
       <section className="mx-auto max-w-7xl px-6 pb-10 pt-32">
-        <div className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-          <span
-            className="cursor-pointer transition hover:text-[#2563eb]"
-            onClick={() => navigate("/")}
-          >
-            Home
-          </span>
-
-          <span>/</span>
-
-          <span className="text-gray-500">Events Calendar</span>
-        </div>
-
+       
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div className="min-w-0 flex-1">
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#2563eb] shadow-sm">

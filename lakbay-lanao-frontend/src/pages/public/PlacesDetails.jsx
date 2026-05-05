@@ -550,60 +550,79 @@ const PlacesDetails = () => {
       </section>
 
       {/* GALLERY */}
+     
       <section className="mx-auto mb-16 max-w-7xl px-6">
-        <div className="relative h-[320px] w-full overflow-hidden rounded-[28px] border border-gray-100 shadow-lg md:h-[460px] lg:h-[540px]">
-          <img
-            src={galleryImages[activeGalleryIndex] || "/default.jpg"}
-            alt={destinationDetail.title || destinationDetail.name}
-            className="h-full w-full object-cover transition-opacity duration-500"
-          />
+        <div
+          onClick={() => setLightboxOpen(true)}
+          className="group relative h-[320px] w-full cursor-zoom-in overflow-hidden rounded-[28px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)] md:h-[460px] lg:h-[540px]"
+        >
+          <div className="relative h-full w-full overflow-hidden rounded-[24px] bg-blue-50">
+            <img
+              src={galleryImages[activeGalleryIndex] || "/default.jpg"}
+              alt={destinationDetail.title || destinationDetail.name}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.005]"
+            />
 
-          <div className="absolute inset-0 rounded-[28px] bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
 
-          {galleryImages.length > 1 && (
-            <>
-              <button
-                onClick={() =>
-                  setActiveGalleryIndex((i) => Math.max(i - 1, 0))
-                }
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white"
-              >
-                <FiChevronLeft className="text-lg text-gray-700" />
-              </button>
+            {/* Fullscreen button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxOpen(true);
+              }}
+              className="absolute bottom-4 right-4 rounded-full border border-white/70 bg-white px-4 py-2 text-xs font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb]"
+            >
+              View fullscreen
+            </button>
 
-              <button
-                onClick={() =>
-                  setActiveGalleryIndex((i) =>
-                    Math.min(i + 1, galleryImages.length - 1)
-                  )
-                }
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white"
-              >
-                <FiChevronRight className="text-lg text-gray-700" />
-              </button>
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveGalleryIndex((i) => Math.max(i - 1, 0));
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50"
+                >
+                  <FiChevronLeft className="text-lg text-gray-700" />
+                </button>
 
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                {galleryImages.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveGalleryIndex(i)}
-                    className={`rounded-full transition-all ${
-                      i === activeGalleryIndex
-                        ? "h-2 w-6 bg-white"
-                        : "h-2 w-2 bg-white/50 hover:bg-white/80"
-                    }`}
-                  />
-                ))}
-              </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveGalleryIndex((i) =>
+                      Math.min(i + 1, galleryImages.length - 1)
+                    );
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50"
+                >
+                  <FiChevronRight className="text-lg text-gray-700" />
+                </button>
 
-              <button
-                onClick={() => setLightboxOpen(true)}
-                className="absolute bottom-4 right-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-gray-800 shadow backdrop-blur-sm transition hover:bg-white"
-              >
-                View all {galleryImages.length} photos
-              </button>
-            </>
-          )}
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2"
+                >
+                  {galleryImages.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActiveGalleryIndex(i)}
+                      className={`rounded-full transition-all ${
+                        i === activeGalleryIndex
+                          ? "h-2 w-6 bg-white"
+                          : "h-2 w-2 bg-white/50 hover:bg-white/80"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {galleryImages.length > 1 && (
@@ -611,8 +630,9 @@ const PlacesDetails = () => {
             {galleryImages.map((img, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => setActiveGalleryIndex(i)}
-                className={`h-14 w-20 flex-shrink-0 overflow-hidden rounded-[12px] border-2 transition ${
+                className={`h-14 w-20 flex-shrink-0 overflow-hidden rounded-[14px] border-2 bg-blue-50 transition ${
                   i === activeGalleryIndex
                     ? "border-[#2563eb] shadow-md"
                     : "border-transparent opacity-60 hover:opacity-90"
@@ -631,41 +651,119 @@ const PlacesDetails = () => {
 
       {/* LIGHTBOX */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/92 p-4">
           <button
+            type="button"
             onClick={() => setLightboxOpen(false)}
-            className="absolute right-5 top-5 text-white/70 hover:text-white"
+            className="absolute right-5 top-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/20"
           >
             <FiX className="text-2xl" />
           </button>
 
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveGalleryIndex((i) =>
+                    i === 0 ? galleryImages.length - 1 : i - 1
+                  )
+                }
+                className="absolute left-4 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/20"
+              >
+                <FiChevronLeft className="text-4xl" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveGalleryIndex((i) =>
+                    i === galleryImages.length - 1 ? 0 : i + 1
+                  )
+                }
+                className="absolute right-4 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/20"
+              >
+                <FiChevronRight className="text-4xl" />
+              </button>
+            </>
+          )}
+
+          <div className="w-full max-w-6xl">
+            <img
+              src={galleryImages[activeGalleryIndex] || "/default.jpg"}
+              alt={destinationDetail.title || destinationDetail.name}
+              className="mx-auto max-h-[88vh] max-w-full rounded-[18px] object-contain shadow-2xl"
+            />
+          </div>
+
+          {galleryImages.length > 1 && (
+            <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/70">
+              {activeGalleryIndex + 1} / {galleryImages.length}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* LIGHTBOX */}
+      {/* LIGHTBOX */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"
+          onClick={() => setLightboxOpen(false)}
+        >
           <button
-            onClick={() => setActiveGalleryIndex((i) => Math.max(i - 1, 0))}
-            className="absolute left-4 text-white/70 hover:text-white"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxOpen(false);
+            }}
+            className="absolute right-5 top-5 z-[100000] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
           >
-            <FiChevronLeft className="text-4xl" />
+            <FiX className="text-2xl" />
           </button>
+
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveGalleryIndex((i) =>
+                    i === 0 ? galleryImages.length - 1 : i - 1
+                  );
+                }}
+                className="absolute left-4 top-1/2 z-[100000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              >
+                <FiChevronLeft className="text-4xl" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveGalleryIndex((i) =>
+                    i === galleryImages.length - 1 ? 0 : i + 1
+                  );
+                }}
+                className="absolute right-4 top-1/2 z-[100000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              >
+                <FiChevronRight className="text-4xl" />
+              </button>
+            </>
+          )}
 
           <img
-            src={galleryImages[activeGalleryIndex]}
-            alt=""
-            className="max-h-[85vh] max-w-full rounded-[16px] object-contain"
+            src={galleryImages[activeGalleryIndex] || "/default.jpg"}
+            alt={destinationDetail.title || destinationDetail.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-screen max-w-screen object-contain"
           />
 
-          <button
-            onClick={() =>
-              setActiveGalleryIndex((i) =>
-                Math.min(i + 1, galleryImages.length - 1)
-              )
-            }
-            className="absolute right-4 text-white/70 hover:text-white"
-          >
-            <FiChevronRight className="text-4xl" />
-          </button>
-
-          <p className="absolute bottom-5 left-1/2 -translate-x-1/2 text-sm text-white/60">
-            {activeGalleryIndex + 1} / {galleryImages.length}
-          </p>
+          {galleryImages.length > 1 && (
+            <p className="absolute bottom-5 left-1/2 z-[100000] -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/70">
+              {activeGalleryIndex + 1} / {galleryImages.length}
+            </p>
+          )}
         </div>
       )}
 
