@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/common/Navbar";
 import Footer from "../../components/common/Footer";
-import TourismChatbot from "../../components/chatbot/TourismChatbot";
+
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
@@ -113,17 +113,7 @@ function Articles() {
 
       {/* HEADER */}
       <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-5 font-medium uppercase tracking-wider">
-          <span
-            className="cursor-pointer hover:text-[#2563eb] transition"
-            onClick={() => navigate("/")}
-          >
-            Home
-          </span>
-          <span>/</span>
-          <span className="text-gray-500">Articles</span>
-        </div>
-
+        
         <div className="flex items-start justify-between gap-8 flex-wrap">
           <div className="flex-1 min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-white/70 px-3 py-1 text-xs font-semibold text-[#2563eb] mb-4 shadow-sm backdrop-blur-md">

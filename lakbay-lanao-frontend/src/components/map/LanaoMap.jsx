@@ -6,7 +6,7 @@ import { db } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
 import { FiMapPin, FiChevronRight } from "react-icons/fi";
 
-const center = [7.92, 124.27];
+const center = [7.7818039, 124.0087275];
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
 function FlyToSpot({ spot }) {
@@ -143,7 +143,7 @@ function LanaoMap({ selectedSpot, onSpotClick }) {
         center={center}
         zoom={9}
         minZoom={8}
-        maxZoom={18}
+        maxZoom={10}
         zoomControl={false}
         className="h-[680px] w-full"
       >

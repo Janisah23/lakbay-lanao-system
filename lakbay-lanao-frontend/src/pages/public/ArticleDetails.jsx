@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../../components/common/Navbar";
 import Footer from "../../components/common/Footer";
-import TourismChatbot from "../../components/chatbot/TourismChatbot";
+
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FiClock,
@@ -513,8 +513,7 @@ const ArticleDetails = () => {
         </div>
       </section>
 
-      <TourismChatbot />
-      <Footer />
+     
 
       <style jsx>{`
         .article-body p,
