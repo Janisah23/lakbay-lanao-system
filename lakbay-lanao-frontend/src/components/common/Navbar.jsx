@@ -81,6 +81,17 @@ function Navbar() {
     navigate("/");
   };
 
+  const handleOpenChatbot = () => {
+    if (!user) {
+      navigate("/login");
+      closePanels();
+      return;
+    }
+
+    navigate("/", { state: { openChatbot: true } });
+    closePanels();
+  };
+
   const handleResultClick = (item) => {
     if (item.routeType === "place") {
       navigate(`/destination/${item.id}`);
@@ -209,7 +220,7 @@ function Navbar() {
               : "px-4 py-2.5 shadow-[0_8px_24px_rgba(37,99,235,0.08)] md:px-10 md:py-3"
           }`}
         >
-          {/* BRAND / LOGO */}
+         {/* BRAND / LOGO */}
           <div
             onClick={() => {
               navigate("/");
@@ -223,10 +234,17 @@ function Navbar() {
               className="h-8 w-8 flex-shrink-0 object-contain transition-transform group-hover:scale-105 md:h-9 md:w-9"
             />
 
-            <span className="hidden truncate whitespace-nowrap text-xs font-bold tracking-tight text-blue-600 sm:block md:text-sm">
-              Provincial Tourism Office
-            </span>
+            <div className="hidden min-w-0 flex-col leading-tight sm:flex">
+              <span className="truncate whitespace-nowrap text-xs font-bold tracking-tight text-blue-600 md:text-sm">
+                Provincial Tourism Office
+              </span>
+
+              <span className="mt-0.8 truncate whitespace-nowrap text-[8px] font-semibold uppercase tracking-[0.1em] text-blue-900">
+                 Lanao del Sur
+              </span>
+            </div>
           </div>
+
 
           {/* DESKTOP MENU */}
           <div className="hidden items-center gap-8 lg:flex">
@@ -309,7 +327,7 @@ function Navbar() {
               </button>
             ) : (
               <div className="relative">
-                <img
+               <img
                   src={user.photoURL || "/default-avatar.png"}
                   alt="profile"
                   onClick={(e) => {
@@ -317,7 +335,7 @@ function Navbar() {
                     setOpenMenu(!openMenu);
                     setShowMobileMenu(false);
                   }}
-                  className="h-9 w-9 cursor-pointer rounded-full border-2 border-transparent object-cover shadow-sm transition-colors hover:border-blue-600 md:h-10 md:w-10"
+                  className="h-9 w-9 cursor-pointer rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] transition-all hover:border-blue-700 hover:shadow-[0_0_0_5px_rgba(37,99,235,0.16)] md:h-10 md:w-10"
                 />
 
                 {openMenu && (
@@ -421,113 +439,119 @@ function Navbar() {
               >
                 Events
               </button>
+
+              <button
+                onClick={handleOpenChatbot}
+                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+              >
+                AI Chatbot
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* SEARCH OVERLAY */}
+      {showSearch && (
+        <div className="search-overlay fixed inset-0 z-[1100] flex items-start justify-center px-4 pt-28 animate-fadeIn">
+          <div className="search-glass-card w-full max-w-3xl p-4 md:p-6">
+            <div className="search-inner-card p-5 md:p-6">
+              <div className="search-input-box flex items-center gap-3 px-5 py-3.5">
+                <FiSearch className="text-xl text-[#2563eb]" />
 
-      
-     {showSearch && (
-      <div className="search-overlay fixed inset-0 z-[1100] flex items-start justify-center px-4 pt-28 animate-fadeIn">
-        <div className="search-glass-card w-full max-w-3xl p-4 md:p-6">
-          <div className="search-inner-card p-5 md:p-6">
-            <div className="search-input-box flex items-center gap-3 px-5 py-3.5">
-              <FiSearch className="text-[#2563eb] text-xl" />
+                <input
+                  type="text"
+                  placeholder="Search destinations, events, establishments..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
+                  autoFocus
+                />
 
-              <input
-                type="text"
-                placeholder="Search destinations, events, establishments..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
-                autoFocus
-              />
-
-              <button
-                onClick={closeSearch}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* SEARCH FILTERS */}
-            <div className="mt-5 flex flex-wrap gap-2">
-              {[
-                { label: "All", value: "all" },
-                { label: "Destination", value: "destination" },
-                { label: "Event", value: "event" },
-                { label: "Establishment", value: "establishment" },
-                {
-                  label: "Cultural & Heritage",
-                  value: "culturalheritagesite",
-                },
-                { label: "Landmark", value: "landmark" },
-              ].map((filter) => (
                 <button
-                  key={filter.value}
-                  onClick={() => setActiveFilter(filter.value)}
-                  className={`search-filter-btn px-4 py-2 text-xs font-semibold ${
-                    activeFilter === filter.value ? "active" : ""
-                  }`}
+                  onClick={closeSearch}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                 >
-                  {filter.label}
+                  ✕
                 </button>
-              ))}
-            </div>
+              </div>
 
-            {/* SEARCH RESULTS */}
-            <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
-              {searchTerm === "" && (
-                <div className="search-empty-state py-14 text-center">
-                  <p className="text-sm font-medium text-gray-400">
-                    Start typing to search Lanao del Sur
-                  </p>
-                </div>
-              )}
-
-              {searchTerm !== "" && filteredResults.length === 0 && (
-                <div className="search-empty-state py-14 text-center">
-                  <p className="text-sm font-medium text-gray-400">
-                    No results found for "{searchTerm}"
-                  </p>
-                </div>
-              )}
-
-              {searchTerm !== "" &&
-                filteredResults.map((item) => (
-                  <div
-                    key={`${item.routeType}-${item.id}`}
-                    onClick={() => handleResultClick(item)}
-                    className="search-result-card flex cursor-pointer items-center gap-4 p-3"
+              {/* SEARCH FILTERS */}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {[
+                  { label: "All", value: "all" },
+                  { label: "Destination", value: "destination" },
+                  { label: "Event", value: "event" },
+                  { label: "Establishment", value: "establishment" },
+                  {
+                    label: "Cultural & Heritage",
+                    value: "culturalheritagesite",
+                  },
+                  { label: "Landmark", value: "landmark" },
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setActiveFilter(filter.value)}
+                    className={`search-filter-btn px-4 py-2 text-xs font-semibold ${
+                      activeFilter === filter.value ? "active" : ""
+                    }`}
                   >
-                    <img
-                      src={item.imageURL || "/default-image.png"}
-                      alt={item.title}
-                      className="search-result-img h-20 w-20"
-                    />
-
-                    <div className="min-w-0">
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
-                        {item.searchType || "General"}
-                      </span>
-
-                      <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
-                        {item.title}
-                      </h3>
-
-                      <p className="mt-1 line-clamp-1 text-sm text-gray-500">
-                        {item.summary || "No description available."}
-                      </p>
-                    </div>
-                  </div>
+                    {filter.label}
+                  </button>
                 ))}
+              </div>
+
+              {/* SEARCH RESULTS */}
+              <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+                {searchTerm === "" && (
+                  <div className="search-empty-state py-14 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      Start typing to search Lanao del Sur
+                    </p>
+                  </div>
+                )}
+
+                {searchTerm !== "" && filteredResults.length === 0 && (
+                  <div className="search-empty-state py-14 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      No results found for "{searchTerm}"
+                    </p>
+                  </div>
+                )}
+
+                {searchTerm !== "" &&
+                  filteredResults.map((item) => (
+                    <div
+                      key={`${item.routeType}-${item.id}`}
+                      onClick={() => handleResultClick(item)}
+                      className="search-result-card flex cursor-pointer items-center gap-4 p-3"
+                    >
+                      <img
+                        src={item.imageURL || "/default-image.png"}
+                        alt={item.title}
+                        className="search-result-img h-20 w-20"
+                      />
+
+                      <div className="min-w-0">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
+                          {item.searchType || "General"}
+                        </span>
+
+                        <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-1 line-clamp-1 text-sm text-gray-500">
+                          {item.summary || "No description available."}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* DISCOVER PANEL */}
       {showExplore && (
@@ -659,15 +683,7 @@ function Navbar() {
               </div>
 
               <div
-                onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                  } else {
-                    window.dispatchEvent(new Event("open-tourism-chatbot"));
-                  }
-
-                  setShowFeatures(false);
-                }}
+                onClick={handleOpenChatbot}
                 className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">

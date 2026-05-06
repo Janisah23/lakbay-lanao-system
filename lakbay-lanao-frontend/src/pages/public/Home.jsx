@@ -13,7 +13,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
@@ -25,23 +25,28 @@ import { motion } from "framer-motion";
 
 import "swiper/css";
 import "swiper/css/pagination";
-import "./Home.css";
 import "swiper/css/navigation";
+import "./Home.css";
 
 function Home() {
   const { favorites } = useFavorites();
-  const [showHeart, setShowHeart] = useState(null);
-  const navigate = useNavigate();
 
+  const [showHeart, setShowHeart] = useState(null);
   const [articles, setArticles] = useState([]);
   const [content, setContent] = useState([]);
   const [activeHighlight, setActiveHighlight] = useState(0);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const heroImages = [
     "src/assets/hero1.png",
     "src/assets/hero2.png",
     "src/assets/hero3.png",
   ];
+
+  const fallbackHighlightImage =
+    "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=1400&q=80";
 
   const sectionReveal = {
     hidden: {
@@ -103,6 +108,71 @@ function Home() {
     return `${firstSentence.slice(0, 72).trim()}...`;
   };
 
+  const getVideoEmbedURL = (url) => {
+    if (!url) return "";
+
+    try {
+      const cleanUrl = url.trim();
+      const parsedUrl = new URL(cleanUrl);
+      const host = parsedUrl.hostname.replace("www.", "");
+
+      // YouTube: youtu.be
+      if (host.includes("youtu.be")) {
+        const videoId = parsedUrl.pathname.replace("/", "").split("?")[0];
+
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+
+      // YouTube: watch, embed, shorts
+      if (host.includes("youtube.com")) {
+        const videoId = parsedUrl.searchParams.get("v");
+
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+
+        if (cleanUrl.includes("/embed/")) {
+          return cleanUrl;
+        }
+
+        if (cleanUrl.includes("/shorts/")) {
+          const shortsId = cleanUrl.split("/shorts/")[1]?.split("?")[0];
+
+          if (shortsId) {
+            return `https://www.youtube.com/embed/${shortsId}`;
+          }
+        }
+      }
+
+      // Facebook Videos/Reels
+      if (
+        host.includes("facebook.com") ||
+        host.includes("m.facebook.com") ||
+        host.includes("fb.watch")
+      ) {
+       return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+          cleanUrl
+        )}&show_text=false&width=900`;
+      }
+
+      return "";
+    } catch {
+      return "";
+    }
+  };
+
+  useEffect(() => {
+    if (location.state?.openChatbot) {
+      setTimeout(() => {
+        window.dispatchEvent(new Event("open-tourism-chatbot"));
+      }, 300);
+
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log("AUTH USER:", user);
@@ -162,34 +232,6 @@ function Home() {
       item.status?.toLowerCase() === "published"
   );
 
-  const getYouTubeEmbedURL = (url) => {
-    if (!url) return "";
-
-    try {
-      const parsedUrl = new URL(url);
-
-      if (parsedUrl.hostname.includes("youtu.be")) {
-        return `https://www.youtube.com/embed${parsedUrl.pathname}`;
-      }
-
-      if (parsedUrl.hostname.includes("youtube.com")) {
-        const videoId = parsedUrl.searchParams.get("v");
-
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`;
-        }
-      }
-
-      if (url.includes("/embed/")) {
-        return url;
-      }
-
-      return "";
-    } catch (error) {
-      return "";
-    }
-  };
-
   const toggleFavorite = async (item) => {
     const user = auth.currentUser;
 
@@ -230,7 +272,7 @@ function Home() {
   };
 
   return (
-    <div className="font-sans min-h-screen bg-[#f3f9ff] pb-20 text-gray-900">
+   <div className="font-sans min-h-screen bg-[#f3f9ff] text-gray-900">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -240,6 +282,10 @@ function Home() {
 
         .highlight-swiper .swiper-pagination-bullet-active {
           background: #2563eb;
+        }
+
+        .highlight-swiper .swiper-pagination-bullet {
+          background: rgba(37, 99, 235, 0.45);
         }
 
         @keyframes pop {
@@ -296,7 +342,7 @@ function Home() {
 
           <button
             className="explore-btn transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(37,99,235,0.18)] active:scale-[0.98]"
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => navigate("/login")}
           >
             Explore Lanao
           </button>
@@ -331,17 +377,20 @@ function Home() {
           >
             {highlights.length > 0 ? (
               <Swiper
-                modules={[Pagination, Navigation]}
+                modules={[Autoplay, Pagination, Navigation]}
+                autoplay={{
+                  delay: 20000,
+                  disableOnInteraction: false,
+                  pauseOnMouseEnter: true,
+                }}
                 pagination={{ clickable: true }}
                 navigation={{
                   nextEl: ".highlight-next",
                   prevEl: ".highlight-prev",
                 }}
-                loop={false}
-                allowTouchMove={false}
-                onSlideChange={(swiper) =>
-                  setActiveHighlight(swiper.activeIndex)
-                }
+                loop={highlights.length > 1}
+                allowTouchMove={true}
+                onSlideChange={(swiper) => setActiveHighlight(swiper.realIndex)}
                 className="highlight-swiper overflow-hidden rounded-[24px]"
               >
                 <button className="highlight-prev absolute left-6 top-1/2 z-30 -translate-y-1/2 text-5xl font-light text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 hover:text-white/90">
@@ -353,32 +402,36 @@ function Home() {
                 </button>
 
                 {highlights.map((item, index) => {
-                  const embedURL = getYouTubeEmbedURL(item.videoURL);
+                  const embedURL = getVideoEmbedURL(item.videoURL);
+                  const hasVideo = Boolean(embedURL);
                   const isActive = activeHighlight === index;
 
                   return (
-                    <SwiperSlide key={index}>
-                      <div className="relative">
-                        {embedURL && isActive ? (
-                          <iframe
-                            src={embedURL}
-                            title={item.title}
-                            className="h-[560px] w-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                          />
-                        ) : (
-                          <img
-                            src={
-                              item.imageURL ||
-                              "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=1400&q=80"
-                            }
-                            alt={item.title}
-                            className="h-[560px] w-full object-cover"
-                          />
-                        )}
+                    <SwiperSlide key={item.id || index}>
+                      <div className="relative overflow-hidden rounded-[24px] bg-gray-100">
+                     {hasVideo && isActive ? (
+                       <div className="relative w-full overflow-hidden bg-black aspect-video">
+                        <iframe
+                          key={embedURL}
+                          src={embedURL}
+                          title={item.title || "Highlight Video"}
+                          className="absolute inset-0 h-full w-full border-0 bg-black"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                      ) : (
+                        <img
+                          src={item.imageURL || fallbackHighlightImage}
+                          alt={item.title || "Travel Highlight"}
+                         className="aspect-video w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = fallbackHighlightImage;
+                          }}
+                        />
+                      )}
 
-                        {(!embedURL || !isActive) && (
+                        {!hasVideo && (
                           <>
                             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
 
@@ -398,6 +451,16 @@ function Home() {
                               )}
                             </div>
                           </>
+                        )}
+
+                        {hasVideo && item.imageURL && !isActive && (
+                          <div className="pointer-events-none absolute inset-0 hidden">
+                            <img
+                              src={item.imageURL}
+                              alt={item.title || "Video thumbnail"}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
                         )}
                       </div>
                     </SwiperSlide>
@@ -720,7 +783,7 @@ function Home() {
               </span>
 
               <button
-                onClick={() => (window.location.href = "/events")}
+                onClick={() => navigate("/events")}
                 className="rounded-full bg-[#2563eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
               >
                 See more events →
