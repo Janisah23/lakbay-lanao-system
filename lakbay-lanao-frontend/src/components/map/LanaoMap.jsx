@@ -6,7 +6,8 @@ import { db } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
 import { FiMapPin, FiChevronRight } from "react-icons/fi";
 
-const center = [7.8731, 124.2863];
+const center = [7.92, 124.27];
+const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
 function FlyToSpot({ spot }) {
   const map = useMap();
@@ -138,19 +139,19 @@ function LanaoMap({ selectedSpot, onSpotClick }) {
         }
       `}</style>
 
-      <MapContainer
+     <MapContainer
         center={center}
-        zoom={10}
+        zoom={9}
         minZoom={8}
-        maxZoom={17}
+        maxZoom={18}
         zoomControl={false}
         className="h-[680px] w-full"
       >
         <FixMapSize />
 
-        <TileLayer
-          attribution="© OpenStreetMap contributors © CARTO"
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+       <TileLayer
+          attribution='&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+          url={`https://api.maptiler.com/maps/outdoor-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`}
         />
 
         {selectedSpot && <FlyToSpot spot={selectedSpot} />}
