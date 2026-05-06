@@ -21,6 +21,7 @@ import { db, auth } from "../../firebase/config";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import lakbayLogo from "../../assets/lakbay-logos.png";
+import html2pdf from "html2pdf.js";
 
 /* ── helpers ──────────────────────────────────────────────────────── */
 const ITINERARY_CATEGORIES = [
@@ -104,14 +105,6 @@ const isLocalNewer = (localPlan, cloudPlan) => {
   return localTime > cloudTime;
 };
 
-const escapeHtml = (value = "") =>
-  String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-
 /* ── SaveStatus badge ─────────────────────────────────────────────── */
 function SaveBadge({ status, mode }) {
   if (status === "saving") {
@@ -168,7 +161,7 @@ function PlaceCard({ place, index }) {
             </p>
 
             <span
-              className={`mt-1 inline-flex max-w-full rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${catClass}`}
+              className={`mt-1 inline-flex max-w-[92px] rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide ${catClass}`}
             >
               <span className="truncate">
                 {formatCategoryLabel(place.category)}
@@ -274,7 +267,7 @@ function DayCard({
 
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             <span
-                              className={`inline-flex max-w-[140px] rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${catClass}`}
+                              className={`inline-flex max-w-[92px] rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide ${catClass}`}
                             >
                               <span className="truncate">
                                 {formatCategoryLabel(place.category)}
@@ -336,452 +329,162 @@ function DayCard({
   );
 }
 
-/* ── Print / Save as PDF template ─────────────────────────────────── */
-const downloadItineraryPDF = (days, notes, dayCount) => {
+/* ── Hidden Tailwind PDF Template ─────────────────────────────────── */
+function ItineraryPDFTemplate({ days, notes, dayCount, totalStops }) {
   const date = new Date().toLocaleDateString("en-PH", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const totalStops = Object.values(days).reduce((a, b) => a + b.length, 0);
-
-  const dayRows = Object.keys(days)
-    .map((dayKey, idx) => {
-      const items = days[dayKey] || [];
-      const dayNote = notes[dayKey] || "";
-
-      const stops =
-        items.length === 0
-          ? `<div class="empty-stop">No stops added yet.</div>`
-          : items
-              .map((place, i) => {
-                const title = escapeHtml(
-                  place.name || place.title || "Untitled stop"
-                );
-                const category = escapeHtml(
-                  formatCategoryLabel(place.category || "Place")
-                );
-                const municipality = escapeHtml(
-                  place.location?.municipality || "Lanao del Sur"
-                );
-                const time = escapeHtml(place.time || "Time not set");
-
-                return `
-                  <div class="stop-row">
-                    <div class="stop-number">${i + 1}</div>
-
-                    <div class="stop-main">
-                      <div class="stop-topline">
-                        <p class="stop-title">${title}</p>
-                        <span class="stop-time">${time}</span>
-                      </div>
-
-                      <p class="stop-meta">${category} · ${municipality}</p>
-                    </div>
-                  </div>`;
-              })
-              .join("");
-
-      return `
-        <section class="day-card">
-          <div class="day-header">
-            <div class="day-number">${idx + 1}</div>
+  return (
+    <div className="w-[794px] min-h-[1123px] bg-[#f3f9ff] p-7 font-sans text-slate-900">
+      <section className="rounded-[24px] border border-blue-100 bg-white p-8">
+        <header className="flex items-center justify-between gap-6 border-b border-blue-100 pb-6">
+          <div className="flex items-center gap-4">
+            <img
+              src={lakbayLogo}
+              alt="Lakbay Lanao Logo"
+              className="h-[58px] w-[58px] rounded-[16px] object-contain"
+            />
 
             <div>
-              <h2>Day ${idx + 1}</h2>
-              <p>${items.length} stop${items.length !== 1 ? "s" : ""}</p>
+              <p className="m-0 text-[23px] font-extrabold tracking-tight text-[#2563eb]">
+                Lakbay Lanao
+              </p>
+
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Provincial Tourism Office
+                <br />
+                Lanao del Sur, Philippines
+              </p>
             </div>
           </div>
 
-          <div class="day-body">
-            ${stops}
+          <div className="text-right">
+            <h1 className="m-0 text-2xl font-extrabold tracking-tight text-slate-900">
+              My Itinerary
+            </h1>
 
-            ${
-              dayNote
-                ? `<div class="note-box"><strong>Notes:</strong> ${escapeHtml(
-                    dayNote
-                  )}</div>`
-                : ""
-            }
+            <p className="mt-1.5 text-xs text-slate-500">Generated {date}</p>
           </div>
-        </section>`;
-    })
-    .join("");
+        </header>
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Lakbay Lanao Itinerary</title>
+        <section className="my-6 grid grid-cols-3 gap-3">
+          <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Trip Length
+            </p>
 
-        <style>
-          * {
-            box-sizing: border-box;
-          }
+            <p className="mt-1 text-lg font-extrabold text-[#2563eb]">
+              {dayCount} Day{dayCount !== 1 ? "s" : ""}
+            </p>
+          </div>
 
-          body {
-            margin: 0;
-            padding: 0;
-            background: #f3f9ff;
-            color: #0f172a;
-            font-family: Arial, sans-serif;
-          }
+          <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Total Stops
+            </p>
 
-          .page {
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 32px;
-          }
+            <p className="mt-1 text-lg font-extrabold text-[#2563eb]">
+              {totalStops}
+            </p>
+          </div>
 
-          .sheet {
-            background: #ffffff;
-            border: 1px solid #dbeafe;
-            border-radius: 28px;
-            padding: 34px;
-            box-shadow: 0 18px 45px rgba(37, 99, 235, 0.12);
-          }
+          <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Prepared For
+            </p>
 
-          .brand-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-            padding-bottom: 22px;
-            border-bottom: 1px solid #dbeafe;
-          }
+            <p className="mt-1 text-lg font-extrabold text-[#2563eb]">
+              Traveler
+            </p>
+          </div>
+        </section>
 
-          .brand-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-          }
+        <section className="space-y-[18px]">
+          {Object.keys(days).map((dayKey, dayIndex) => {
+            const items = days[dayKey] || [];
+            const dayNote = notes[dayKey] || "";
 
-          .brand-logo {
-            width: 58px;
-            height: 58px;
-            object-fit: contain;
-            border-radius: 16px;
-          }
+            return (
+              <div
+                key={dayKey}
+                className="overflow-hidden rounded-[20px] border border-blue-100 bg-white"
+              >
+                <div className="flex items-center gap-3 border-b border-blue-100 bg-[#f8fbff] px-5 py-4">
+                  <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#2563eb] text-[13px] font-extrabold text-white">
+                    {dayIndex + 1}
+                  </div>
 
-          .brand-title {
-            margin: 0;
-            color: #2563eb;
-            font-size: 23px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-          }
+                  <div>
+                    <h2 className="m-0 text-base font-extrabold text-[#2563eb]">
+                      Day {dayIndex + 1}
+                    </h2>
 
-          .brand-subtitle {
-            margin: 4px 0 0;
-            color: #64748b;
-            font-size: 12px;
-            line-height: 1.5;
-          }
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {items.length} stop{items.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
 
-          .doc-title {
-            text-align: right;
-          }
+                <div className="px-5 py-3">
+                  {items.length === 0 ? (
+                    <div className="my-2 rounded-[14px] border border-dashed border-blue-100 bg-[#f8fbff] p-4 text-center text-[13px] text-slate-400">
+                      No stops added yet.
+                    </div>
+                  ) : (
+                    <div>
+                      {items.map((place, i) => (
+                        <div
+                          key={`${dayKey}-${place.id}-${i}`}
+                          className="flex gap-3 border-b border-[#eef2ff] py-3 last:border-b-0"
+                        >
+                          <div className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-extrabold text-[#2563eb]">
+                            {i + 1}
+                          </div>
 
-          .doc-title h1 {
-            margin: 0;
-            color: #0f172a;
-            font-size: 24px;
-            letter-spacing: -0.03em;
-          }
+                          <div className="min-w-0 flex-1">
+                            <div className="flex justify-between gap-4">
+                              <p className="m-0 text-sm font-extrabold text-slate-900">
+                                {place.name || place.title || "Untitled stop"}
+                              </p>
 
-          .doc-title p {
-            margin: 6px 0 0;
-            color: #64748b;
-            font-size: 12px;
-          }
+                              <span className="flex-shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-extrabold text-[#2563eb]">
+                                {place.time || "Time not set"}
+                              </span>
+                            </div>
 
-          .summary-strip {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 24px 0;
-          }
+                            <p className="mt-1 text-xs text-slate-500">
+                              {formatCategoryLabel(place.category)} ·{" "}
+                              {place.location?.municipality || "Lanao del Sur"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-          .summary-item {
-            background: #f8fbff;
-            border: 1px solid #dbeafe;
-            border-radius: 18px;
-            padding: 14px 16px;
-          }
-
-          .summary-label {
-            margin: 0;
-            color: #64748b;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 700;
-          }
-
-          .summary-value {
-            margin: 4px 0 0;
-            color: #2563eb;
-            font-size: 18px;
-            font-weight: 800;
-          }
-
-          .day-card {
-            break-inside: avoid;
-            overflow: hidden;
-            margin-bottom: 18px;
-            border: 1px solid #dbeafe;
-            border-radius: 22px;
-            background: #ffffff;
-          }
-
-          .day-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px 20px;
-            background: #f8fbff;
-            border-bottom: 1px solid #dbeafe;
-          }
-
-          .day-number {
-            width: 34px;
-            height: 34px;
-            border-radius: 999px;
-            background: #2563eb;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: 800;
-          }
-
-          .day-header h2 {
-            margin: 0;
-            color: #2563eb;
-            font-size: 16px;
-          }
-
-          .day-header p {
-            margin: 2px 0 0;
-            color: #64748b;
-            font-size: 12px;
-          }
-
-          .day-body {
-            padding: 10px 20px 18px;
-          }
-
-          .stop-row {
-            display: flex;
-            gap: 12px;
-            padding: 13px 0;
-            border-bottom: 1px solid #eef2ff;
-          }
-
-          .stop-row:last-child {
-            border-bottom: none;
-          }
-
-          .stop-number {
-            flex-shrink: 0;
-            width: 26px;
-            height: 26px;
-            border-radius: 999px;
-            background: #eff6ff;
-            color: #2563eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-          }
-
-          .stop-main {
-            min-width: 0;
-            flex: 1;
-          }
-
-          .stop-topline {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-          }
-
-          .stop-title {
-            margin: 0;
-            color: #0f172a;
-            font-size: 14px;
-            font-weight: 800;
-          }
-
-          .stop-time {
-            flex-shrink: 0;
-            color: #2563eb;
-            font-size: 11px;
-            font-weight: 800;
-            background: #eff6ff;
-            border-radius: 999px;
-            padding: 5px 10px;
-          }
-
-          .stop-meta {
-            margin: 4px 0 0;
-            color: #64748b;
-            font-size: 12px;
-          }
-
-          .empty-stop {
-            margin: 10px 0;
-            color: #94a3b8;
-            font-size: 13px;
-            background: #f8fbff;
-            border: 1px dashed #dbeafe;
-            border-radius: 14px;
-            padding: 14px;
-            text-align: center;
-          }
-
-          .note-box {
-            margin-top: 12px;
-            background: #f8fbff;
-            border: 1px solid #dbeafe;
-            border-radius: 16px;
-            padding: 12px 14px;
-            color: #475569;
-            font-size: 12px;
-            line-height: 1.6;
-          }
-
-          .footer {
-            margin-top: 26px;
-            padding-top: 18px;
-            border-top: 1px solid #dbeafe;
-            text-align: center;
-            color: #94a3b8;
-            font-size: 11px;
-            line-height: 1.7;
-          }
-
-          .print-actions {
-            margin-top: 24px;
-            text-align: center;
-          }
-
-          .print-button {
-            background: #2563eb;
-            color: #ffffff;
-            border: 0;
-            border-radius: 999px;
-            padding: 12px 30px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-          }
-
-          @page {
-            size: A4;
-            margin: 14mm;
-          }
-
-          @media print {
-            body {
-              background: #ffffff;
-            }
-
-            .page {
-              max-width: none;
-              padding: 0;
-            }
-
-            .sheet {
-              border: none;
-              box-shadow: none;
-              border-radius: 0;
-              padding: 0;
-            }
-
-            .print-actions {
-              display: none;
-            }
-          }
-        </style>
-      </head>
-
-      <body>
-        <main class="page">
-          <section class="sheet">
-            <header class="brand-header">
-              <div class="brand-left">
-                <img class="brand-logo" src="${lakbayLogo}" alt="Lakbay Lanao Logo" />
-
-                <div>
-                  <p class="brand-title">Lakbay Lanao</p>
-                  <p class="brand-subtitle">
-                    Provincial Tourism Office<br />
-                    Lanao del Sur, Philippines
-                  </p>
+                  {dayNote && (
+                    <div className="mt-3 rounded-[16px] border border-blue-100 bg-[#f8fbff] px-3.5 py-3 text-xs leading-relaxed text-slate-600">
+                      <strong>Notes:</strong> {dayNote}
+                    </div>
+                  )}
                 </div>
               </div>
+            );
+          })}
+        </section>
 
-              <div class="doc-title">
-                <h1>My Itinerary</h1>
-                <p>Generated ${date}</p>
-              </div>
-            </header>
-
-            <section class="summary-strip">
-              <div class="summary-item">
-                <p class="summary-label">Trip Length</p>
-                <p class="summary-value">${dayCount} Day${
-    dayCount !== 1 ? "s" : ""
-  }</p>
-              </div>
-
-              <div class="summary-item">
-                <p class="summary-label">Total Stops</p>
-                <p class="summary-value">${totalStops}</p>
-              </div>
-
-              <div class="summary-item">
-                <p class="summary-label">Prepared For</p>
-                <p class="summary-value">Traveler</p>
-              </div>
-            </section>
-
-            ${dayRows}
-
-            <footer class="footer">
-              Lakbay Lanao · Explore Lanao del Sur with confidence<br />
-              This itinerary was generated from your saved trip plan.
-            </footer>
-          </section>
-
-          <div class="print-actions">
-            <button class="print-button" onclick="window.print()">
-              Print / Save as PDF
-            </button>
-          </div>
-        </main>
-      </body>
-    </html>
-  `;
-
-  const win = window.open("", "_blank");
-  if (!win) return;
-
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-
-  win.onload = () => {
-    win.focus();
-    win.print();
-  };
-};
+        <footer className="mt-7 border-t border-blue-100 pt-5 text-center text-[11px] leading-relaxed text-slate-400">
+          Lakbay Lanao · Explore Lanao del Sur with confidence
+          <br />
+          This itinerary was generated from your saved trip plan.
+        </footer>
+      </section>
+    </div>
+  );
+}
 
 /* ── Main Itinerary ───────────────────────────────────────────────── */
 function Itinerary() {
@@ -797,14 +500,47 @@ function Itinerary() {
   const [ruleNotice, setRuleNotice] = useState("");
 
   const syncTimeoutRef = useRef(null);
+  const pdfRef = useRef(null);
 
   const places = favorites.filter((item) =>
     ITINERARY_CATEGORIES.includes(item.category)
   );
 
+  const totalStops = Object.values(days).reduce((a, b) => a + b.length, 0);
+
   const showRuleNotice = (message) => {
     setRuleNotice(message);
     setTimeout(() => setRuleNotice(""), 2600);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!pdfRef.current) return;
+
+    const options = {
+      margin: 0,
+      filename: `Lakbay-Lanao-Itinerary-${new Date()
+        .toISOString()
+        .slice(0, 10)}.pdf`,
+      image: {
+        type: "jpeg",
+        quality: 0.98,
+      },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#f3f9ff",
+      },
+      jsPDF: {
+        unit: "px",
+        format: [794, 1123],
+        orientation: "portrait",
+      },
+      pagebreak: {
+        mode: ["avoid-all", "css", "legacy"],
+      },
+    };
+
+    await html2pdf().set(options).from(pdfRef.current).save();
   };
 
   const buildPayload = useCallback(
@@ -1089,11 +825,21 @@ function Itinerary() {
     persistPlan(days, updatedNotes, dayCount, false);
   };
 
-  const totalStops = Object.values(days).reduce((a, b) => a + b.length, 0);
-
   return (
     <div className="font-sans min-h-screen bg-[#f3f9ff] pb-24 text-gray-900">
       <Navbar />
+
+      {/* Hidden PDF template */}
+      <div className="fixed left-[-9999px] top-0">
+        <div ref={pdfRef}>
+          <ItineraryPDFTemplate
+            days={days}
+            notes={notes}
+            dayCount={dayCount}
+            totalStops={totalStops}
+          />
+        </div>
+      </div>
 
       <section className="relative mx-4 mt-0 h-[340px] overflow-hidden rounded-b-[48px] md:mx-8">
         <img
@@ -1146,7 +892,7 @@ function Itinerary() {
             <SaveBadge status={saveStatus} mode={saveMode} />
 
             <button
-              onClick={() => downloadItineraryPDF(days, notes, dayCount)}
+              onClick={handleDownloadPDF}
               className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb]"
             >
               <FiDownload className="text-sm" />
@@ -1191,8 +937,6 @@ function Itinerary() {
             {ruleNotice}
           </div>
         )}
-
-        
       </div>
 
       <section className="mx-auto max-w-7xl px-6 pb-24 pt-8">
@@ -1209,6 +953,7 @@ function Itinerary() {
                   <div className="border-b border-blue-50 px-5 pb-4 pt-5">
                     <div className="mb-1 flex items-center gap-2">
                       <FiMapPin className="text-base text-[#2563eb]" />
+
                       <h2 className="text-base font-bold text-[#2563eb]">
                         Saved Places
                       </h2>
