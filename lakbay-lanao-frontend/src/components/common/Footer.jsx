@@ -18,30 +18,35 @@ function Footer() {
     { label: "Itinerary Builder", path: "/itinerary" },
   ];
 
+  const handleNavigate = (path) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <footer className="bg-gray-950 text-gray-300">
-      <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-3 gap-10">
+    <footer className="relative bg-[#030712] text-gray-300">
+      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-3 lg:px-8">
         {/* BRAND */}
         <div>
           <h2
-            onClick={() => navigate("/")}
-            className="text-xl font-semibold text-white cursor-pointer"
+            onClick={() => handleNavigate("/")}
+            className="inline-block cursor-pointer text-2xl font-bold tracking-tight text-white transition hover:text-blue-300"
           >
             Lakbay Lanao
           </h2>
 
-          <p className="text-sm text-gray-400 mt-4 leading-relaxed">
+          <p className="mt-5 max-w-sm text-sm leading-7 text-gray-400">
             A digital tourism guide for exploring destinations, establishments,
             cultural heritage sites, and travel experiences in Lanao del Sur.
           </p>
 
-          <div className="flex gap-4 mt-6 text-lg">
+          <div className="mt-7 flex items-center gap-3">
             <a
               href="https://www.facebook.com/arawnglanao"
               target="_blank"
               rel="noreferrer"
               aria-label="Facebook"
-              className="hover:text-white transition cursor-pointer"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition hover:border-blue-400 hover:bg-blue-500 hover:text-white"
             >
               <FaFacebookF />
             </a>
@@ -51,7 +56,7 @@ function Footer() {
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram"
-              className="hover:text-white transition cursor-pointer"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition hover:border-blue-400 hover:bg-blue-500 hover:text-white"
             >
               <FaInstagram />
             </a>
@@ -60,16 +65,18 @@ function Footer() {
 
         {/* EXPLORE */}
         <div>
-          <h3 className="text-white font-semibold mb-5">Explore</h3>
+          <h3 className="text-lg font-semibold text-white">Explore</h3>
 
-          <ul className="space-y-3 text-sm text-gray-400">
+          <ul className="mt-5 space-y-3 text-sm text-gray-400">
             {footerLinks.map((link) => (
-              <li
-                key={link.path}
-                onClick={() => navigate(link.path)}
-                className="hover:text-white transition cursor-pointer"
-              >
-                {link.label}
+              <li key={link.path}>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate(link.path)}
+                  className="text-left transition hover:translate-x-1 hover:text-white"
+                >
+                  {link.label}
+                </button>
               </li>
             ))}
           </ul>
@@ -77,32 +84,32 @@ function Footer() {
 
         {/* CONTACT */}
         <div>
-          <h3 className="text-white font-semibold mb-5">Contact</h3>
+          <h3 className="text-lg font-semibold text-white">Contact</h3>
 
-          <ul className="space-y-4 text-sm text-gray-400">
-            <li className="flex items-center gap-3">
-              <FaMapMarkerAlt />
+          <ul className="mt-5 space-y-4 text-sm text-gray-400">
+            <li className="flex items-start gap-3">
+              <FaMapMarkerAlt className="mt-1 shrink-0 text-gray-500" />
               <span>Provincial Tourism Office, Lanao del Sur</span>
             </li>
 
-            <li className="flex items-center gap-3">
-              <FaEnvelope />
+            <li className="flex items-start gap-3">
+              <FaEnvelope className="mt-1 shrink-0 text-gray-500" />
               <a
                 href="mailto:tourismlds@gmail.com"
-                className="hover:text-white transition"
+                className="transition hover:text-white"
               >
-              tourismlds@gmail.com
+                tourismlds@gmail.com
               </a>
             </li>
           </ul>
 
-          <div className="mt-6 text-sm text-gray-500">
+          <p className="mt-7 max-w-sm text-sm leading-6 text-gray-500">
             Department of Tourism · BARMM · Province of Lanao del Sur
-          </div>
+          </p>
         </div>
       </div>
 
-      <div className="border-t border-gray-800 text-center py-6 text-sm text-gray-500">
+      <div className="border-t border-white/10 px-6 py-6 text-center text-sm text-gray-500">
         © {new Date().getFullYear()} Lakbay Lanao. All Rights Reserved.
       </div>
     </footer>

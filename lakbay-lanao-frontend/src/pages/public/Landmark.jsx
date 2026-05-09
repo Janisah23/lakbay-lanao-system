@@ -130,9 +130,10 @@ function Landmarks() {
 
         setData(uniqueById);
 
-        const sortedTop = [...uniqueById].sort(
-          (a, b) => (b.rating || 0) - (a.rating || 0)
-        );
+        const sortedTop = [...uniqueById]
+          .filter((item) => Number(item.rating || 0) > 0)
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
         setTopPlaces(sortedTop.slice(0, 4));
       } catch (error) {
         console.error("Error fetching landmarks:", error);
@@ -157,6 +158,7 @@ function Landmarks() {
       const matchesSearch =
         !query ||
         normalize(item.title).includes(query) ||
+        normalize(item.name).includes(query) ||
         normalize(item.description).includes(query) ||
         normalize(item.summary).includes(query) ||
         normalize(item.location?.municipality).includes(query) ||
@@ -175,7 +177,9 @@ function Landmarks() {
     if (!user) return;
 
     const favRef = doc(db, "users", user.uid, "favorites", String(item.id));
-    const isFavorited = favorites.some((fav) => String(fav.id) === String(item.id));
+    const isFavorited = favorites.some(
+      (fav) => String(fav.id) === String(item.id)
+    );
 
     try {
       if (isFavorited) {
@@ -199,124 +203,149 @@ function Landmarks() {
     setSearchQuery("");
   };
 
+  const getPlaceTitle = (item) => {
+    return item.title || item.name || "Untitled Landmark";
+  };
+
+  const getPlaceLocation = (item) => {
+    return (
+      item.location?.municipality ||
+      item.location?.province ||
+      "Lanao del Sur"
+    );
+  };
+
   const featuredItem = filteredData[0];
   const regularItems = filteredData.slice(1);
 
   const MiniCard = ({ item }) => {
     const isFav = favorites.some((fav) => String(fav.id) === String(item.id));
+    const title = getPlaceTitle(item);
 
     return (
-      <div
+      <article
         onClick={() => navigate(`/destination/${item.id}`)}
-        className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+        className="group flex h-full min-h-[330px] cursor-pointer flex-col overflow-hidden rounded-[30px] border border-blue-100 bg-white shadow-[0_8px_22px_rgba(37,99,235,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.10)]"
       >
-        <div className="relative h-[160px] overflow-hidden">
-          <img
-            src={item.imageURL || "/default.jpg"}
-            alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        <div className="p-2.5 pb-0">
+          <div className="relative h-[190px] overflow-hidden rounded-[24px] border border-blue-100 bg-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_6px_16px_rgba(37,99,235,0.06)]">
+            <img
+              src={item.imageURL || "/default.jpg"}
+              alt={title}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.005]"
+            />
 
-          <div className="absolute top-3 left-3">
-            <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
+
+            <span className="absolute left-4 top-4 rounded-full border border-blue-100 bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm">
               {item.type || item.category || "Landmark"}
             </span>
-          </div>
 
-          <button
-            onClick={(e) => handleToggleFavorite(e, item)}
-            className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md z-10 hover:bg-white transition"
-          >
-            {isFav ? (
-              <FaHeart className="text-[#2563eb] text-sm" />
-            ) : (
-              <FiHeart className="text-gray-500 text-sm" />
+            <button
+              onClick={(e) => handleToggleFavorite(e, item)}
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-sm transition hover:bg-blue-50"
+            >
+              {isFav ? (
+                <FaHeart className="text-sm text-[#2563eb]" />
+              ) : (
+                <FiHeart className="text-sm text-gray-500" />
+              )}
+            </button>
+
+            {showHeart === item.id && (
+              <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-5xl text-[#2563eb]" />
             )}
-          </button>
-
-          {showHeart === item.id && (
-            <FaHeart className="absolute inset-0 m-auto text-[#2563eb] text-5xl pointer-events-none z-20 animate-ping" />
-          )}
+          </div>
         </div>
 
-        <div className="p-4">
-          <h3 className="font-bold text-[#2563eb] text-[15px] group-hover:text-blue-700 transition line-clamp-1">
-            {item.title}
+        <div className="flex flex-1 flex-col px-6 pb-6 pt-4">
+          <h3 className="line-clamp-2 min-h-[44px] text-base font-bold leading-snug text-[#2563eb] transition group-hover:text-blue-700">
+            {title}
           </h3>
-          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1 line-clamp-1">
-            <FiMapPin className="text-gray-400" />
-            {item.location?.municipality || "Lanao del Sur"}
-          </p>
-          {item.rating && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <StarRating rating={item.rating} />
-              <span className="text-xs text-gray-400 font-medium">
-                {item.rating.toFixed(1)}
-              </span>
+
+          <div className="mt-auto pt-4">
+            <div className="mb-3 flex items-center gap-2 text-xs font-medium text-gray-400">
+              <FiMapPin className="shrink-0 text-[#2563eb]" />
+              <span className="line-clamp-1">{getPlaceLocation(item)}</span>
             </div>
-          )}
+
+            {item.rating && (
+              <div className="mb-4 flex items-center gap-1.5">
+                <StarRating rating={item.rating} />
+                <span className="text-xs font-medium text-gray-400">
+                  {Number(item.rating).toFixed(1)}
+                </span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/destination/${item.id}`);
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700"
+            >
+              View landmark <FiChevronRight />
+            </button>
+          </div>
         </div>
-      </div>
+      </article>
     );
   };
 
   return (
-    <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] pb-24">
+    <div className="min-h-screen bg-[#f3f9ff] pb-24 font-sans text-gray-900">
       <Navbar />
 
-      <section className="pt-32 pb-10 px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6 font-medium uppercase tracking-wider">
-          <span
-            className="cursor-pointer hover:text-[#2563eb] transition"
-            onClick={() => navigate("/")}
-          >
-            Visit Lanao
-          </span>
-          <span>/</span>
-          <span className="text-gray-500">Landmarks</span>
-        </div>
+      <section className="mx-auto max-w-7xl px-6 pb-10 pt-32 lg:px-8">
+       
 
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-[#2563eb] mb-4">
+            <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold text-[#2563eb] shadow-sm">
               <FiMapPin className="text-xs" /> Lanao del Sur
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] leading-tight tracking-tight">
-              Lanao<br className="hidden md:block" /> Landmarks
+
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-[#2563eb] md:text-5xl">
+              Lanao
+              <br className="hidden md:block" /> Landmarks
             </h1>
-            <p className="mt-3 text-gray-500 max-w-md text-base font-light leading-relaxed">
-              Explore iconic landmarks, historic places, and recognizable sites across Lanao del Sur.
+
+            <p className="mt-3 max-w-md text-base font-light leading-relaxed text-gray-500">
+              Explore iconic landmarks, historic places, and recognizable sites
+              across Lanao del Sur.
             </p>
           </div>
 
-          <div className="relative w-full lg:w-80 flex-shrink-0">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+          <div className="relative w-full flex-shrink-0 lg:w-80">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400" />
+
             <input
               type="text"
               placeholder="Search landmarks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-[12px] border border-gray-200 bg-white pl-10 pr-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 shadow-sm"
+              className="w-full rounded-[16px] border border-blue-100 bg-white py-3 pl-10 pr-4 text-sm shadow-sm outline-none transition hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
             />
           </div>
         </div>
       </section>
 
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-3 flex items-center gap-4">
+      <div className="sticky top-0 z-20 border-b border-blue-100 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3 lg:px-8">
           <div
-            className="flex gap-2 overflow-x-auto pb-0.5 flex-1"
+            className="flex flex-1 gap-2 overflow-x-auto pb-0.5"
             style={{ scrollbarWidth: "none" }}
           >
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full transition flex-shrink-0 ${
+                className={`flex-shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
                   activeCategory === cat
                     ? "bg-[#2563eb] text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+                    : "border border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                 }`}
               >
                 {cat}
@@ -324,22 +353,23 @@ function Landmarks() {
             ))}
           </div>
 
-          <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-1 rounded-full border border-blue-100 bg-[#f8fbff] p-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-full transition ${
+              className={`rounded-full p-2 transition ${
                 viewMode === "grid"
-                  ? "bg-white shadow-sm text-[#2563eb]"
+                  ? "bg-white text-[#2563eb] shadow-sm"
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
               <FiGrid className="text-sm" />
             </button>
+
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-full transition ${
+              className={`rounded-full p-2 transition ${
                 viewMode === "list"
-                  ? "bg-white shadow-sm text-[#2563eb]"
+                  ? "bg-white text-[#2563eb] shadow-sm"
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
@@ -347,19 +377,23 @@ function Landmarks() {
             </button>
           </div>
 
-          <p className="text-xs text-gray-400 font-medium flex-shrink-0 hidden md:block">
-            {filteredData.length} {filteredData.length === 1 ? "landmark" : "landmarks"}
+          <p className="hidden flex-shrink-0 text-xs font-medium text-gray-400 md:block">
+            {filteredData.length}{" "}
+            {filteredData.length === 1 ? "landmark" : "landmarks"}
           </p>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 pt-10">
+      <main className="mx-auto max-w-7xl px-6 pt-10 lg:px-8">
         {filteredData.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-[28px] border border-dashed border-gray-200">
-            <p className="text-gray-400 text-sm font-medium">No landmarks found.</p>
+          <div className="rounded-[28px] border border-dashed border-blue-100 bg-white py-20 text-center shadow-sm">
+            <p className="text-sm font-medium text-gray-400">
+              No landmarks found.
+            </p>
+
             <button
               onClick={handleClearFilters}
-              className="mt-4 text-sm text-[#2563eb] font-semibold hover:underline"
+              className="mt-4 text-sm font-semibold text-[#2563eb] hover:underline"
             >
               Clear filters
             </button>
@@ -367,112 +401,145 @@ function Landmarks() {
         ) : viewMode === "list" ? (
           <div className="space-y-4">
             {filteredData.map((item) => {
-              const isFav = favorites.some((fav) => String(fav.id) === String(item.id));
+              const isFav = favorites.some(
+                (fav) => String(fav.id) === String(item.id)
+              );
+
+              const title = getPlaceTitle(item);
 
               return (
-                <div
+                <article
                   key={item.id}
                   onClick={() => navigate(`/destination/${item.id}`)}
-                  className="group cursor-pointer bg-white rounded-[20px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-5 p-4 overflow-hidden"
+                  className="group flex cursor-pointer items-center gap-5 overflow-hidden rounded-[24px] border border-blue-100 bg-white p-4 shadow-[0_8px_22px_rgba(37,99,235,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)]"
                 >
-                  <div className="relative w-28 h-20 flex-shrink-0 rounded-[12px] overflow-hidden bg-gray-100">
+                  <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-[18px] border border-blue-100 bg-[#f8fbff] shadow-sm">
                     <img
                       src={item.imageURL || "/default.jpg"}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      alt={title}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.005]"
                     />
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <span className="inline-block rounded-full bg-[#2563eb] px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm mb-1.5">
+                  <div className="min-w-0 flex-1">
+                    <span className="mb-2 inline-block rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
                       {item.type || item.category || "Landmark"}
                     </span>
-                    <h3 className="font-bold text-[#2563eb] text-base group-hover:text-blue-700 transition line-clamp-1">
-                      {item.title}
+
+                    <h3 className="line-clamp-1 text-base font-bold text-[#2563eb] transition group-hover:text-blue-700">
+                      {title}
                     </h3>
-                    <p className="text-sm text-gray-400 mt-1 line-clamp-1 font-light">
-                      {item.description || item.summary || "Explore this landmark in Lanao."}
+
+                    <p className="mt-2 line-clamp-1 text-sm font-light text-gray-400">
+                      {item.description ||
+                        item.summary ||
+                        "Explore this landmark in Lanao."}
                     </p>
-                    {item.rating && <StarRating rating={item.rating} />}
+
+                    {item.rating && (
+                      <div className="mt-2">
+                        <StarRating rating={item.rating} />
+                      </div>
+                    )}
                   </div>
 
                   <button
                     onClick={(e) => handleToggleFavorite(e, item)}
-                    className="flex-shrink-0 p-2.5 bg-gray-50 rounded-full hover:bg-blue-50 transition mr-2"
+                    className="mr-2 flex-shrink-0 rounded-full bg-blue-50 p-2.5 transition hover:bg-blue-100"
                   >
                     {isFav ? (
-                      <FaHeart className="text-[#2563eb] text-sm" />
+                      <FaHeart className="text-sm text-[#2563eb]" />
                     ) : (
-                      <FiHeart className="text-gray-400 text-sm" />
+                      <FiHeart className="text-sm text-gray-400" />
                     )}
                   </button>
 
-                  <FiChevronRight className="text-gray-300 flex-shrink-0 hidden md:block" />
-                </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/destination/${item.id}`);
+                    }}
+                    className="hidden items-center gap-2 rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 md:inline-flex"
+                  >
+                    View landmark <FiChevronRight />
+                  </button>
+                </article>
               );
             })}
           </div>
         ) : (
           <div className="space-y-6">
             {featuredItem && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                <article
                   onClick={() => navigate(`/destination/${featuredItem.id}`)}
-                  className="group cursor-pointer relative bg-white rounded-[28px] border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden md:col-span-2 min-h-[420px]"
+                  className="group relative min-h-[420px] cursor-pointer overflow-hidden rounded-[30px] border border-blue-100 bg-white p-2.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_14px_34px_rgba(37,99,235,0.11)] md:col-span-2"
                 >
-                  <img
-                    src={featuredItem.imageURL || "/default.jpg"}
-                    alt={featuredItem.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="relative h-full min-h-[400px] overflow-hidden rounded-[24px] bg-blue-50">
+                    <img
+                      src={featuredItem.imageURL || "/default.jpg"}
+                      alt={getPlaceTitle(featuredItem)}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.005]"
+                    />
 
-                  <div className="absolute top-5 left-5">
-                    <span className="rounded-full bg-[#2563eb] px-3 py-1 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
-                      {featuredItem.type || featuredItem.category || "Landmark"}
-                    </span>
-                  </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
 
-                  <button
-                    onClick={(e) => handleToggleFavorite(e, featuredItem)}
-                    className="absolute top-5 right-5 bg-white/90 p-2.5 rounded-full shadow-md z-10 hover:bg-white transition"
-                  >
-                    {favorites.some((fav) => String(fav.id) === String(featuredItem.id)) ? (
-                      <FaHeart className="text-[#2563eb] text-base" />
-                    ) : (
-                      <FiHeart className="text-gray-500 text-base" />
-                    )}
-                  </button>
-
-                  {showHeart === featuredItem.id && (
-                    <FaHeart className="absolute inset-0 m-auto text-[#2563eb] text-6xl pointer-events-none z-20 animate-ping" />
-                  )}
-
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    {featuredItem.rating && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <StarRating rating={featuredItem.rating} />
-                        <span className="text-white/70 text-xs">
-                          {featuredItem.rating.toFixed(1)} ({featuredItem.reviewsCount || 0})
-                        </span>
-                      </div>
-                    )}
-                    <h3 className="text-2xl font-bold text-white leading-tight mb-1">
-                      {featuredItem.title}
-                    </h3>
-                    <p className="text-white/70 text-sm line-clamp-2 font-light">
-                      {featuredItem.description || featuredItem.summary || "Explore this landmark in Lanao."}
-                    </p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <FiMapPin className="text-white/60 text-xs flex-shrink-0" />
-                      <span className="text-white/60 text-xs">
-                        {featuredItem.location?.municipality ||
-                          featuredItem.location?.province ||
-                          "Lanao del Sur"}
+                    <div className="absolute left-5 top-5">
+                      <span className="rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm">
+                        {featuredItem.type ||
+                          featuredItem.category ||
+                          "Landmark"}
                       </span>
                     </div>
+
+                    <button
+                      onClick={(e) => handleToggleFavorite(e, featuredItem)}
+                      className="absolute right-5 top-5 z-10 rounded-full border border-white/80 bg-white/95 p-2.5 shadow-sm transition hover:bg-blue-50"
+                    >
+                      {favorites.some(
+                        (fav) => String(fav.id) === String(featuredItem.id)
+                      ) ? (
+                        <FaHeart className="text-base text-[#2563eb]" />
+                      ) : (
+                        <FiHeart className="text-base text-gray-500" />
+                      )}
+                    </button>
+
+                    {showHeart === featuredItem.id && (
+                      <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-6xl text-[#2563eb]" />
+                    )}
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      {featuredItem.rating && (
+                        <div className="mb-2 flex items-center gap-2">
+                          <StarRating rating={featuredItem.rating} />
+                          <span className="text-xs text-white/75">
+                            {Number(featuredItem.rating).toFixed(1)} (
+                            {featuredItem.reviewsCount || 0})
+                          </span>
+                        </div>
+                      )}
+
+                      <h3 className="mb-1 text-2xl font-bold leading-tight text-white">
+                        {getPlaceTitle(featuredItem)}
+                      </h3>
+
+                      <p className="line-clamp-2 text-sm font-light text-white/70">
+                        {featuredItem.description ||
+                          featuredItem.summary ||
+                          "Explore this landmark in Lanao."}
+                      </p>
+
+                      <div className="mt-3 flex items-center gap-2">
+                        <FiMapPin className="flex-shrink-0 text-xs text-white/60" />
+                        <span className="text-xs text-white/60">
+                          {getPlaceLocation(featuredItem)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </article>
 
                 <div className="flex flex-col gap-5">
                   {regularItems.slice(0, 2).map((item) => (
@@ -483,7 +550,7 @@ function Landmarks() {
             )}
 
             {regularItems.length > 2 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {regularItems.slice(2).map((item) => (
                   <MiniCard key={item.id} item={item} />
                 ))}
@@ -494,28 +561,34 @@ function Landmarks() {
       </main>
 
       {topPlaces.length > 0 && (
-        <section className="mt-20 px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-6">
+        <section className="mx-auto mt-20 max-w-7xl border-t border-blue-50 px-6 py-20 lg:px-8">
+          <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-[#2563eb] tracking-tight">
+              <span className="mb-3 inline-flex rounded-full border border-blue-100 bg-white px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm">
+                Most Recommended
+              </span>
+
+              <h2 className="text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
                 Top Rated Landmarks
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+
+              <p className="mt-2 text-sm text-gray-500">
                 Discover the most highly recommended sites to visit.
               </p>
             </div>
+
             <button
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 handleClearFilters();
               }}
-              className="text-sm font-semibold text-[#2563eb] hover:underline hidden sm:block"
+              className="hidden rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:bg-blue-50 sm:block"
             >
               View all
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {topPlaces.map((item) => (
               <MiniCard key={item.id} item={item} />
             ))}

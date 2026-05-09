@@ -213,13 +213,7 @@ function TourismChatbot() {
             setOpen((prev) => !prev);
             setManuallyOpen(true);
           }}
-          className="
-            relative rounded-full p-1.5
-            shadow-[0_12px_28px_rgba(37,99,235,0.18)]
-            backdrop-blur-sm
-            transition-all duration-300
-            hover:scale-105 hover:shadow-[0_14px_32px_rgba(37,99,235,0.22)]
-          "
+          
         >
           <img
             src="src/assets/chatbot-icon.png"
