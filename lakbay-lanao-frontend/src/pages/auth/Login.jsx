@@ -221,7 +221,7 @@ function Login() {
       if (role === "admin") {
         navigate("/admin/dashboard");
       } else if (role === "staff") {
-        navigate("/staff/manage");
+        navigate("/staff/dashboard");
       } else {
         navigate("/home");
       }

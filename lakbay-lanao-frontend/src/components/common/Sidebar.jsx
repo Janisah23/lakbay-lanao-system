@@ -43,7 +43,8 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
     { name: "AI Knowledge Base", path: "/admin/knowledge", icon: <FiCpu /> },
   ];
 
-  const navItems = role === "admin" ? adminNav : staffNav;
+  // FIXED: Added .toLowerCase() to ensure "Admin" and "admin" both work
+  const navItems = role?.toLowerCase() === "admin" ? adminNav : staffNav;
 
   return (
     <aside
@@ -131,7 +132,6 @@ function Sidebar({ role, name, collapsed, setCollapsed }) {
           transition-all duration-300`}
         >
           <div className="flex items-center gap-3">
-            {/* Changed from rounded-[12px] to rounded-full */}
             <div className="w-10 h-10 rounded-full bg-blue-50 text-[#2563EB] flex items-center justify-center font-bold text-lg flex-shrink-0 border border-blue-100">
               {name ? name.charAt(0).toUpperCase() : "U"}
             </div>

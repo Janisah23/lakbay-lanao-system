@@ -45,10 +45,6 @@ function Navbar() {
   const navLinkClass =
     "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
 
-  const recentEvents = eventsData
-    .filter((item) => item.contentType === "Event")
-    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
-    .slice(0, 4);
 
   const filteredResults = searchItems.filter((item) => {
     const term = searchTerm.toLowerCase();
@@ -327,17 +323,19 @@ function Navbar() {
               </button>
             ) : (
               <div className="relative">
-               <img
-                  src={user.photoURL || "/default-avatar.png"}
-                  alt="profile"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenMenu(!openMenu);
-                    setShowMobileMenu(false);
-                  }}
-                  className="h-9 w-9 cursor-pointer rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] transition-all hover:border-blue-700 hover:shadow-[0_0_0_5px_rgba(37,99,235,0.16)] md:h-10 md:w-10"
-                />
-
+            <img
+              src={
+                user.photoURL || 
+                `https://ui-avatars.com/api/?name=${user.displayName || user.email || "User"}&background=eff6ff&color=2563eb&bold=true`
+              }
+              alt="profile"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenMenu(!openMenu);
+                setShowMobileMenu(false);
+              }}
+              className="h-9 w-9 cursor-pointer rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] transition-all hover:border-blue-700 hover:shadow-[0_0_0_5px_rgba(37,99,235,0.16)] md:h-10 md:w-10"
+            />
                 {openMenu && (
                   <div className="absolute right-0 z-50 mt-4 w-52 overflow-hidden rounded-[24px] border border-blue-100 bg-white py-2 shadow-[0_14px_35px_rgba(37,99,235,0.10)] animate-dropdown">
                     <button
