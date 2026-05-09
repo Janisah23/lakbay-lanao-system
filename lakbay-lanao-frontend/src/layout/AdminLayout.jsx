@@ -10,20 +10,16 @@ function AdminLayout() {
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    // Listen for the current logged-in user
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          // Fetch the user's document from the "users" collection
           const userDocRef = doc(db, "users", user.uid);
           const userDocSnap = await getDoc(userDocRef);
 
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            // Try to use 'name', fallback to 'displayName', or auth display name
             setUserName(userData.name || userData.displayName || user.displayName || "Admin User");
           } else {
-            // Fallback if the user document doesn't exist yet
             setUserName(user.displayName || "Admin User");
           }
         } catch (error) {
