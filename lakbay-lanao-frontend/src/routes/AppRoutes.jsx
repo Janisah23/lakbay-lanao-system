@@ -16,7 +16,9 @@ import Itinerary from "../pages/public/Itinerary";
 import EventsCalendar from "../pages/public/EventsCalendar";
 import Articles from "../pages/public/Articles";
 import Events from "../pages/public/Events";
-
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import Profile from "../pages/public/Profile";
+import EditProfile from "../pages/public/EditProfile";
 
 
 import StaffLayout from "../layout/StaffLayout";
@@ -65,8 +67,11 @@ function AppRoutes() {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events-calendar" element={<EventsCalendar />} />
-      
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
 
+        
         {/* Shared Details Routes */}
         <Route path="/event/:id" element={<EventDetails />} />
         <Route path="/destination/:id" element={<PlacesDetails />} />

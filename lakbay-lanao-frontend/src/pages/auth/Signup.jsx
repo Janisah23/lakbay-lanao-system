@@ -1,8 +1,13 @@
 import { useState } from "react";
+import Select from "react-select";
+import "flag-icons/css/flag-icons.min.css";
+
 import { createUserWithEmailAndPassword } from "firebase/auth";
+
 import { auth, db } from "../../firebase/config";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+
 import {
   FiArrowLeft,
   FiAlertCircle,
@@ -11,15 +16,86 @@ import {
   FiEye,
   FiEyeOff,
 } from "react-icons/fi";
+
 import { AnimatePresence, motion } from "framer-motion";
 import loginpage from "../../assets/loginpage.png";
 
 function Signup() {
+  const countries = [
+    { value: "Philippines", label: "Philippines", code: "ph" },
+    { value: "South Korea", label: "South Korea", code: "kr" },
+    { value: "United States", label: "United States", code: "us" },
+    { value: "Japan", label: "Japan", code: "jp" },
+    { value: "China", label: "China", code: "cn" },
+    { value: "Australia", label: "Australia", code: "au" },
+    { value: "Canada", label: "Canada", code: "ca" },
+    { value: "Taiwan", label: "Taiwan", code: "tw" },
+    { value: "Singapore", label: "Singapore", code: "sg" },
+    { value: "United Kingdom", label: "United Kingdom", code: "gb" },
+    { value: "Malaysia", label: "Malaysia", code: "my" },
+    { value: "Indonesia", label: "Indonesia", code: "id" },
+    { value: "Thailand", label: "Thailand", code: "th" },
+    { value: "Vietnam", label: "Vietnam", code: "vn" },
+    { value: "Brunei", label: "Brunei", code: "bn" },
+    { value: "Cambodia", label: "Cambodia", code: "kh" },
+    { value: "Laos", label: "Laos", code: "la" },
+    { value: "Myanmar", label: "Myanmar", code: "mm" },
+    { value: "Hong Kong", label: "Hong Kong", code: "hk" },
+    { value: "Macau", label: "Macau", code: "mo" },
+    { value: "India", label: "India", code: "in" },
+    { value: "Pakistan", label: "Pakistan", code: "pk" },
+    { value: "Bangladesh", label: "Bangladesh", code: "bd" },
+    { value: "Sri Lanka", label: "Sri Lanka", code: "lk" },
+    { value: "Nepal", label: "Nepal", code: "np" },
+    { value: "Saudi Arabia", label: "Saudi Arabia", code: "sa" },
+    { value: "United Arab Emirates", label: "United Arab Emirates", code: "ae" },
+    { value: "Qatar", label: "Qatar", code: "qa" },
+    { value: "Kuwait", label: "Kuwait", code: "kw" },
+    { value: "Bahrain", label: "Bahrain", code: "bh" },
+    { value: "Oman", label: "Oman", code: "om" },
+    { value: "Israel", label: "Israel", code: "il" },
+    { value: "Turkey", label: "Turkey", code: "tr" },
+    { value: "Germany", label: "Germany", code: "de" },
+    { value: "France", label: "France", code: "fr" },
+    { value: "Italy", label: "Italy", code: "it" },
+    { value: "Spain", label: "Spain", code: "es" },
+    { value: "Netherlands", label: "Netherlands", code: "nl" },
+    { value: "Switzerland", label: "Switzerland", code: "ch" },
+    { value: "Sweden", label: "Sweden", code: "se" },
+    { value: "Norway", label: "Norway", code: "no" },
+    { value: "Denmark", label: "Denmark", code: "dk" },
+    { value: "Ireland", label: "Ireland", code: "ie" },
+    { value: "Belgium", label: "Belgium", code: "be" },
+    { value: "Austria", label: "Austria", code: "at" },
+    { value: "Poland", label: "Poland", code: "pl" },
+    { value: "Russia", label: "Russia", code: "ru" },
+    { value: "New Zealand", label: "New Zealand", code: "nz" },
+    { value: "Guam", label: "Guam", code: "gu" },
+    {
+      value: "Northern Mariana Islands",
+      label: "Northern Mariana Islands",
+      code: "mp",
+    },
+    { value: "Palau", label: "Palau", code: "pw" },
+    { value: "Papua New Guinea", label: "Papua New Guinea", code: "pg" },
+    { value: "Mexico", label: "Mexico", code: "mx" },
+    { value: "Brazil", label: "Brazil", code: "br" },
+    { value: "Argentina", label: "Argentina", code: "ar" },
+    { value: "Chile", label: "Chile", code: "cl" },
+    { value: "South Africa", label: "South Africa", code: "za" },
+    { value: "Egypt", label: "Egypt", code: "eg" },
+    { value: "Morocco", label: "Morocco", code: "ma" },
+    { value: "Nigeria", label: "Nigeria", code: "ng" },
+    { value: "Other", label: "Other", code: "" },
+  ];
+
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [municipality, setMunicipality] = useState("");
+
+  const [country, setCountry] = useState(countries[0]);
+  const [location, setLocation] = useState("");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -32,35 +108,6 @@ function Signup() {
 
   const navigate = useNavigate();
 
-  const municipalities = [
-    "Amai Manabilang",
-    "Balabagan",
-    "Balindong",
-    "Bayang",
-    "Bubong",
-    "Calanogas",
-    "Ganassi",
-    "Kapai",
-    "Lumbaca-Unayan",
-    "Madalum",
-    "Madamba",
-    "Malabang",
-    "Marantao",
-    "Marogong",
-    "Masiu",
-    "Mulondo",
-    "Pagayawan",
-    "Piagapo",
-    "Poona Bayabao",
-    "Pualas",
-    "Saguiaran",
-    "Tamparan",
-    "Taraka",
-    "Tubaran",
-    "Tugaya",
-    "Wao",
-  ];
-
   const clearMessages = () => {
     setErrorMsg("");
     setSuccessMsg("");
@@ -71,6 +118,82 @@ function Signup() {
 
   const passwordInputStyle =
     "w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 pr-12 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100";
+
+  const countrySelectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "46px",
+      borderRadius: "14px",
+      borderColor: state.isFocused ? "#2563eb" : "#dbeafe",
+      boxShadow: state.isFocused ? "0 0 0 4px #dbeafe" : "none",
+      fontSize: "14px",
+      transition: "all 0.2s ease",
+      "&:hover": {
+        borderColor: "rgba(37, 99, 235, 0.5)",
+      },
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      paddingLeft: "14px",
+      paddingRight: "8px",
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: "#374151",
+    }),
+    input: (base) => ({
+      ...base,
+      color: "#374151",
+    }),
+    dropdownIndicator: (base, state) => ({
+      ...base,
+      color: state.isFocused ? "#2563eb" : "#9ca3af",
+      "&:hover": {
+        color: "#2563eb",
+      },
+    }),
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: "16px",
+      overflow: "hidden",
+      border: "1px solid #dbeafe",
+      boxShadow: "0 18px 45px rgba(37, 99, 235, 0.14)",
+      zIndex: 9999,
+    }),
+    menuList: (base) => ({
+      ...base,
+      padding: "6px",
+      maxHeight: "230px",
+    }),
+    option: (base, state) => ({
+      ...base,
+      borderRadius: "10px",
+      fontSize: "14px",
+      cursor: "pointer",
+      backgroundColor: state.isSelected
+        ? "#2563eb"
+        : state.isFocused
+        ? "#eff6ff"
+        : "white",
+      color: state.isSelected ? "white" : "#374151",
+    }),
+  };
+
+  const formatCountryOption = (option) => (
+    <div className="flex items-center gap-2">
+      {option.code ? (
+        <span className={`fi fi-${option.code} rounded-[3px]`} />
+      ) : (
+        <span className="flex h-[14px] w-[20px] items-center justify-center text-xs">
+          🌍
+        </span>
+      )}
+      <span>{option.label}</span>
+    </div>
+  );
 
   const MessageAlert = ({ type, message }) => {
     const isError = type === "error";
@@ -121,6 +244,12 @@ function Signup() {
       return;
     }
 
+    if (!country?.value) {
+      setErrorMsg("Please select your country.");
+      setLoading(false);
+      return;
+    }
+
     if (password.length < 6) {
       setErrorMsg("Password must be at least 6 characters.");
       setLoading(false);
@@ -136,7 +265,7 @@ function Signup() {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password
       );
 
@@ -146,16 +275,18 @@ function Signup() {
         fullName: fullName.trim(),
         username: username.trim(),
         email: user.email,
-        phone: phone.trim() || "",
-        municipality: municipality || "",
+        country: country.value,
+        countryCode: country.code || "",
+        location: location.trim() || "",
         role: "tourist",
+        emailVerified: true,
         createdAt: serverTimestamp(),
       });
 
-      setSuccessMsg("Account created successfully. Please sign in.");
+      setSuccessMsg("Account created successfully. Redirecting...");
 
       setTimeout(() => {
-        navigate("/login");
+        navigate("/home");
       }, 900);
     } catch (error) {
       console.error("Signup error:", error);
@@ -166,6 +297,8 @@ function Signup() {
         setErrorMsg("Please enter a valid email address.");
       } else if (error.code === "auth/weak-password") {
         setErrorMsg("Password must be at least 6 characters.");
+      } else if (error.code === "auth/too-many-requests") {
+        setErrorMsg("Too many attempts. Please try again later.");
       } else {
         setErrorMsg("Signup failed. Please try again.");
       }
@@ -204,7 +337,7 @@ function Signup() {
         </h2>
 
         <p className="mb-6 text-sm text-gray-500">
-          Create your Lakbay Lanao account
+          Create your Lakbay Lanao tourist account
         </p>
 
         <form onSubmit={handleSignup} className="text-left">
@@ -245,32 +378,31 @@ function Signup() {
               className={inputStyle}
             />
 
-            <input
-              type="text"
-              placeholder="Phone Number (optional)"
-              value={phone}
-              onChange={(e) => {
-                setPhone(e.target.value);
+            <Select
+              value={country}
+              onChange={(selected) => {
+                setCountry(selected);
                 clearMessages();
               }}
-              className={inputStyle}
+              options={countries}
+              isSearchable
+              formatOptionLabel={formatCountryOption}
+              className="text-sm"
+              classNamePrefix="country-select"
+              styles={countrySelectStyles}
+              placeholder="Select Country"
             />
 
-            <select
-              value={municipality}
+            <input
+              type="text"
+              placeholder="Location / City / Province (optional)"
+              value={location}
               onChange={(e) => {
-                setMunicipality(e.target.value);
+                setLocation(e.target.value);
                 clearMessages();
               }}
-              className={inputStyle}
-            >
-              <option value="">Select Municipality (optional)</option>
-              {municipalities.map((mun, index) => (
-                <option key={index} value={mun}>
-                  {mun}
-                </option>
-              ))}
-            </select>
+              className="w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100 md:col-span-2"
+            />
 
             <div className="relative">
               <input
@@ -299,7 +431,7 @@ function Signup() {
               </button>
             </div>
 
-            <div className="relative md:col-span-2">
+            <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm Password"

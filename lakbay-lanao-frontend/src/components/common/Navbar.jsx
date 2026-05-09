@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, doc, getDoc } from "firebase/firestore";
 import {
   FiSearch,
   FiHeart,
@@ -17,6 +17,9 @@ import {
   FiCalendar,
   FiCompass,
   FiBriefcase,
+  FiUser,
+  FiEdit3,
+  FiChevronRight,
 } from "react-icons/fi";
 import "./Navbar.css";
 
@@ -28,6 +31,8 @@ function Navbar() {
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+
   const [showFeatures, setShowFeatures] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,11 +50,6 @@ function Navbar() {
   const navLinkClass =
     "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
 
-  const recentEvents = eventsData
-    .filter((item) => item.contentType === "Event")
-    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
-    .slice(0, 4);
-
   const filteredResults = searchItems.filter((item) => {
     const term = searchTerm.toLowerCase();
 
@@ -59,10 +59,36 @@ function Navbar() {
       item.searchType?.toLowerCase().includes(term);
 
     const matchesFilter =
-      activeFilter === "all" || normalize(item.searchType).includes(activeFilter);
+      activeFilter === "all" ||
+      normalize(item.searchType).includes(activeFilter);
 
     return matchesSearch && matchesFilter;
   });
+
+  const displayUsername =
+    userProfile?.username ||
+    user?.displayName ||
+    userProfile?.fullName ||
+    "Tourist";
+
+  const displayFullName =
+    userProfile?.fullName ||
+    user?.displayName ||
+    userProfile?.username ||
+    "Tourist";
+
+  const displayEmail = user?.email || userProfile?.email || "";
+  const displayInitial = displayUsername?.charAt(0)?.toUpperCase() || "U";
+
+  const displayRole = userProfile?.role
+    ? userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)
+    : "Tourist";
+
+  const displayLocation =
+    userProfile?.location ||
+    userProfile?.cityMunicipality ||
+    userProfile?.municipality ||
+    "";
 
   const closeSearch = () => {
     setShowSearch(false);
@@ -78,6 +104,9 @@ function Navbar() {
 
   const handleLogout = async () => {
     await signOut(auth);
+    setUser(null);
+    setUserProfile(null);
+    setOpenMenu(false);
     navigate("/");
   };
 
@@ -90,6 +119,7 @@ function Navbar() {
 
     navigate("/", { state: { openChatbot: true } });
     closePanels();
+    setOpenMenu(false);
   };
 
   const handleResultClick = (item) => {
@@ -125,9 +155,9 @@ function Navbar() {
     const unsubContent = onSnapshot(
       collection(db, "tourismContent"),
       (snapshot) => {
-        const contentData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const contentData = snapshot.docs.map((docItem) => ({
+          id: docItem.id,
+          ...docItem.data(),
         }));
 
         setEventsData(contentData);
@@ -157,9 +187,9 @@ function Navbar() {
       collection(db, "tourismData"),
       (snapshot) => {
         const placesData = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
+          .map((docItem) => ({
+            id: docItem.id,
+            ...docItem.data(),
           }))
           .filter((item) => item.status !== "archived")
           .map((item) => ({
@@ -189,8 +219,27 @@ function Navbar() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+
+      if (!currentUser) {
+        setUserProfile(null);
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          setUserProfile(userSnap.data());
+        } else {
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setUserProfile(null);
+      }
     });
 
     return () => unsubscribe();
@@ -220,7 +269,7 @@ function Navbar() {
               : "px-4 py-2.5 shadow-[0_8px_24px_rgba(37,99,235,0.08)] md:px-10 md:py-3"
           }`}
         >
-         {/* BRAND / LOGO */}
+          {/* BRAND / LOGO */}
           <div
             onClick={() => {
               navigate("/");
@@ -240,11 +289,10 @@ function Navbar() {
               </span>
 
               <span className="mt-0.8 truncate whitespace-nowrap text-[8px] font-semibold uppercase tracking-[0.1em] text-blue-900">
-                 Lanao del Sur
+                Lanao del Sur
               </span>
             </div>
           </div>
-
 
           {/* DESKTOP MENU */}
           <div className="hidden items-center gap-8 lg:flex">
@@ -327,53 +375,152 @@ function Navbar() {
               </button>
             ) : (
               <div className="relative">
-               <img
-                  src={user.photoURL || "/default-avatar.png"}
-                  alt="profile"
+                <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setOpenMenu(!openMenu);
+                    setOpenMenu((prev) => !prev);
                     setShowMobileMenu(false);
+                    setShowExplore(false);
+                    setShowFeatures(false);
                   }}
-                  className="h-9 w-9 cursor-pointer rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] transition-all hover:border-blue-700 hover:shadow-[0_0_0_5px_rgba(37,99,235,0.16)] md:h-10 md:w-10"
-                />
+                  className="flex items-center gap-2 rounded-full border border-blue-100 bg-white p-1 pr-2 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
+                  aria-label="Open profile menu"
+                >
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt="profile"
+                      className="h-9 w-9 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] md:h-10 md:w-10"
+                    />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-sm font-bold text-white shadow-[0_0_0_4px_rgba(37,99,235,0.10)] md:h-10 md:w-10">
+                      {displayInitial}
+                    </div>
+                  )}
+
+                  <span className="hidden max-w-[90px] truncate text-xs font-semibold text-gray-700 md:block">
+                    {displayUsername}
+                  </span>
+
+                  <FiChevronRight
+                    className={`hidden text-gray-400 transition md:block ${
+                      openMenu ? "rotate-90" : ""
+                    }`}
+                  />
+                </button>
 
                 {openMenu && (
-                  <div className="absolute right-0 z-50 mt-4 w-52 overflow-hidden rounded-[24px] border border-blue-100 bg-white py-2 shadow-[0_14px_35px_rgba(37,99,235,0.10)] animate-dropdown">
-                    <button
-                      onClick={() => {
-                        navigate("/favorites");
-                        setOpenMenu(false);
-                      }}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                    >
-                      <FiHeart className="text-lg text-blue-600" />
-                      Top Picks
-                    </button>
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-[calc(100%+22px)] z-[1200] w-[300px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[28px] border border-blue-100 bg-white/95 shadow-[0_24px_60px_rgba(37,99,235,0.20)] backdrop-blur-xl animate-dropdown"
+                  >
+                    {/* PROFILE HEADER */}
+                    <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        {user.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt="profile"
+                            className="h-12 w-12 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)]"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-base font-bold text-white shadow-[0_0_0_4px_rgba(37,99,235,0.10)]">
+                            {displayInitial}
+                          </div>
+                        )}
 
-                    <button
-                      onClick={() => {
-                        navigate("/itinerary");
-                        setOpenMenu(false);
-                      }}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                    >
-                      <FiMap className="text-lg text-blue-600" />
-                      Itineraries
-                    </button>
+                        <div className="min-w-0">
+                          <h4 className="truncate text-sm font-bold text-gray-800">
+                            {displayFullName}
+                          </h4>
 
-                    <div className="my-1 border-t border-blue-50" />
+                          <p className="truncate text-xs text-gray-500">
+                            {displayEmail}
+                          </p>
 
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setOpenMenu(false);
-                      }}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-sm font-medium text-red-500 transition hover:bg-red-50"
-                    >
-                      <FiLogOut className="text-lg text-red-500" />
-                      Logout
-                    </button>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                              {displayRole}
+                            </span>
+
+                            {user.emailVerified && (
+                              <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700">
+                                Verified
+                              </span>
+                            )}
+                          </div>
+
+                          {displayLocation && (
+                            <p className="mt-1 truncate text-[11px] text-gray-400">
+                              {displayLocation}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-1.5">
+                      <button
+                        onClick={() => {
+                          navigate("/profile");
+                          setOpenMenu(false);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                      >
+                        <FiUser className="text-lg text-blue-600" />
+                        View Profile
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          navigate("/profile/edit");
+                          setOpenMenu(false);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                      >
+                        <FiEdit3 className="text-lg text-blue-600" />
+                        Edit Profile
+                      </button>
+
+                      <div className="my-1 border-t border-blue-50" />
+
+                      <button
+                        onClick={() => {
+                          navigate("/favorites");
+                          setOpenMenu(false);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                      >
+                        <FiHeart className="text-lg text-blue-600" />
+                        Top Picks
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          navigate("/itinerary");
+                          setOpenMenu(false);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                      >
+                        <FiMap className="text-lg text-blue-600" />
+                        My Itinerary
+                      </button>
+
+                    
+                      <div className="my-1 border-t border-blue-50" />
+
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setOpenMenu(false);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
+                      >
+                        <FiLogOut className="text-lg text-red-500" />
+                        Logout
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -476,7 +623,6 @@ function Navbar() {
                 </button>
               </div>
 
-              {/* SEARCH FILTERS */}
               <div className="mt-5 flex flex-wrap gap-2">
                 {[
                   { label: "All", value: "all" },
@@ -501,7 +647,6 @@ function Navbar() {
                 ))}
               </div>
 
-              {/* SEARCH RESULTS */}
               <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
                 {searchTerm === "" && (
                   <div className="search-empty-state py-14 text-center">

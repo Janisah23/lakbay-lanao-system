@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { 
-  FiSearch, 
-  FiPlus, 
-  FiX, 
-  FiFilter, 
-  FiList, 
-  FiGrid, 
-  FiEdit2, 
-  FiArchive, 
-  FiRefreshCw, 
-  FiCalendar, 
-  FiImage,
-  FiCheckCircle
+import {
+  FiSearch,
+  FiPlus,
+  FiX,
 } from "react-icons/fi";
+
 import {
   collection,
   addDoc,
@@ -22,10 +14,10 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+
+
 import { db } from "../../firebase/config";
 
-
-// 1. Updated Dynamic Categories based on your new Schema
 const CATEGORY_OPTIONS = {
   Article: [
     "Travel Guides",
@@ -71,7 +63,6 @@ const ManageTourismContent = () => {
   const [contentList, setContentList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
-  const [viewMode, setViewMode] = useState("list"); // List or Tiles
   const [openModal, setOpenModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -79,31 +70,23 @@ const ManageTourismContent = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const [isUploading, setIsUploading] = useState(false);
 
   const showToast = (message) => {
     setToast(message);
-    setTimeout(() => setToast(""), 3000);
+    setTimeout(() => setToast(""), 4000);
   };
 
-const [formData, setFormData] = useState({
-  
-  contentType: "",
-  category: "",
-  title: "",
-  summary: "",
-  content: "",
-  status: "draft",
-  imageURL: "",
-  videoURL: "",
-  eventDate: "",
-});
-
   const filteredContent = contentList.filter((item) => {
+    const title = item.title || "";
+    const summary = item.summary || "";
+
     const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.summary && item.summary.toLowerCase().includes(searchTerm.toLowerCase()));
+      title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      summary.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType = filterType ? item.contentType === filterType : true;
+
     const matchesArchive = showArchived
       ? item.status === "archived"
       : item.status !== "archived";
@@ -114,6 +97,7 @@ const [formData, setFormData] = useState({
   const fetchContent = async () => {
     try {
       const snapshot = await getDocs(collection(db, "tourismContent"));
+
       const data = snapshot.docs.map((docItem) => {
         const raw = docItem.data();
 
@@ -133,7 +117,29 @@ const [formData, setFormData] = useState({
   };
 
   useEffect(() => {
-    fetchContent();
+    const loadContent = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "tourismContent"));
+
+        const data = snapshot.docs.map((docItem) => {
+          const raw = docItem.data();
+
+          return {
+            id: docItem.id,
+            ...raw,
+            createdAt: raw.createdAt?.toDate?.() || null,
+            updatedAt: raw.updatedAt?.toDate?.() || null,
+          };
+        });
+
+        setContentList(data);
+      } catch (error) {
+        console.error("Error fetching content:", error);
+        showToast("Failed to fetch content.");
+      }
+    };
+
+    loadContent();
   }, []);
 
   const resetForm = () => {
@@ -167,19 +173,79 @@ const [formData, setFormData] = useState({
   };
 
   const handleArchive = async () => {
-    await updateDoc(doc(db, "tourismContent", selectedId), {
-      status: "archived",
-    });
+    if (!selectedId) return;
 
-    setShowConfirm(false);
-    fetchContent();
-    showToast("Content archived!");
+    try {
+      await updateDoc(doc(db, "tourismContent", selectedId), {
+        status: "archived",
+        updatedAt: serverTimestamp(),
+      });
+
+      setShowConfirm(false);
+      setSelectedId(null);
+      fetchContent();
+      showToast("Content archived!");
+    } catch (error) {
+      console.error("Error archiving content:", error);
+      showToast("Failed to archive content.");
+    }
   };
 
   const handleRestore = async (id) => {
     try {
+      await updateDoc(doc(db, "tourismContent", id), {
+        status: "draft",
+        updatedAt: serverTimestamp(),
+      });
+
+      fetchContent();
+      showToast("Content restored!");
+    } catch (error) {
+      console.error("Error restoring content:", error);
+      showToast("Failed to restore content.");
+    }
+  };
+
+  const uploadImage = async (file) => {
+    setIsUploading(true);
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", "tourism_upload");
+
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+
+      const result = await res.json();
+
+      if (!result.secure_url) {
+        throw new Error("Image upload failed.");
+      }
+
+      return result.secure_url;
+    } catch (error) {
+      console.error("Upload error:", error);
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
       if (!formData.contentType) {
         showToast("Please select a content type.");
+        return;
+      }
+
+      if (!formData.category) {
+        showToast("Please select a category.");
         return;
       }
 
@@ -188,11 +254,13 @@ const [formData, setFormData] = useState({
         return;
       }
 
-      const finalData = {
+      let finalData = {
         ...formData,
         title: formData.title.trim(),
         summary: formData.summary?.trim() || "",
+        content: formData.content || "",
         videoURL: formData.videoURL?.trim() || "",
+        imageURL: formData.imageURL || "",
       };
 
       if (finalData.contentType === "Gallery") {
@@ -219,46 +287,25 @@ const [formData, setFormData] = useState({
           ...finalData,
           updatedAt: serverTimestamp(),
         });
+
         showToast("Content updated successfully!");
       } else {
         await addDoc(collection(db, "tourismContent"), {
           ...finalData,
-          status: finalData.status || "published",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
+
         showToast("Content saved successfully!");
       }
 
       setOpenModal(false);
       resetForm();
       fetchContent();
-      showToast(editingId ? "Content updated successfully!" : "Content saved successfully!");
     } catch (error) {
       console.error("Error saving content:", error);
       showToast("Failed to save content.");
     }
-  };
-
-  const uploadImage = async (file) => {
-    setIsUploading(true);
-    try {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("upload_preset", "tourism_upload");
-
-      const res = await fetch("https://api.cloudinary.com/v1_1/dbyz3shts/image/upload", {
-        method: "POST",
-        body: data,
-      });
-
-    const result = await res.json();
-
-    if (!result.secure_url) {
-      throw new Error("Image upload failed.");
-    }
-
-    return result.secure_url;
   };
 
   return (
@@ -267,7 +314,6 @@ const [formData, setFormData] = useState({
         Manage Tourism Content
       </h2>
 
-      {/* SEARCH + FILTERS + BUTTONS */}
       <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex w-full flex-wrap items-center gap-4 md:w-auto">
           <div className="relative flex w-full items-center rounded-full border border-gray-200 bg-white px-5 py-3 shadow-sm md:w-[350px]">
@@ -282,7 +328,7 @@ const [formData, setFormData] = useState({
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition p-1"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 transition hover:text-red-500"
               >
                 <FiX className="text-base" />
               </button>
@@ -301,6 +347,7 @@ const [formData, setFormData] = useState({
               <option value="Article">Article</option>
               <option value="Highlight">Highlight</option>
               <option value="Event">Event</option>
+              <option value="Gallery">Gallery</option>
             </select>
 
             <svg
@@ -336,7 +383,6 @@ const [formData, setFormData] = useState({
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="mt-10 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="grid grid-cols-6 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium text-gray-600">
           <span>Title</span>
@@ -358,6 +404,7 @@ const [formData, setFormData] = useState({
               <span className="font-semibold text-[#2563EB]">
                 {item.contentType}
               </span>
+
               {item.category && (
                 <span className="text-xs text-gray-500">{item.category}</span>
               )}
@@ -373,7 +420,7 @@ const [formData, setFormData] = useState({
                     : "bg-gray-100 text-gray-700"
                 }`}
               >
-                {item.status}
+                {item.status || "draft"}
               </span>
             </span>
 
@@ -383,7 +430,7 @@ const [formData, setFormData] = useState({
               ) : item.contentType === "Highlight" && item.videoURL ? (
                 <em className="text-gray-500">Video highlight</em>
               ) : (
-                item.summary
+                item.summary || "—"
               )}
             </span>
 
@@ -428,13 +475,11 @@ const [formData, setFormData] = useState({
             No content found.
           </div>
         )}
-
       </div>
 
-      {/* MODAL (ADD / EDIT) */}
       {openModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl animate-fadeIn">
+          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <button
               onClick={() => {
                 setOpenModal(false);
@@ -450,7 +495,6 @@ const [formData, setFormData] = useState({
             </h3>
 
             <div className="space-y-4">
-              {/* CONTENT TYPE + CATEGORY */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <select
                   value={formData.contentType}
@@ -486,6 +530,7 @@ const [formData, setFormData] = useState({
                   }`}
                 >
                   <option value="">Select Category</option>
+
                   {formData.contentType &&
                     CATEGORY_OPTIONS[formData.contentType]?.map((cat) => (
                       <option key={cat} value={cat}>
@@ -495,7 +540,6 @@ const [formData, setFormData] = useState({
                 </select>
               </div>
 
-              {/* TITLE */}
               <input
                 type="text"
                 placeholder="Title"
@@ -506,7 +550,6 @@ const [formData, setFormData] = useState({
                 className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100"
               />
 
-              {/* EVENT DATE */}
               {formData.contentType === "Event" && (
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-gray-500">
@@ -527,7 +570,6 @@ const [formData, setFormData] = useState({
                 </div>
               )}
 
-              {/* HIGHLIGHT VIDEO URL */}
               {formData.contentType === "Highlight" && (
                 <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
                   <label className="mb-1 block text-xs font-semibold text-[#2563EB]">
@@ -554,7 +596,6 @@ const [formData, setFormData] = useState({
                 </div>
               )}
 
-              {/* IMAGE UPLOAD */}
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-500">
                   Image / Thumbnail
@@ -563,13 +604,14 @@ const [formData, setFormData] = useState({
                 <input
                   type="file"
                   accept="image/*"
+                  disabled={isUploading}
                   onChange={async (e) => {
                     try {
-                      const file = e.target.files[0];
+                      const file = e.target.files?.[0];
                       if (!file) return;
 
                       const url = await uploadImage(file);
-                      setFormData({ ...formData, imageURL: url });
+                      setFormData((prev) => ({ ...prev, imageURL: url }));
                       showToast("Image uploaded!");
                     } catch (error) {
                       console.error("Upload error:", error);
@@ -578,6 +620,12 @@ const [formData, setFormData] = useState({
                   }}
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100"
                 />
+
+                {isUploading && (
+                  <p className="mt-2 text-xs text-blue-600">
+                    Uploading image...
+                  </p>
+                )}
 
                 {formData.imageURL && (
                   <img
@@ -588,7 +636,6 @@ const [formData, setFormData] = useState({
                 )}
               </div>
 
-              {/* SUMMARY + CONTENT */}
               {formData.contentType !== "Gallery" && (
                 <>
                   <textarea
@@ -601,21 +648,20 @@ const [formData, setFormData] = useState({
                     className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100"
                   />
 
-                  {formData.contentType !== "Highlight" && (
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
-                      <ReactQuill
-                        theme="snow"
-                        value={formData.content}
-                        onChange={(value) =>
-                          setFormData({ ...formData, content: value })
-                        }
-                      />
-                    </div>
+                 {formData.contentType !== "Highlight" && (
+                    <textarea
+                      rows="7"
+                      placeholder="Content"
+                      value={formData.content}
+                      onChange={(e) =>
+                        setFormData({ ...formData, content: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100"
+                    />
                   )}
                 </>
               )}
 
-              {/* STATUS */}
               <select
                 value={formData.status}
                 onChange={(e) =>
@@ -629,7 +675,8 @@ const [formData, setFormData] = useState({
 
               <button
                 onClick={handleSubmit}
-                className="w-full rounded-lg bg-[#2563EB] py-3 font-medium text-white transition hover:bg-blue-700"
+                disabled={isUploading}
+                className="w-full rounded-lg bg-[#2563EB] py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {editingId ? "Update Content" : "Save Content"}
               </button>
@@ -638,7 +685,6 @@ const [formData, setFormData] = useState({
         </div>
       )}
 
-      {/* CONFIRM ARCHIVE MODAL */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-[350px] rounded-xl bg-white p-6 text-center shadow-lg">
@@ -651,8 +697,11 @@ const [formData, setFormData] = useState({
 
             <div className="flex justify-center gap-4">
               <button
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 font-medium"
+                onClick={() => {
+                  setShowConfirm(false);
+                  setSelectedId(null);
+                }}
+                className="rounded-md bg-gray-100 px-4 py-2 font-medium hover:bg-gray-200"
               >
                 Cancel
               </button>
@@ -668,9 +717,8 @@ const [formData, setFormData] = useState({
         </div>
       )}
 
-      {/* TOAST NOTIFICATION */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-green-500 px-6 py-3 text-white shadow-lg animate-fadeIn">
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-green-500 px-6 py-3 text-white shadow-lg">
           {toast}
         </div>
       )}
