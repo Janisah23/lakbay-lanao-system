@@ -16,8 +16,8 @@ import Itinerary from "../pages/public/Itinerary";
 import EventsCalendar from "../pages/public/EventsCalendar";
 import Articles from "../pages/public/Articles";
 import Events from "../pages/public/Events";
-
-
+import Profile from "../pages/public/Profile";
+import EditProfile from "../pages/public/EditProfile";
 
 import StaffLayout from "../layout/StaffLayout";
 import ManageTourismData from "../pages/staff/ManageTourismData";
@@ -35,18 +35,17 @@ import AccountManagement from "../pages/admin/AccountManagement";
 
 import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
+import ForgotPassword from "../pages/auth/ForgotPassword";
 
 import AdminRoute from "../components/common/AdminRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import TourismChatbot from "../components/chatbot/TourismChatbot";
-
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-       {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
 
@@ -56,20 +55,51 @@ function AppRoutes() {
         <Route path="/cultural" element={<CulturalHeritage />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/gallery" element={<Gallery />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/article/:id" element={<ArticleDetails />} />
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/blog" element={<TourismBlog />} />
-        <Route path="/chatbot" element={<TourismChatbot />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/events-calendar" element={<EventsCalendar />} />
-      
 
-        {/* Shared Details Routes */}
+        <Route path="/articles" element={<Articles />} />
+        <Route path="/article/:id" element={<ArticleDetails />} />
+        <Route path="/blog" element={<TourismBlog />} />
+
+        <Route path="/events" element={<Events />} />
         <Route path="/event/:id" element={<EventDetails />} />
+        <Route path="/events-calendar" element={<EventsCalendar />} />
+
         <Route path="/destination/:id" element={<PlacesDetails />} />
+
+        <Route path="/chatbot" element={<TourismChatbot />} />
+
+        {/* Auth Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        {/* Protected Tourist Routes */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Favorites />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/itinerary"
