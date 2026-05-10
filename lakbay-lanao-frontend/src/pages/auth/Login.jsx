@@ -3,10 +3,15 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { logAction } from "../../utils/logAction";
 import {
@@ -24,7 +29,6 @@ import googleIcon from "../../assets/google-icon.png";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState("");
@@ -81,6 +85,52 @@ function Login() {
     );
   };
 
+  const redirectUser = async (user) => {
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        setErrorMsg("User profile not found in database.");
+        return;
+      }
+
+      const userData = docSnap.data();
+      const role = String(userData.role || "").toLowerCase().trim();
+
+      const name =
+        userData.fullName ||
+        userData.username ||
+        userData.name ||
+        user.email ||
+        "User";
+
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email.trim());
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
+      await logAction({
+        action: "Login",
+        userName: name,
+        performedBy: name,
+        role: role || "tourist",
+      });
+
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (role === "staff") {
+        navigate("/staff/manage");
+      } else {
+        navigate("/home");
+      }
+    } catch (error) {
+      console.error("Redirect error:", error);
+      setErrorMsg("Login succeeded, but role-based redirect failed.");
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -89,13 +139,21 @@ function Login() {
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password
       );
 
       const user = userCredential.user;
 
-      await user.getIdToken(true);
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          emailVerified: true,
+          lastLoginAt: serverTimestamp(),
+        });
+      }
 
       setSuccessMsg("Login successful.");
 
@@ -139,9 +197,22 @@ function Login() {
           fullName: user.displayName || "",
           username: user.displayName || "",
           email: user.email,
-          phone: "",
-          municipality: "",
+          location: {
+            country: "",
+            province: "",
+            municipality: "",
+          },
+          country: "",
+          countryCode: "",
           role: "tourist",
+          emailVerified: true,
+          createdAt: serverTimestamp(),
+          lastLoginAt: serverTimestamp(),
+        });
+      } else {
+        await updateDoc(docRef, {
+          emailVerified: true,
+          lastLoginAt: serverTimestamp(),
         });
       }
 
@@ -155,79 +226,6 @@ function Login() {
       setErrorMsg("Google sign-in failed. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    clearMessages();
-
-    if (!email.trim()) {
-      setErrorMsg("Please enter your email first.");
-      return;
-    }
-
-    try {
-      await sendPasswordResetEmail(auth, email);
-
-      setSuccessMsg(
-        "If this email is registered, a password reset link will be sent."
-      );
-    } catch (error) {
-      console.error("Reset password error:", error);
-
-      if (error.code === "auth/invalid-email") {
-        setErrorMsg("Please enter a valid email address.");
-      } else if (error.code === "auth/too-many-requests") {
-        setErrorMsg("Too many attempts. Please try again later.");
-      } else {
-        setErrorMsg("Could not process password reset. Please try again.");
-      }
-    }
-  };
-
-  const redirectUser = async (user) => {
-    try {
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        setErrorMsg("User profile not found in database.");
-        return;
-      }
-
-      const userData = docSnap.data();
-      const role = String(userData.role || "").toLowerCase().trim();
-
-      const name =
-        userData.fullName ||
-        userData.username ||
-        userData.name ||
-        user.email ||
-        "User";
-
-      if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email);
-      } else {
-        localStorage.removeItem("rememberedEmail");
-      }
-
-      await logAction({
-        action: "Login",
-        userName: name,
-        performedBy: name,
-        role: role || "tourist",
-      });
-
-      if (role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (role === "staff") {
-        navigate("/staff/dashboard");
-      } else {
-        navigate("/home");
-      }
-    } catch (error) {
-      console.error("Redirect error:", error);
-      setErrorMsg("Login succeeded, but role-based redirect failed.");
     }
   };
 
@@ -317,7 +315,7 @@ function Login() {
 
             <button
               type="button"
-              onClick={handleForgotPassword}
+              onClick={() => navigate("/forgot-password")}
               className="font-medium text-[#2563eb] transition hover:underline"
             >
               Forgot password?
