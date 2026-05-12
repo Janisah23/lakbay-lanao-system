@@ -152,18 +152,7 @@ const ArticleDetails = () => {
 
       {/* HEADER */}
       <section className="mx-auto max-w-7xl px-6 pb-10 pt-32">
-        <div className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-          <span
-            className="cursor-pointer transition hover:text-[#2563eb]"
-            onClick={() => navigate("/articles")}
-          >
-            Articles
-          </span>
-          <span>/</span>
-          <span className="text-gray-500">
-            {articleDetail.category || "Travel Guide"}
-          </span>
-        </div>
+        
 
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div className="min-w-0 flex-1">

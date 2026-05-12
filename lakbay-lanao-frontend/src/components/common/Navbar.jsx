@@ -59,8 +59,7 @@ function Navbar() {
       item.searchType?.toLowerCase().includes(term);
 
     const matchesFilter =
-      activeFilter === "all" ||
-      normalize(item.searchType).includes(activeFilter);
+      activeFilter === "all" || normalize(item.searchType).includes(activeFilter);
 
     return matchesSearch && matchesFilter;
   });
@@ -73,10 +72,7 @@ function Navbar() {
     "Tourist";
 
   const displayFullName =
-    userProfile?.fullName ||
-    user?.displayName ||
-    userProfile?.username ||
-    "Tourist";
+    userProfile?.fullName || user?.displayName || userProfile?.username || "Tourist";
 
   const displayEmail = user?.email || userProfile?.email || "";
 
@@ -105,18 +101,30 @@ function Navbar() {
     setShowFeatures(false);
   };
 
+  const refreshNavigate = (path) => {
+    closePanels();
+    setOpenMenu(false);
+    closeSearch();
+
+    if (window.location.pathname === path) {
+      window.location.reload();
+      return;
+    }
+
+    window.location.href = path;
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
     setOpenMenu(false);
-    navigate("/");
+    window.location.href = "/";
   };
 
   const handleOpenChatbot = () => {
     if (!user) {
-      navigate("/login");
-      closePanels();
+      refreshNavigate("/login");
       return;
     }
 
@@ -126,15 +134,24 @@ function Navbar() {
   };
 
   const handleResultClick = (item) => {
+    let path = "/";
+
     if (item.routeType === "place") {
-      navigate(`/destination/${item.id}`);
+      path = `/destination/${item.id}`;
     } else if (item.routeType === "article") {
-      navigate(`/article/${item.id}`);
+      path = `/article/${item.id}`;
     } else if (item.routeType === "event") {
-      navigate(`/event/${item.id}`);
+      path = `/event/${item.id}`;
     }
 
     closeSearch();
+
+    if (window.location.pathname === path) {
+      window.location.reload();
+      return;
+    }
+
+    window.location.href = path;
   };
 
   useEffect(() => {
@@ -161,63 +178,54 @@ function Navbar() {
   }, []);
 
   useEffect(() => {
-    const unsubContent = onSnapshot(
-      collection(db, "tourismContent"),
-      (snapshot) => {
-        const contentData = snapshot.docs.map((docItem) => ({
-          id: docItem.id,
-          ...docItem.data(),
+    const unsubContent = onSnapshot(collection(db, "tourismContent"), (snapshot) => {
+      const contentData = snapshot.docs.map((docItem) => ({
+        id: docItem.id,
+        ...docItem.data(),
+      }));
+
+      const searchableContent = contentData
+        .filter(
+          (item) => item.status !== "archived" && item.contentType !== "Highlight"
+        )
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          summary: item.summary,
+          imageURL: item.imageURL,
+          searchType: item.contentType || "Content",
+          routeType: item.contentType?.toLowerCase() || "event",
         }));
 
-        const searchableContent = contentData
-          .filter(
-            (item) =>
-              item.status !== "archived" && item.contentType !== "Highlight"
-          )
-          .map((item) => ({
-            id: item.id,
-            title: item.title,
-            summary: item.summary,
-            imageURL: item.imageURL,
-            searchType: item.contentType || "Content",
-            routeType: item.contentType?.toLowerCase() || "event",
-          }));
+      setSearchItems((prev) => {
+        const placesOnly = prev.filter((item) => item.routeType === "place");
+        return [...placesOnly, ...searchableContent];
+      });
+    });
 
-        setSearchItems((prev) => {
-          const placesOnly = prev.filter((item) => item.routeType === "place");
-          return [...placesOnly, ...searchableContent];
-        });
-      }
-    );
+    const unsubTourismData = onSnapshot(collection(db, "tourismData"), (snapshot) => {
+      const placesData = snapshot.docs
+        .map((docItem) => ({
+          id: docItem.id,
+          ...docItem.data(),
+        }))
+        .filter((item) => item.status !== "archived")
+        .map((item) => ({
+          id: item.id,
+          title: item.name || item.title,
+          summary:
+            item.description ||
+            `${item.location?.municipality || ""} ${item.location?.province || ""}`,
+          imageURL: item.imageURL,
+          searchType: item.category || "Destination",
+          routeType: "place",
+        }));
 
-    const unsubTourismData = onSnapshot(
-      collection(db, "tourismData"),
-      (snapshot) => {
-        const placesData = snapshot.docs
-          .map((docItem) => ({
-            id: docItem.id,
-            ...docItem.data(),
-          }))
-          .filter((item) => item.status !== "archived")
-          .map((item) => ({
-            id: item.id,
-            title: item.name || item.title,
-            summary:
-              item.description ||
-              `${item.location?.municipality || ""} ${
-                item.location?.province || ""
-              }`,
-            imageURL: item.imageURL,
-            searchType: item.category || "Destination",
-            routeType: "place",
-          }));
-
-        setSearchItems((prev) => {
-          const contentOnly = prev.filter((item) => item.routeType !== "place");
-          return [...contentOnly, ...placesData];
-        });
-      }
-    );
+      setSearchItems((prev) => {
+        const contentOnly = prev.filter((item) => item.routeType !== "place");
+        return [...contentOnly, ...placesData];
+      });
+    });
 
     return () => {
       unsubContent();
@@ -276,10 +284,7 @@ function Navbar() {
           }`}
         >
           <div
-            onClick={() => {
-              navigate("/");
-              closePanels();
-            }}
+            onClick={() => refreshNavigate("/")}
             className="group flex min-w-0 cursor-pointer items-center gap-2 md:gap-3"
           >
             {/* Added fallback for PTO logo just in case */}
@@ -302,7 +307,7 @@ function Navbar() {
           </div>
 
           <div className="hidden items-center gap-8 lg:flex">
-            <span onClick={() => navigate("/")} className={navLinkClass}>
+            <span onClick={() => refreshNavigate("/")} className={navLinkClass}>
               Home
             </span>
 
@@ -326,18 +331,11 @@ function Navbar() {
               <span>Features</span>
             </div>
 
-            <span onClick={() => navigate("/gallery")} className={navLinkClass}>
+            <span onClick={() => refreshNavigate("/gallery")} className={navLinkClass}>
               Gallery
             </span>
 
-            <span
-              onClick={() => {
-                navigate("/events");
-                setShowExplore(false);
-                setShowFeatures(false);
-              }}
-              className={navLinkClass}
-            >
+            <span onClick={() => refreshNavigate("/events")} className={navLinkClass}>
               Events
             </span>
           </div>
@@ -370,10 +368,7 @@ function Navbar() {
 
             {!user ? (
               <button
-                onClick={() => {
-                  navigate("/login");
-                  closePanels();
-                }}
+                onClick={() => refreshNavigate("/login")}
                 className="whitespace-nowrap rounded-full border-[1.5px] border-blue-600 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 md:px-6 md:text-sm"
               >
                 Sign In
@@ -472,11 +467,8 @@ function Navbar() {
                     </div>
 
                     <div className="p-1.5">
-                     <button
-                        onClick={() => {
-                          navigate("/profile");
-                          setOpenMenu(false);
-                        }}
+                      <button
+                        onClick={() => refreshNavigate("/profile")}
                         className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
                         <FiUser className="text-lg text-blue-600" />
@@ -484,10 +476,7 @@ function Navbar() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          navigate("/profile/edit");
-                          setOpenMenu(false);
-                        }}
+                        onClick={() => refreshNavigate("/profile/edit")}
                         className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
                         <FiEdit3 className="text-lg text-blue-600" />
@@ -497,10 +486,7 @@ function Navbar() {
                       <div className="my-1 border-t border-blue-50" />
 
                       <button
-                        onClick={() => {
-                          navigate("/favorites");
-                          setOpenMenu(false);
-                        }}
+                        onClick={() => refreshNavigate("/favorites")}
                         className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
                         <FiHeart className="text-lg text-blue-600" />
@@ -508,22 +494,15 @@ function Navbar() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          navigate("/itinerary");
-                          setOpenMenu(false);
-                        }}
+                        onClick={() => refreshNavigate("/itinerary")}
                         className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
                         <FiMap className="text-lg text-blue-600" />
                         My Itinerary
                       </button>
 
-                    
                       <button
-                        onClick={() => {
-                          handleLogout();
-                          setOpenMenu(false);
-                        }}
+                        onClick={handleLogout}
                         className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
                       >
                         <FiLogOut className="text-lg text-red-500" />
@@ -554,10 +533,7 @@ function Navbar() {
               ].map((item) => (
                 <button
                   key={item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    setShowMobileMenu(false);
-                  }}
+                  onClick={() => refreshNavigate(item.path)}
                   className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                 >
                   {item.label}
@@ -720,10 +696,7 @@ function Navbar() {
               ].map((item) => (
                 <div
                   key={item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    setShowExplore(false);
-                  }}
+                  onClick={() => refreshNavigate(item.path)}
                   className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
                 >
                   <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
@@ -731,9 +704,7 @@ function Navbar() {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-blue-600">
-                      {item.label}
-                    </h4>
+                    <h4 className="font-semibold text-blue-600">{item.label}</h4>
                     <p className="mt-1 text-sm text-gray-500">{item.desc}</p>
                   </div>
                 </div>
@@ -764,10 +735,7 @@ function Navbar() {
           <div className="grid w-[95%] max-w-7xl grid-cols-2 gap-8 rounded-[30px] border border-blue-100 bg-white p-8 shadow-[0_16px_42px_rgba(37,99,235,0.10)]">
             <div className="grid grid-cols-2 gap-5">
               <div
-                onClick={() => {
-                  navigate("/map");
-                  setShowFeatures(false);
-                }}
+                onClick={() => refreshNavigate("/map")}
                 className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
@@ -802,9 +770,8 @@ function Navbar() {
 
               <div
                 onClick={() => {
-                  if (!user) navigate("/login");
-                  else navigate("/itinerary");
-                  setShowFeatures(false);
+                  if (!user) refreshNavigate("/login");
+                  else refreshNavigate("/itinerary");
                 }}
                 className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
@@ -823,10 +790,7 @@ function Navbar() {
               </div>
 
               <div
-                onClick={() => {
-                  navigate("/events-calendar");
-                  setShowFeatures(false);
-                }}
+                onClick={() => refreshNavigate("/events-calendar")}
                 className="group flex cursor-pointer items-start gap-4 rounded-[22px] border border-transparent p-4 transition hover:border-blue-100 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
