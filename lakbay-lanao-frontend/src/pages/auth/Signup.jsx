@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import {
   FiUserPlus,
   FiEye,
   FiEyeOff,
+  FiMail,
 } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -186,6 +187,7 @@ function Signup() {
     setLoading(true);
 
     try {
+      // 1. Create the Auth Account
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
@@ -193,6 +195,9 @@ function Signup() {
       );
 
       const user = userCredential.user;
+
+      // 2. SEND VERIFICATION EMAIL (Prevents fake emails)
+      await sendEmailVerification(user);
 
       const provinceName =
         provincesList.find((p) => p.code === selectedProvince)?.name || "";
@@ -211,6 +216,7 @@ function Signup() {
             addressText: foreignLocation.trim(),
           };
 
+      // 3. Save Profile to Firestore
       await setDoc(doc(db, "users", user.uid), {
         fullName: fullName.trim(),
         username: username.trim(),
@@ -219,15 +225,19 @@ function Signup() {
         country: selectedCountry.name,
         countryCode: selectedCountry.code,
         role: "tourist",
-        emailVerified: true,
+        emailVerified: false, // Set to false initially!
         createdAt: serverTimestamp(),
       });
 
-      setSuccessMsg("Account created successfully. Redirecting...");
+      // 4. Update Success Message & Redirect
+      setSuccessMsg(
+        "Your account has been created successfully. We have sent you an email with a verification link. Please check your inbox and click the link to continue."
+      );
 
+      // Give them 7 seconds to read the message before going to login
       setTimeout(() => {
-        navigate("/home");
-      }, 1200);
+        navigate("/login");
+      }, 7000);
     } catch (error) {
       console.error("Signup error:", error);
 
@@ -534,9 +544,9 @@ function Signup() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-4 flex items-start gap-3 rounded-[16px] border border-green-100 bg-green-50 p-4 text-sm font-semibold text-green-700 shadow-sm"
+                className="mt-4 flex items-start gap-3 rounded-[16px] border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-[#2563eb] shadow-sm"
               >
-                <FiCheckCircle className="mt-1 shrink-0 text-lg" />
+                <FiMail className="mt-1 shrink-0 text-lg" />
                 {successMsg}
               </motion.div>
             )}

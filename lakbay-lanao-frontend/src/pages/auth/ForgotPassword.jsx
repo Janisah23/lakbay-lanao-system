@@ -25,7 +25,7 @@ function ForgotPassword() {
     setSuccessMsg("");
   };
 
-  const handleForgotPassword = async (e) => {
+const handleForgotPassword = async (e) => {
     e.preventDefault();
     clearMessages();
 
@@ -37,7 +37,15 @@ function ForgotPassword() {
     setLoading(true);
 
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      // NEW: Add Action Code Settings
+      const actionCodeSettings = {
+        // Change this to your live domain when you deploy (e.g., https://lakbaylanao.com/login)
+        url: 'http://localhost:5173/login', 
+        handleCodeInApp: false, // Ensures the link opens in a browser, not just a mobile app
+      };
+
+      // Pass the settings as the third argument
+      await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
 
       setSuccessMsg(
         "If this email is registered, a password reset link has been sent. Please check your inbox or spam folder."
@@ -56,8 +64,7 @@ function ForgotPassword() {
       setLoading(false);
     }
   };
-
-  const inputStyle =
+    const inputStyle =
     "w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100";
 
   return (
