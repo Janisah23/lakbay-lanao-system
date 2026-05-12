@@ -63,6 +63,17 @@ function Home() {
     },
   };
 
+  const scrollToMap = () => {
+  const mapSection = document.getElementById("map-section");
+
+  if (mapSection) {
+    mapSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+};
+
   const headingReveal = {
     hidden: {
       opacity: 0,
@@ -340,12 +351,12 @@ function Home() {
             culture and breathtaking destinations of Lanao del Sur.
           </p>
 
-          <button
-            className="explore-btn transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(37,99,235,0.18)] active:scale-[0.98]"
-            onClick={() => navigate("/login")}
-          >
-            Explore Lanao
-          </button>
+        <button
+          className="explore-btn transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(37,99,235,0.18)] active:scale-[0.98]"
+          onClick={scrollToMap}
+        >
+          Explore Lanao
+        </button>
         </div>
       </section>
 
@@ -625,8 +636,10 @@ function Home() {
       </motion.section>
 
       {/* MAP */}
+     
       <motion.section
-        className="bg-transparent px-6 py-24 md:px-12 lg:px-20"
+        id="map-section"
+        className="scroll-mt-24 bg-transparent px-6 py-24 md:px-12 lg:px-20"
         variants={sectionReveal}
         initial="hidden"
         whileInView="show"

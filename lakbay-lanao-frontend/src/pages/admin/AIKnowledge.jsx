@@ -6,6 +6,7 @@ import {
   FiRefreshCw,
   FiCheckCircle,
   FiAlertCircle,
+  FiX,
 } from "react-icons/fi";
 
 const API = "http://localhost:5000/api/knowledge";
@@ -27,10 +28,13 @@ function AIKnowledge() {
 
   const fetchDocuments = useCallback(async () => {
     setLoadingDocs(true);
+
     try {
       const res = await fetch(`${API}/documents`);
       const data = await res.json();
+
       if (data.error) throw new Error(data.error);
+
       setDocuments(data.documents || []);
     } catch (err) {
       showToast("error", "Failed to load documents: " + err.message);
@@ -61,6 +65,7 @@ function AIKnowledge() {
 
   const confirmUpload = async () => {
     if (!fileToConfirm) return;
+
     setUploading(true);
 
     try {
@@ -73,6 +78,7 @@ function AIKnowledge() {
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
       showToast("success", data.message);
@@ -82,6 +88,7 @@ function AIKnowledge() {
     } finally {
       setUploading(false);
       setFileToConfirm(null);
+
       if (fileRef.current) fileRef.current.value = "";
     }
   };
@@ -90,11 +97,14 @@ function AIKnowledge() {
     if (!window.confirm(`Delete "${name}" from the knowledge base?`)) return;
 
     setDeletingName(name);
+
     try {
       const res = await fetch(`${API}/documents/${encodeURIComponent(name)}`, {
         method: "DELETE",
       });
+
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
       showToast("success", data.message);
@@ -109,57 +119,77 @@ function AIKnowledge() {
   const onDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
+
     const file = e.dataTransfer.files[0];
+
     if (file) handleFileSelect(file);
   };
 
   return (
-      <div className="w-full">
-      <div className="max-w-7xl mx-auto pt-6 pb-20 px-6 space-y-10">
-        
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
+    <div className="min-h-screen w-full bg-[#f8fbff] font-['Poppins']">
+      <main className="mx-auto max-w-7xl px-6 pb-24 pt-10 lg:px-10">
+        {/* HEADER */}
+        <section className="mb-10">
+          <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+            Chatbot Content
+          </span>
+
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
             AI Knowledge Base
           </h1>
-          <p className="text-gray-500 mt-2">
-            Upload documents to give the chatbot context about Lanao del Sur. Supported formats: PDF, TXT, DOCX.
-          </p>
-        </div>
 
-        {/* Toast Notification */}
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-gray-500">
+            Upload documents to give the chatbot reliable context about Lanao
+            del Sur. Supported formats: PDF, TXT, and DOCX.
+          </p>
+        </section>
+
+        {/* TOAST */}
         {toast && (
           <div
-            className={`flex items-center gap-3 px-5 py-4 rounded-[12px] text-sm font-medium shadow-sm border animate-fadeIn ${
+            className={`mb-6 flex items-center justify-between gap-4 rounded-[20px] border px-5 py-4 text-sm font-medium shadow-[0_8px_24px_rgba(37,99,235,0.06)] ${
               toast.type === "success"
-                ? "bg-green-50 border-green-200 text-green-800"
-                : "bg-red-50 border-red-200 text-red-800"
+                ? "border-green-100 bg-green-50 text-green-700"
+                : "border-red-100 bg-red-50 text-red-700"
             }`}
           >
-            {toast.type === "success" ? (
-              <FiCheckCircle className="text-green-600 text-lg shrink-0" />
-            ) : (
-              <FiAlertCircle className="text-red-600 text-lg shrink-0" />
-            )}
-            {toast.msg}
+            <div className="flex items-center gap-3">
+              {toast.type === "success" ? (
+                <FiCheckCircle className="text-lg text-green-600" />
+              ) : (
+                <FiAlertCircle className="text-lg text-red-600" />
+              )}
+
+              <span>{toast.msg}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="rounded-full p-1 transition hover:bg-white"
+            >
+              <FiX />
+            </button>
           </div>
         )}
 
-        {/* Upload Zone */}
-        <div
+        {/* UPLOAD ZONE */}
+        <section
           onDragOver={(e) => {
             e.preventDefault();
             setDragOver(true);
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
-          onClick={() => !uploading && !fileToConfirm && fileRef.current?.click()}
-          className={`relative flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-[28px] px-8 py-16 transition-all duration-300 ${
+          onClick={() =>
+            !uploading && !fileToConfirm && fileRef.current?.click()
+          }
+          className={`relative mb-8 flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-8 py-14 text-center transition duration-300 ${
             !uploading && !fileToConfirm ? "cursor-pointer" : ""
           } ${
             dragOver
-              ? "border-[#2563eb] bg-blue-50 scale-[1.01]"
-              : "border-gray-200 bg-white hover:border-[#2563eb] hover:bg-blue-50/40 shadow-sm hover:shadow-md"
+              ? "border-[#2563eb] bg-blue-50"
+              : "border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] hover:border-[#2563eb]/50 hover:bg-blue-50/40"
           } ${uploading ? "pointer-events-none opacity-70" : ""}`}
         >
           <input
@@ -171,132 +201,170 @@ function AIKnowledge() {
           />
 
           {uploading ? (
-            <div className="flex flex-col items-center text-center animate-fadeIn">
-              <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mb-3 shadow-sm">
-                <FiRefreshCw className="text-[#2563eb] text-2xl animate-spin" />
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
+                <FiRefreshCw className="animate-spin text-3xl" />
               </div>
-              <p className="text-base font-bold text-gray-800 mb-1">
-                Processing & embedding document...
+
+              <p className="text-lg font-bold text-[#2563eb]">
+                Processing document...
               </p>
-              <p className="text-sm text-gray-500">
-                Please wait. This may take a few minutes for larger files.
+
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-gray-500">
+                Please wait while the system prepares and embeds the document
+                for chatbot use.
               </p>
             </div>
           ) : fileToConfirm ? (
-            <div className="text-center z-10 w-full max-w-md bg-white border border-gray-200 shadow-md p-8 rounded-[24px] animate-fadeIn">
-              <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
-                <FiFileText className="text-3xl text-[#2563eb]" />
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-[28px] border border-blue-100 bg-white p-7 shadow-[0_10px_28px_rgba(37,99,235,0.08)]"
+            >
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
+                <FiFileText className="text-3xl" />
               </div>
-              <p className="text-base font-bold text-gray-800 mb-2">
+
+              <h2 className="text-xl font-bold text-[#2563eb]">
                 Confirm Upload
-              </p>
-              <p className="text-sm text-gray-500 mb-8 truncate px-2">
-                Are you sure you want to process <br/>
-                <strong className="text-gray-900 font-semibold">{fileToConfirm.name}</strong>?
+              </h2>
+
+              <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                Are you sure you want to process this file?
               </p>
 
-              <div className="flex gap-3 justify-center">
+              <p className="mt-3 truncate rounded-[16px] border border-blue-100 bg-[#f8fbff] px-4 py-3 text-sm font-semibold text-gray-700">
+                {fileToConfirm.name}
+              </p>
+
+              <div className="mt-7 flex justify-center gap-3">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  type="button"
+                  onClick={() => {
                     setFileToConfirm(null);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
-                  className="rounded-full bg-gray-100 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] transition-all"
+                  className="rounded-full border border-[#2563eb]/20 bg-white px-6 py-2.5 text-sm font-medium text-[#2563eb] shadow-sm transition hover:bg-blue-50"
                 >
                   Cancel
                 </button>
+
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    confirmUpload();
-                  }}
-                  className="rounded-full bg-[#2563eb] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md"
+                  type="button"
+                  onClick={confirmUpload}
+                  className="rounded-full bg-[#2563eb] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
                 >
                   Process File
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center text-center pointer-events-none">
-              <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mb-4 shadow-sm">
-                <FiUploadCloud className="text-[#2563eb] text-3xl" />
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
+                <FiUploadCloud className="text-3xl" />
               </div>
-              <p className="text-base font-bold text-gray-800 mb-1">
-                Drag & drop a file here, or{" "}
-                <span className="text-[#2563eb] underline pointer-events-auto cursor-pointer">click to browse</span>
+
+              <h2 className="text-xl font-bold text-[#2563eb]">
+                Upload Knowledge Document
+              </h2>
+
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-gray-500">
+                Drag and drop a file here, or click to browse from your device.
+                The uploaded document will be used as chatbot reference.
               </p>
-              <p className="text-sm text-gray-500">PDF, TXT, DOCX files only (max 100 MB)</p>
+
+              <span className="mt-5 inline-flex rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+                PDF · TXT · DOCX only
+              </span>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Documents List Panel */}
-        <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden flex flex-col transition duration-300 hover:shadow-md">
-          <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center">
-              Active Documents
-              {!loadingDocs && (
-                <span className="ml-3 text-xs bg-blue-100 text-[#2563eb] px-2.5 py-1 rounded-full font-bold shadow-sm">
-                  {documents.length}
-                </span>
-              )}
-            </h3>
+        {/* DOCUMENTS PANEL */}
+        <section className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+          <div className="flex flex-col justify-between gap-4 border-b border-blue-50 bg-[#f8fbff] px-6 py-5 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="flex items-center gap-3 text-lg font-bold text-[#2563eb]">
+                Active Documents
+                {!loadingDocs && (
+                  <span className="rounded-full border border-blue-100 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+                    {documents.length}
+                  </span>
+                )}
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Manage uploaded files used by the chatbot knowledge base.
+              </p>
+            </div>
 
             <button
+              type="button"
               onClick={fetchDocuments}
               disabled={loadingDocs}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-[#2563eb] transition disabled:opacity-50 bg-white border border-gray-200 px-4 py-2 rounded-full shadow-sm hover:bg-blue-50"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-medium text-[#2563eb] shadow-sm transition hover:bg-blue-50 disabled:opacity-50"
             >
-              <FiRefreshCw className={loadingDocs ? "animate-spin text-[#2563eb]" : ""} />
+              <FiRefreshCw
+                className={loadingDocs ? "animate-spin text-[#2563eb]" : ""}
+              />
               Refresh
             </button>
           </div>
 
           {loadingDocs ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <FiRefreshCw className="text-3xl text-[#2563eb] animate-spin mb-3" />
-              <p className="text-sm text-gray-500 font-medium">Syncing knowledge base...</p>
+              <FiRefreshCw className="mb-3 animate-spin text-3xl text-[#2563eb]" />
+              <p className="text-sm font-medium text-gray-500">
+                Syncing knowledge base...
+              </p>
             </div>
           ) : documents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
-                <FiFileText className="text-3xl text-gray-300" />
+            <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
+                <FiFileText className="text-3xl" />
               </div>
-              <p className="text-base font-bold text-gray-700 mb-1">No documents found</p>
-              <p className="text-sm text-gray-500">Upload your first document to give the AI context.</p>
+
+              <p className="text-base font-bold text-gray-800">
+                No documents found
+              </p>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Upload your first document to give the AI chatbot context.
+              </p>
             </div>
           ) : (
-            <div className="max-h-[500px] overflow-y-auto">
-              <ul className="divide-y divide-gray-50">
+            <div className="max-h-[520px] overflow-y-auto">
+              <ul className="divide-y divide-blue-50">
                 {documents.map((doc) => (
                   <li
                     key={doc.name}
-                    className="flex items-center justify-between px-8 py-5 hover:bg-blue-50/40 transition-colors group"
+                    className="group flex flex-col gap-4 px-6 py-5 transition hover:bg-blue-50/50 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-12 h-12 rounded-[14px] bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 shadow-sm group-hover:bg-[#2563eb] group-hover:text-white transition-colors text-[#2563eb]">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] border border-blue-100 bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
                         <FiFileText className="text-xl" />
                       </div>
 
-                      <div className="min-w-0 flex flex-col justify-center">
-                        <p className="text-base font-bold text-gray-900 truncate group-hover:text-[#2563eb] transition-colors">
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-bold text-gray-800 transition group-hover:text-[#2563eb]">
                           {doc.name}
                         </p>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          <span className="text-[#2563eb] font-bold">
+
+                        <p className="mt-0.5 text-sm text-gray-500">
+                          <span className="font-bold text-[#2563eb]">
                             {doc.chunkCount}
                           </span>{" "}
                           chunk{doc.chunkCount !== 1 ? "s" : ""}
                           {doc.uploadedAt && (
                             <>
-                              {" "}
-                              <span className="mx-1.5 text-gray-300">•</span>{" "}
-                              {new Date(doc.uploadedAt).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
+                              <span className="mx-1.5 text-gray-300">•</span>
+                              {new Date(doc.uploadedAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}
                             </>
                           )}
                         </p>
@@ -304,9 +372,10 @@ function AIKnowledge() {
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => handleDelete(doc.name)}
                       disabled={deletingName === doc.name}
-                      className="ml-4 shrink-0 flex items-center gap-2 text-sm font-medium text-red-500 bg-white border border-red-100 hover:text-white hover:bg-red-500 hover:border-red-500 rounded-full px-5 py-2 shadow-sm transition-all disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-red-100 bg-white px-5 py-2.5 text-sm font-medium text-red-500 shadow-sm transition hover:border-red-500 hover:bg-red-500 hover:text-white disabled:opacity-50"
                     >
                       {deletingName === doc.name ? (
                         <FiRefreshCw className="animate-spin text-lg" />
@@ -320,9 +389,8 @@ function AIKnowledge() {
               </ul>
             </div>
           )}
-        </div>
-
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

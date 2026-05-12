@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { 
-  FiSearch, 
-  FiPlus, 
-  FiX, 
-  FiFilter, 
-  FiList, 
-  FiGrid, 
-  FiEdit2, 
-  FiArchive, 
-  FiRefreshCw, 
-  FiCalendar, 
+import {
+  FiSearch,
+  FiPlus,
+  FiX,
+  FiFilter,
+  FiList,
+  FiGrid,
+  FiEdit2,
+  FiArchive,
+  FiRefreshCw,
+  FiCalendar,
   FiImage,
   FiCheckCircle,
-  FiVideo
+  FiVideo,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 import {
   collection,
@@ -71,17 +73,20 @@ const ManageTourismContent = () => {
   const [contentList, setContentList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
-  const [viewMode, setViewMode] = useState("list"); 
+  const [viewMode, setViewMode] = useState("list");
   const [openModal, setOpenModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [toast, setToast] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-  
+
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const showToast = (message) => {
     setToast(message);
@@ -90,10 +95,11 @@ const ManageTourismContent = () => {
 
   const filteredContent = contentList.filter((item) => {
     const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.summary && item.summary.toLowerCase().includes(searchTerm.toLowerCase()));
+      item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.summary?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType = filterType ? item.contentType === filterType : true;
+
     const matchesArchive = showArchived
       ? item.status === "archived"
       : item.status !== "archived";
@@ -101,11 +107,24 @@ const ManageTourismContent = () => {
     return matchesSearch && matchesType && matchesArchive;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredContent.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedContent = filteredContent.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, showArchived, viewMode]);
+
   const fetchContent = async () => {
     try {
       const snapshot = await getDocs(collection(db, "tourismContent"));
+
       const data = snapshot.docs.map((docItem) => {
         const raw = docItem.data();
+
         return {
           id: docItem.id,
           ...raw,
@@ -113,6 +132,7 @@ const ManageTourismContent = () => {
           updatedAt: raw.updatedAt?.toDate?.() || null,
         };
       });
+
       setContentList(data);
     } catch (error) {
       console.error("Error fetching content:", error);
@@ -136,6 +156,7 @@ const ManageTourismContent = () => {
 
   const openEditModal = (item) => {
     setEditingId(item.id);
+
     setFormData({
       contentType: item.contentType || "",
       category: item.category || "",
@@ -149,6 +170,7 @@ const ManageTourismContent = () => {
         ? new Date(item.eventDate.seconds * 1000).toISOString().split("T")[0]
         : item.eventDate || "",
     });
+
     setOpenModal(true);
   };
 
@@ -156,6 +178,7 @@ const ManageTourismContent = () => {
     await updateDoc(doc(db, "tourismContent", selectedId), {
       status: "archived",
     });
+
     setShowConfirm(false);
     fetchContent();
     showToast("Content archived successfully!");
@@ -165,6 +188,7 @@ const ManageTourismContent = () => {
     await updateDoc(doc(db, "tourismContent", id), {
       status: "draft",
     });
+
     fetchContent();
     showToast("Content restored to drafts!");
   };
@@ -172,12 +196,14 @@ const ManageTourismContent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       if (!formData.contentType) {
         showToast("Please select a content type.");
         setLoading(false);
         return;
       }
+
       if (!formData.title.trim()) {
         showToast("Please enter a title.");
         setLoading(false);
@@ -198,11 +224,17 @@ const ManageTourismContent = () => {
         finalData.eventDate = "";
       }
 
-      if (finalData.contentType !== "Event") finalData.eventDate = "";
+      if (finalData.contentType !== "Event") {
+        finalData.eventDate = "";
+      }
+
       if (finalData.contentType === "Event" && finalData.eventDate) {
         finalData.eventDate = Timestamp.fromDate(new Date(finalData.eventDate));
       }
-      if (finalData.contentType !== "Highlight") finalData.videoURL = "";
+
+      if (finalData.contentType !== "Highlight") {
+        finalData.videoURL = "";
+      }
 
       if (editingId) {
         await updateDoc(doc(db, "tourismContent", editingId), {
@@ -221,32 +253,42 @@ const ManageTourismContent = () => {
       setOpenModal(false);
       resetForm();
       fetchContent();
-      showToast(editingId ? "Content updated successfully!" : "Content saved successfully!");
+      showToast(
+        editingId ? "Content updated successfully!" : "Content saved successfully!"
+      );
     } catch (error) {
       console.error("Error saving content:", error);
       showToast("Failed to save content.");
     }
+
     setLoading(false);
   };
 
   const uploadImage = async (file) => {
     setIsUploading(true);
+
     try {
       const data = new FormData();
+
       data.append("file", file);
       data.append("upload_preset", "tourism_upload");
 
-      const res = await fetch("https://api.cloudinary.com/v1_1/dbyz3shts/image/upload", {
-        method: "POST",
-        body: data,
-      });
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
+        {
+          method: "POST",
+          body: data,
+        }
+      );
 
       const result = await res.json();
+
       setIsUploading(false);
 
       if (!result.secure_url) {
         throw new Error("Image upload failed.");
       }
+
       return result.secure_url;
     } catch (error) {
       setIsUploading(false);
@@ -254,311 +296,506 @@ const ManageTourismContent = () => {
     }
   };
 
-  const inputStyle = "w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100";
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterType("");
+    setCurrentPage(1);
+  };
+
+  const inputStyle =
+    "w-full rounded-[18px] border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-gray-600 outline-none shadow-sm transition duration-300 placeholder:text-gray-400 hover:border-[#2563eb]/40 hover:bg-blue-50/40 focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100";
+
+  const primaryButton =
+    "inline-flex items-center justify-center gap-2 rounded-[18px] bg-[#2563eb] px-6 py-3 text-sm font-semibold text-white shadow-sm transition duration-300 hover:bg-blue-700";
+
+  const secondaryButton =
+    "inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#2563eb]/20 bg-white px-5 py-3 text-sm font-medium text-[#2563eb] shadow-sm transition duration-300 hover:bg-blue-50";
+
+  const StatusBadge = ({ status }) => {
+    const style =
+      status === "published"
+        ? "border-green-100 bg-green-50 text-green-600"
+        : status === "archived"
+        ? "border-red-100 bg-red-50 text-red-600"
+        : "border-gray-200 bg-gray-50 text-gray-600";
+
+    return (
+      <span
+        className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${style}`}
+      >
+        {status || "draft"}
+      </span>
+    );
+  };
+
+  const Pagination = () => {
+    if (filteredContent.length <= itemsPerPage) return null;
+
+    return (
+      <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-[24px] border border-blue-100 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:flex-row">
+        <p className="text-sm font-medium text-gray-500">
+          Showing{" "}
+          <span className="font-semibold text-gray-700">{startIndex + 1}</span>{" "}
+          to{" "}
+          <span className="font-semibold text-gray-700">
+            {Math.min(startIndex + itemsPerPage, filteredContent.length)}
+          </span>{" "}
+          of{" "}
+          <span className="font-semibold text-gray-700">
+            {filteredContent.length}
+          </span>{" "}
+          content items
+        </p>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition ${
+              currentPage === 1
+                ? "cursor-not-allowed border-blue-50 bg-white text-gray-300"
+                : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+            }`}
+          >
+            <FiChevronLeft className="text-lg" />
+          </button>
+
+          <span className="rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            type="button"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition ${
+              currentPage === totalPages
+                ? "cursor-not-allowed border-blue-50 bg-white text-gray-300"
+                : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+            }`}
+          >
+            <FiChevronRight className="text-lg" />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="w-full font-sans text-gray-800">
-      <div className="max-w-7xl mx-auto pt-10 pb-20 px-6 lg:px-10">
-        
-        {/* HEADER SECTION */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 mb-10">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
-              Manage Tourism Content
-            </h1>
-            <p className="text-gray-500 mt-2">
-              Publish and manage articles, events, highlights, and promotional content.
-            </p>
-          </div>
+    <div className="min-h-screen w-full bg-[#f8fbff] font-['Poppins']">
+      <main className="mx-auto max-w-7xl px-6 pb-24 pt-10 lg:px-10">
+        {/* HEADER */}
+        <section className="mb-10">
+          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div>
+              <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+                Staff Content
+              </span>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className={`rounded-full px-5 py-2.5 text-sm font-medium transition shadow-sm border ${
-                showArchived 
-                  ? "bg-gray-800 text-white border-gray-800 hover:bg-gray-700" 
-                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-              }`}
-            >
-              {showArchived ? "View Active Content" : "View Archived"}
-            </button>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
+                Manage Tourism Content
+              </h1>
 
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-2 rounded-full bg-[#2563eb] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
-            >
-              <FiPlus />
-              Add Content
-            </button>
-          </div>
-        </div>
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-gray-500">
+                Publish and manage articles, events, highlights, and promotional
+                content for Lakbay Lanao.
+              </p>
+            </div>
 
-        {/* TOOLBAR: Search, Filters, & View Toggle */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8 items-center">
-          
-          {/* Search Bar */}
-          <div className="relative w-full md:col-span-5 lg:col-span-5">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search content titles or summaries..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`${inputStyle} pl-11`}
-            />
-            {searchTerm && (
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition p-1"
+                type="button"
+                onClick={() => setShowArchived(!showArchived)}
+                className={
+                  showArchived
+                    ? "inline-flex items-center justify-center rounded-[18px] border border-red-100 bg-red-50 px-5 py-3 text-sm font-medium text-red-500 shadow-sm transition hover:bg-red-100"
+                    : secondaryButton
+                }
               >
-                <FiX className="text-base" />
+                {showArchived ? "View Active Content" : "View Archived"}
+              </button>
+
+              <button type="button" onClick={openAddModal} className={primaryButton}>
+                <FiPlus />
+                Add Content
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* TOOLBAR */}
+        <section className="mb-8 rounded-[28px] border border-blue-100 bg-white p-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+          <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-lg font-bold text-[#2563eb]">
+                Content Library
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Search, filter, edit, archive, or restore tourism content.
+              </p>
+            </div>
+
+            {(searchTerm || filterType) && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-red-100 bg-white px-4 py-2.5 text-sm font-medium text-red-500 shadow-sm transition hover:bg-red-50"
+              >
+                <FiX />
+                Clear Filters
               </button>
             )}
           </div>
 
-          {/* Type Filter */}
-          <div className="relative w-full md:col-span-4 lg:col-span-4">
-            <FiFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none" />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_260px_auto]">
+            <div className="relative w-full">
+              <FiSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+
+              <input
+                type="text"
+                placeholder="Search content titles or summaries..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`${inputStyle} pl-11 pr-11`}
+              />
+
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                >
+                  <FiX className="text-base" />
+                </button>
+              )}
+            </div>
+
+            <div className="relative w-full">
+              <FiFilter className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+
               <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className={`${inputStyle} pl-11 appearance-none cursor-pointer`}
-            >
-              <option value="">All Content Types</option>
-              <option value="Article">Article</option>
-              <option value="Highlight">Highlight</option>
-              <option value="Event">Event</option>
-            </select>
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className={`${inputStyle} cursor-pointer appearance-none pl-11`}
+              >
+                <option value="">All Content Types</option>
+                <option value="Article">Article</option>
+                <option value="Highlight">Highlight</option>
+                <option value="Event">Event</option>
+              </select>
+            </div>
+
+            <div className="flex h-[48px] items-center rounded-[18px] border border-blue-100 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`flex h-full items-center justify-center gap-2 rounded-[14px] px-4 text-sm font-medium transition ${
+                  viewMode === "list"
+                    ? "bg-blue-50 text-[#2563eb]"
+                    : "text-gray-500 hover:bg-blue-50/60 hover:text-[#2563eb]"
+                }`}
+              >
+                <FiList className="text-lg" />
+                List
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode("tiles")}
+                className={`flex h-full items-center justify-center gap-2 rounded-[14px] px-4 text-sm font-medium transition ${
+                  viewMode === "tiles"
+                    ? "bg-blue-50 text-[#2563eb]"
+                    : "text-gray-500 hover:bg-blue-50/60 hover:text-[#2563eb]"
+                }`}
+              >
+                <FiGrid className="text-lg" />
+                Tiles
+              </button>
+            </div>
           </div>
+        </section>
 
-          {/* List/Tiles Toggle */}
-          <div className="flex items-center bg-white border border-gray-200 rounded-[12px] p-1 shadow-sm w-full md:w-auto md:col-span-3 lg:col-span-3 md:justify-self-end justify-center">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-[8px] flex items-center justify-center gap-2 text-sm font-medium transition-all ${
-                viewMode === "list" ? "bg-blue-50 text-[#2563eb] shadow-sm" : "text-gray-400 hover:text-gray-700"
-              }`}
-              title="List View"
-            >
-              <FiList className="text-lg" />
-              <span className="hidden sm:inline pr-1">List</span>
-            </button>
-            <button
-              onClick={() => setViewMode("tiles")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-[8px] flex items-center justify-center gap-2 text-sm font-medium transition-all ${
-                viewMode === "tiles" ? "bg-blue-50 text-[#2563eb] shadow-sm" : "text-gray-400 hover:text-gray-700"
-              }`}
-              title="Tiles View"
-            >
-              <FiGrid className="text-lg" />
-              <span className="hidden sm:inline pr-1">Tiles</span>
-            </button>
-          </div>
-
-        </div>
-
-        {/* ==============================================================
-            DYNAMIC DATA DISPLAY (LIST vs TILES)
-        ============================================================== */}
-        
+        {/* CONTENT DISPLAY */}
         {filteredContent.length === 0 ? (
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-16 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-[#2563eb] mb-4">
+          <section className="flex flex-col items-center justify-center rounded-[28px] border border-blue-100 bg-white px-6 py-20 text-center shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
               <FiSearch className="text-2xl" />
             </div>
-            <h3 className="text-gray-800 font-bold text-lg mb-1">No content found</h3>
-            <p className="text-gray-500 text-sm">Try adjusting your search or filters.</p>
-          </div>
+
+            <h3 className="text-lg font-semibold text-gray-700">
+              No content found
+            </h3>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Try adjusting your search or filters.
+            </p>
+          </section>
         ) : viewMode === "list" ? (
-          /* CONTENT VIEW (TABLE) */
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
-            <div className="overflow-x-auto">
-              <div className="min-w-[1000px]">
-                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <span className="col-span-3">Title & Media</span>
-                  <span className="col-span-2">Type & Category</span>
-                  <span className="col-span-2">Status & Date</span>
-                  <span className="col-span-4">Summary</span>
-                  <span className="col-span-1 text-center">Actions</span>
-                </div>
-                <div className="max-h-[600px] overflow-y-auto">
-                  {filteredContent.map((item) => (
-                    <div key={item.id} className="grid grid-cols-12 gap-4 px-6 py-4 text-sm border-b border-gray-50 items-center hover:bg-blue-50/30 transition-colors last:border-b-0">
-                      
-                      <div className="col-span-3 flex items-center gap-4 pr-2">
-                        <div className="w-12 h-12 rounded-[12px] bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 border border-gray-200">
-                          {item.imageURL ? (
-                            <img src={item.imageURL} alt={item.title} className="w-full h-full object-cover" />
-                          ) : item.videoURL ? (
-                            <FiVideo className="text-gray-400 text-lg" />
-                          ) : (
-                            <FiImage className="text-gray-400 text-lg" />
+          <>
+            <section className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+              <div className="overflow-x-auto">
+                <div className="min-w-[1000px]">
+                  <div className="grid grid-cols-12 gap-4 border-b border-blue-50 bg-[#f8fbff] px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    <span className="col-span-3">Title & Media</span>
+                    <span className="col-span-2">Type & Category</span>
+                    <span className="col-span-2">Status & Date</span>
+                    <span className="col-span-4">Summary</span>
+                    <span className="col-span-1 text-center">Actions</span>
+                  </div>
+
+                  <div className="max-h-[640px] overflow-y-auto">
+                    {paginatedContent.map((item) => (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-12 items-center gap-4 border-b border-blue-50 px-6 py-4 text-sm transition duration-300 last:border-b-0 hover:bg-blue-50/50"
+                      >
+                        <div className="col-span-3 flex items-center gap-4 pr-2">
+                          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-blue-100 bg-[#f8fbff] text-gray-400">
+                            {item.imageURL ? (
+                              <img
+                                src={item.imageURL}
+                                alt={item.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : item.videoURL ? (
+                              <FiVideo className="text-lg" />
+                            ) : (
+                              <FiImage className="text-lg" />
+                            )}
+                          </div>
+
+                          <span className="line-clamp-2 font-semibold text-gray-700">
+                            {item.title}
+                          </span>
+                        </div>
+
+                        <div className="col-span-2 flex flex-col items-start gap-1.5">
+                          <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#2563eb]">
+                            {item.contentType}
+                          </span>
+
+                          {item.category && (
+                            <span className="line-clamp-1 text-xs font-medium text-gray-500">
+                              {item.category}
+                            </span>
                           )}
                         </div>
-                        <span className="font-bold text-gray-900 line-clamp-2">{item.title}</span>
-                      </div>
 
-                      <div className="col-span-2 flex flex-col items-start gap-1">
-                        <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-blue-50 text-[#2563eb] border border-blue-100 uppercase tracking-wide">
-                          {item.contentType}
-                        </span>
-                        {item.category && <span className="text-xs font-medium text-gray-500">{item.category}</span>}
-                      </div>
+                        <div className="col-span-2 flex flex-col items-start gap-1.5">
+                          <StatusBadge status={item.status} />
 
-                      <div className="col-span-2 flex flex-col items-start gap-1">
-                        <span className={`px-2.5 py-1 text-[11px] font-bold rounded-full uppercase tracking-wide border shadow-sm ${
-                          item.status === 'published' ? 'bg-green-50 text-green-600 border-green-100' : 
-                          item.status === 'archived' ? 'bg-red-50 text-red-600 border-red-100' : 
-                          'bg-gray-50 text-gray-600 border-gray-200'
-                        }`}>
-                          {item.status}
-                        </span>
-                        <span className="text-xs text-gray-400 font-medium flex items-center gap-1 mt-1">
-                          <FiCalendar /> {item.createdAt?.toLocaleDateString()}
-                        </span>
-                      </div>
+                          <span className="mt-1 flex items-center gap-1 text-xs font-medium text-gray-400">
+                            <FiCalendar />
+                            {item.createdAt?.toLocaleDateString() || "No date"}
+                          </span>
+                        </div>
 
-                      <div className="col-span-4 text-gray-500 text-xs leading-relaxed line-clamp-3 pr-4">
-                        {item.contentType === 'Gallery' ? <em className="text-gray-400">Media format</em> : item.summary}
-                      </div>
+                        <div className="col-span-4 pr-4 text-xs leading-relaxed text-gray-500 line-clamp-3">
+                          {item.summary || (
+                            <em className="text-gray-400">
+                              No summary available
+                            </em>
+                          )}
+                        </div>
 
-                      <div className="col-span-1 flex flex-col gap-2 items-center">
-                        {!showArchived ? (
-                          <>
+                        <div className="col-span-1 flex flex-col items-center gap-2">
+                          {!showArchived ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEditModal(item)}
+                                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb]"
+                              >
+                                <FiEdit2 />
+                                Edit
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedId(item.id);
+                                  setShowConfirm(true);
+                                }}
+                                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-100 bg-white px-3 py-1.5 text-xs font-semibold text-red-500 shadow-sm transition hover:bg-red-50"
+                              >
+                                <FiArchive />
+                                Archive
+                              </button>
+                            </>
+                          ) : (
                             <button
-                              onClick={() => openEditModal(item)}
-                              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-white border border-gray-200 text-gray-700 hover:text-[#2563eb] hover:border-[#2563eb] hover:bg-blue-50 transition shadow-sm"
+                              type="button"
+                              onClick={() => handleRestore(item.id)}
+                              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-green-100 bg-white px-3 py-1.5 text-xs font-semibold text-green-600 shadow-sm transition hover:bg-green-50"
                             >
-                              <FiEdit2 /> Edit
+                              <FiRefreshCw />
+                              Restore
                             </button>
-                            <button
-                              onClick={() => { setSelectedId(item.id); setShowConfirm(true); }}
-                              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-white border border-gray-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition shadow-sm"
-                            >
-                              <FiArchive /> Archive
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => handleRestore(item.id)}
-                            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-white border border-gray-200 text-green-600 hover:bg-green-50 hover:border-green-200 transition shadow-sm"
-                          >
-                            <FiRefreshCw /> Restore
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </section>
+
+            <Pagination />
+          </>
         ) : (
-          /* TILES VIEW (GRID) */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-300">
-            {filteredContent.map((item) => (
-              <div key={item.id} className="bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden hover:shadow-md hover:border-blue-200 transition-all duration-300 group flex flex-col h-full">
-                
-                <div className="h-44 bg-gray-100 relative overflow-hidden flex-shrink-0">
-                  {item.imageURL ? (
-                    <img src={item.imageURL} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : item.videoURL ? (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-800">
-                      <FiVideo className="text-4xl text-gray-400" />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <FiImage className="text-4xl" />
-                    </div>
-                  )}
-                  
-                  <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-full shadow-sm text-[10px] font-extrabold uppercase tracking-wider border backdrop-blur-sm ${
-                      item.status === 'published' ? 'bg-green-500/90 text-white border-green-400/50' : 
-                      item.status === 'archived' ? 'bg-red-500/90 text-white border-red-400/50' : 
-                      'bg-gray-800/90 text-white border-gray-600/50'
-                    }`}>
-                    {item.status}
-                  </div>
-                </div>
-
-                <div className="p-5 flex flex-col flex-grow">
-                  <div className="flex gap-2 mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#2563eb] bg-blue-50 px-2 py-1 rounded-md border border-blue-100">{item.contentType}</span>
-                    {item.category && <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200 line-clamp-1">{item.category}</span>}
-                  </div>
-                  
-                  <h4 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-[#2563eb] transition-colors">{item.title}</h4>
-                  
-                  <p className="text-sm text-gray-600 line-clamp-3 mb-6 flex-grow leading-relaxed">
-                    {item.contentType === 'Gallery' ? <em className="text-gray-400">Media Gallery</em> : item.summary}
-                  </p>
-                  
-                  <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-100">
-                    {!showArchived ? (
-                      <>
-                        <button 
-                          onClick={() => openEditModal(item)}
-                          className="flex-1 bg-white border border-gray-200 text-gray-700 py-2 rounded-[12px] text-xs font-bold hover:bg-blue-50 hover:text-[#2563eb] hover:border-[#2563eb] transition shadow-sm flex items-center justify-center gap-1.5"
-                        >
-                          <FiEdit2 /> Edit
-                        </button>
-                        <button 
-                          onClick={() => { setSelectedId(item.id); setShowConfirm(true); }}
-                          className="flex-1 bg-white border border-gray-200 text-red-600 py-2 rounded-[12px] text-xs font-bold hover:bg-red-50 hover:border-red-200 transition shadow-sm flex items-center justify-center gap-1.5"
-                        >
-                          <FiArchive /> Archive
-                        </button>
-                      </>
+          <>
+            <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {paginatedContent.map((item) => (
+                <div
+                  key={item.id}
+                  className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(37,99,235,0.08)]"
+                >
+                  <div className="relative h-44 flex-shrink-0 overflow-hidden bg-[#f8fbff]">
+                    {item.imageURL ? (
+                      <img
+                        src={item.imageURL}
+                        alt={item.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                      />
+                    ) : item.videoURL ? (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-800 text-gray-300">
+                        <FiVideo className="text-4xl text-gray-400" />
+                      </div>
                     ) : (
-                      <button 
-                          onClick={() => handleRestore(item.id)}
-                          className="w-full bg-white border border-gray-200 text-green-600 py-2 rounded-[12px] text-xs font-bold hover:bg-green-50 hover:border-green-200 transition shadow-sm flex items-center justify-center gap-1.5"
-                        >
-                          <FiRefreshCw /> Restore
-                      </button>
+                      <div className="flex h-full w-full items-center justify-center text-gray-300">
+                        <FiImage className="text-4xl" />
+                      </div>
                     )}
+
+                    <div className="absolute right-3 top-3">
+                      <StatusBadge status={item.status} />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-grow flex-col px-5 pb-5 pt-4">
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#2563eb]">
+                        {item.contentType}
+                      </span>
+
+                      {item.category && (
+                        <span className="line-clamp-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="line-clamp-2 min-h-[48px] text-base font-bold text-gray-700 transition group-hover:text-[#2563eb]">
+                      {item.title}
+                    </h4>
+
+                    <p className="mb-6 mt-2 line-clamp-3 flex-grow text-sm leading-relaxed text-gray-500">
+                      {item.summary || (
+                        <em className="text-gray-400">No summary available</em>
+                      )}
+                    </p>
+
+                    <div className="mt-auto flex items-center gap-3 border-t border-blue-50 pt-4">
+                      {!showArchived ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(item)}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-blue-100 bg-white py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb]"
+                          >
+                            <FiEdit2 />
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedId(item.id);
+                              setShowConfirm(true);
+                            }}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-red-100 bg-white py-2 text-xs font-semibold text-red-500 shadow-sm transition hover:bg-red-50"
+                          >
+                            <FiArchive />
+                            Archive
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(item.id)}
+                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-green-100 bg-white py-2 text-xs font-semibold text-green-600 shadow-sm transition hover:bg-green-50"
+                        >
+                          <FiRefreshCw />
+                          Restore
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </section>
 
-      {/* MODAL (ADD / EDIT) */}
+            <Pagination />
+          </>
+        )}
+      </main>
+
+      {/* MODAL */}
       {openModal && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[28px] shadow-2xl p-8 relative animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[28px] border border-blue-100 bg-white p-7 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
             <button
+              type="button"
               onClick={() => {
                 setOpenModal(false);
                 resetForm();
               }}
-              className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition"
+              className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-gray-400 transition hover:text-red-500"
             >
               <FiX className="text-lg" />
             </button>
 
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
-              {editingId ? "Edit Content" : "Add Tourism Content"}
-            </h3>
+            <div className="mb-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#2563eb]">
+                <FiFileContentIcon />
+              </div>
+
+              <h3 className="text-2xl font-bold text-[#2563eb]">
+                {editingId ? "Edit Content" : "Add Tourism Content"}
+              </h3>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Create articles, highlights, or events for the public tourism
+                pages.
+              </p>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Content Type</label>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Content Type
+                  </label>
+
                   <select
                     value={formData.contentType}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
                         contentType: e.target.value,
-                        category: "", eventDate: "", videoURL: "", summary: "", content: "",
+                        category: "",
+                        eventDate: "",
+                        videoURL: "",
+                        summary: "",
+                        content: "",
                       })
                     }
                     required
-                    className={`${inputStyle} appearance-none cursor-pointer`}
+                    className={`${inputStyle} cursor-pointer appearance-none`}
                   >
                     <option value="">Select Content Type</option>
                     <option value="Article">Article</option>
@@ -568,29 +805,41 @@ const ManageTourismContent = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Category
+                  </label>
+
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
                     disabled={!formData.contentType}
-                    className={`${inputStyle} appearance-none cursor-pointer disabled:bg-gray-50 disabled:cursor-not-allowed`}
+                    className={`${inputStyle} cursor-pointer appearance-none disabled:cursor-not-allowed disabled:bg-blue-50/50`}
                   >
                     <option value="">Select Category</option>
                     {formData.contentType &&
                       CATEGORY_OPTIONS[formData.contentType]?.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
                       ))}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Title</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Title
+                </label>
+
                 <input
                   type="text"
                   placeholder="Content Title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   required
                   className={inputStyle}
                 />
@@ -598,11 +847,16 @@ const ManageTourismContent = () => {
 
               {formData.contentType === "Event" && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Event Date</label>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Event Date
+                  </label>
+
                   <input
                     type="date"
                     value={formData.eventDate}
-                    onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, eventDate: e.target.value })
+                    }
                     required
                     className={inputStyle}
                   />
@@ -610,31 +864,43 @@ const ManageTourismContent = () => {
               )}
 
               {formData.contentType === "Highlight" && (
-                <div className="rounded-[16px] border border-blue-100 bg-blue-50 p-5">
-                  <label className="block text-xs font-bold text-[#2563eb] uppercase tracking-wider mb-2">Video Link (Optional)</label>
+                <div className="rounded-[18px] border border-blue-100 bg-blue-50/70 p-5">
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+                    Video Link Optional
+                  </label>
+
                   <input
                     type="text"
                     placeholder="Paste YouTube or Facebook video link"
                     value={formData.videoURL}
-                    onChange={(e) => setFormData({ ...formData, videoURL: e.target.value })}
-                    className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
+                    onChange={(e) =>
+                      setFormData({ ...formData, videoURL: e.target.value })
+                    }
+                    className={inputStyle}
                   />
-                  <p className="mt-2 text-xs text-gray-500">Supported: YouTube and public Facebook video links.</p>
+
+                  <p className="mt-2 text-xs text-gray-500">
+                    Supported: YouTube and public Facebook video links.
+                  </p>
                 </div>
               )}
 
-              <div className="rounded-[12px] border border-gray-200 p-4 bg-gray-50">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+              <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] p-4">
+                <label className="mb-3 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Upload Cover Image
                 </label>
+
                 <input
                   type="file"
                   accept="image/*"
                   onChange={async (e) => {
                     try {
                       const file = e.target.files[0];
+
                       if (!file) return;
+
                       const url = await uploadImage(file);
+
                       setFormData({ ...formData, imageURL: url });
                       showToast("Image uploaded successfully!");
                     } catch (error) {
@@ -642,12 +908,22 @@ const ManageTourismContent = () => {
                       showToast("Image upload failed.");
                     }
                   }}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#2563eb] hover:file:bg-blue-100 cursor-pointer"
+                  className="w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#2563eb] hover:file:bg-blue-100"
                 />
-                {isUploading && <p className="text-xs text-blue-500 mt-2 font-bold animate-pulse">Uploading image...</p>}
+
+                {isUploading && (
+                  <p className="mt-2 text-xs font-bold text-[#2563eb] animate-pulse">
+                    Uploading image...
+                  </p>
+                )}
+
                 {formData.imageURL && (
-                  <div className="mt-3 relative w-full h-40 rounded-[12px] overflow-hidden border border-gray-200 shadow-sm">
-                    <img src={formData.imageURL} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="mt-3 h-40 w-full overflow-hidden rounded-[16px] border border-blue-100 bg-white shadow-sm">
+                    <img
+                      src={formData.imageURL}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 )}
               </div>
@@ -655,25 +931,35 @@ const ManageTourismContent = () => {
               {formData.contentType !== "Gallery" && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Short Summary</label>
+                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      Short Summary
+                    </label>
+
                     <textarea
                       rows="2"
                       placeholder="Brief overview of the content..."
                       value={formData.summary}
-                      onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, summary: e.target.value })
+                      }
                       className={`${inputStyle} resize-none`}
                     />
                   </div>
 
                   {formData.contentType !== "Highlight" && (
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Full Content</label>
-                      <div className="border border-gray-200 rounded-[12px] overflow-hidden focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100 transition bg-white shadow-sm">
+                      <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                        Full Content
+                      </label>
+
+                      <div className="overflow-hidden rounded-[18px] border border-blue-100 bg-white shadow-sm transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
                         <ReactQuill
                           theme="snow"
                           value={formData.content}
-                          onChange={(value) => setFormData({ ...formData, content: value })}
-                          className="bg-white min-h-[200px]"
+                          onChange={(value) =>
+                            setFormData({ ...formData, content: value })
+                          }
+                          className="min-h-[200px] bg-white"
                         />
                       </div>
                     </div>
@@ -682,34 +968,52 @@ const ManageTourismContent = () => {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Publishing Status</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Publishing Status
+                </label>
+
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className={`${inputStyle} appearance-none cursor-pointer font-bold ${formData.status === 'published' ? 'text-green-600' : 'text-gray-600'}`}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
+                  className={`${inputStyle} cursor-pointer appearance-none font-bold ${
+                    formData.status === "published"
+                      ? "text-green-600"
+                      : "text-gray-600"
+                  }`}
                 >
-                  <option value="draft">Draft (Hidden)</option>
-                  <option value="published">Published (Live)</option>
+                  <option value="draft">Draft Hidden</option>
+                  <option value="published">Published Live</option>
                 </select>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3">
+              <div className="flex justify-end gap-3 border-t border-blue-50 pt-6">
                 <button
                   type="button"
-                  onClick={() => setOpenModal(false)}
-                  className="px-6 py-3 rounded-full text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                  onClick={() => {
+                    setOpenModal(false);
+                    resetForm();
+                  }}
+                  className="rounded-full border border-[#2563eb]/20 bg-white px-6 py-3 text-sm font-medium text-[#2563eb] shadow-sm transition hover:bg-blue-50"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   disabled={loading || isUploading}
-                  className="flex items-center justify-center px-8 py-3 rounded-full text-sm font-bold text-white bg-[#2563eb] shadow-sm hover:shadow-md hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="inline-flex min-w-[150px] items-center justify-center rounded-full bg-[#2563eb] px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {loading ? (
-                    <span className="flex items-center gap-2"><FiRefreshCw className="animate-spin" /> Saving...</span>
+                    <span className="flex items-center gap-2">
+                      <FiRefreshCw className="animate-spin" />
+                      Saving...
+                    </span>
+                  ) : editingId ? (
+                    "Update Content"
                   ) : (
-                    editingId ? "Update Content" : "Save Content"
+                    "Save Content"
                   )}
                 </button>
               </div>
@@ -720,25 +1024,34 @@ const ManageTourismContent = () => {
 
       {/* CONFIRM ARCHIVE MODAL */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-[24px] p-8 w-full max-w-sm shadow-2xl text-center animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4">
+          <div className="w-full max-w-sm rounded-[28px] border border-blue-100 bg-white p-7 text-center shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
               <FiArchive className="text-3xl" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Archive Content?</h3>
-            <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-              This content will be moved to the archive and hidden from public view. You can restore it later.
+
+            <h3 className="text-xl font-bold text-gray-700">
+              Archive Content?
+            </h3>
+
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              This content will be moved to the archive and hidden from public
+              view. You can restore it later.
             </p>
-            <div className="flex justify-center gap-3">
+
+            <div className="mt-8 flex justify-center gap-3">
               <button
+                type="button"
                 onClick={() => setShowConfirm(false)}
-                className="w-full px-5 py-3 rounded-full text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                className="w-full rounded-full border border-[#2563eb]/20 bg-white px-5 py-3 text-sm font-medium text-[#2563eb] transition hover:bg-blue-50"
               >
                 Cancel
               </button>
+
               <button
+                type="button"
                 onClick={handleArchive}
-                className="w-full px-5 py-3 rounded-full text-sm font-bold text-white bg-red-500 shadow-sm hover:bg-red-600 transition"
+                className="w-full rounded-full bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
               >
                 Yes, Archive
               </button>
@@ -747,15 +1060,19 @@ const ManageTourismContent = () => {
         </div>
       )}
 
-      {/* TOAST NOTIFICATION */}
+      {/* TOAST */}
       {toast && (
-        <div className="fixed bottom-8 right-8 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 font-medium text-sm">
-          <FiCheckCircle className="text-green-400 text-lg" />
+        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-[20px] border border-green-100 bg-white px-6 py-4 text-sm font-medium text-gray-600 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
+          <FiCheckCircle className="text-lg text-green-500" />
           {toast}
         </div>
       )}
     </div>
   );
+};
+
+const FiFileContentIcon = () => {
+  return <FiImage className="text-xl" />;
 };
 
 export default ManageTourismContent;

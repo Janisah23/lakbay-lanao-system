@@ -4,11 +4,8 @@ import "flag-icons/css/flag-icons.min.css";
 import {
   onAuthStateChanged,
   updateProfile,
-  deleteUser,
   EmailAuthProvider,
-  GoogleAuthProvider,
   reauthenticateWithCredential,
-  reauthenticateWithPopup,
   updatePassword,
 } from "firebase/auth";
 
@@ -17,7 +14,6 @@ import {
   doc,
   getDoc,
   updateDoc,
-  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -27,8 +23,6 @@ import {
   FiAlertCircle,
   FiCheckCircle,
   FiSave,
-  FiTrash2,
-  FiX,
   FiUser,
   FiMapPin,
   FiLock,
@@ -73,7 +67,6 @@ function EditProfile() {
   const [user, setUser] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
   const [fullName, setFullName] = useState("");
@@ -90,10 +83,6 @@ function EditProfile() {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [reauthPassword, setReauthPassword] = useState("");
 
   const inputStyle =
     "w-full rounded-[12px] border border-[#e2ebff] bg-white/60 px-3.5 py-2.5 text-sm text-gray-700 outline-none backdrop-blur transition hover:border-[#c3d4ff] focus:border-[#0D27F7] focus:ring-2 focus:ring-[#0D27F7]/15";
@@ -137,10 +126,6 @@ function EditProfile() {
 
   const isPasswordProvider = user?.providerData?.some(
     (provider) => provider.providerId === "password"
-  );
-
-  const isGoogleProvider = user?.providerData?.some(
-    (provider) => provider.providerId === "google.com"
   );
 
   const displayName = fullName || user?.displayName || username || "Tourist";
@@ -315,81 +300,6 @@ function EditProfile() {
       }
     } finally {
       setChangingPassword(false);
-    }
-  };
-
-  const reauthenticateUser = async () => {
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      throw new Error("No authenticated user.");
-    }
-
-    if (isPasswordProvider) {
-      if (!reauthPassword.trim()) {
-        throw new Error("Please enter your password to continue.");
-      }
-
-      const credential = EmailAuthProvider.credential(
-        currentUser.email,
-        reauthPassword
-      );
-
-      await reauthenticateWithCredential(currentUser, credential);
-      return;
-    }
-
-    if (isGoogleProvider) {
-      const provider = new GoogleAuthProvider();
-      await reauthenticateWithPopup(currentUser, provider);
-      return;
-    }
-
-    throw new Error("Please log in again before deleting your account.");
-  };
-
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    clearMessages();
-
-    if (confirmText !== "DELETE") {
-      setErrorMsg("Please type DELETE to confirm account deletion.");
-      setDeleting(false);
-      return;
-    }
-
-    try {
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        setErrorMsg("You need to sign in again.");
-        setDeleting(false);
-        return;
-      }
-
-      await reauthenticateUser();
-
-      await deleteDoc(doc(db, "users", currentUser.uid));
-      await deleteUser(currentUser);
-
-      setShowDeleteModal(false);
-      navigate("/");
-    } catch (error) {
-      console.error("Delete account error:", error);
-
-      if (error.code === "auth/requires-recent-login") {
-        setErrorMsg(
-          "For security, please log in again before deleting your account."
-        );
-      } else if (error.code === "auth/wrong-password") {
-        setErrorMsg("Incorrect password. Please try again.");
-      } else if (error.message) {
-        setErrorMsg(error.message);
-      } else {
-        setErrorMsg("Failed to delete account. Please try again.");
-      }
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -590,11 +500,11 @@ function EditProfile() {
 
             <div className="md:col-span-2">
               <AnimatePresence mode="wait">
-                {errorMsg && !showDeleteModal && (
+                {errorMsg && (
                   <MessageAlert key="error" type="error" message={errorMsg} />
                 )}
 
-                {successMsg && !showDeleteModal && (
+                {successMsg && (
                   <MessageAlert
                     key="success"
                     type="success"
@@ -713,125 +623,7 @@ function EditProfile() {
             )}
           </div>
         </section>
-
-        <section className="mt-5 overflow-hidden rounded-[24px] border border-red-100 bg-white/70 shadow-[0_4px_20px_rgba(239,68,68,0.05)] ring-1 ring-white/80 backdrop-blur-xl">
-          <div className="px-5 py-5 md:px-7">
-            <h2 className="text-lg font-semibold tracking-tight text-red-600">
-              Danger Zone
-            </h2>
-
-            <p className="mt-1.5 text-sm leading-relaxed text-gray-500">
-              Deleting your account is permanent and cannot be undone.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowDeleteModal(true);
-                setConfirmText("");
-                setReauthPassword("");
-                clearMessages();
-              }}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/80 px-5 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:-translate-y-[2px] hover:bg-red-100 hover:shadow-[0_8px_30px_rgba(239,68,68,0.08)] md:w-auto"
-            >
-              <FiTrash2 />
-              Delete Account
-            </button>
-          </div>
-        </section>
       </main>
-
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[24px] border border-red-100 bg-white/80 p-5 shadow-[0_18px_45px_rgba(239,68,68,0.16)] ring-1 ring-white/80 backdrop-blur-xl">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-red-600">
-                  Delete Account
-                </h3>
-
-                <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                  Type DELETE to confirm.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                className="rounded-full bg-gray-100 p-2 text-gray-500 transition hover:bg-red-50 hover:text-red-500"
-              >
-                <FiX />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Type DELETE"
-                value={confirmText}
-                onChange={(e) => {
-                  setConfirmText(e.target.value);
-                  clearMessages();
-                }}
-                className="w-full rounded-[12px] border border-red-100 bg-white/70 px-3.5 py-2.5 text-sm text-gray-700 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
-              />
-
-              {isPasswordProvider && (
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={reauthPassword}
-                  onChange={(e) => {
-                    setReauthPassword(e.target.value);
-                    clearMessages();
-                  }}
-                  className="w-full rounded-[12px] border border-red-100 bg-white/70 px-3.5 py-2.5 text-sm text-gray-700 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                />
-              )}
-
-              {isGoogleProvider && !isPasswordProvider && (
-                <p className="rounded-[16px] border border-[#e2ebff] bg-blue-50/80 px-4 py-3 text-sm text-gray-600">
-                  You will be asked to confirm using your Google account.
-                </p>
-              )}
-
-              <AnimatePresence mode="wait">
-                {errorMsg && showDeleteModal && (
-                  <MessageAlert
-                    key="delete-error"
-                    type="error"
-                    message={errorMsg}
-                  />
-                )}
-              </AnimatePresence>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteModal(false)}
-                  className="w-full rounded-full border border-gray-200 bg-white/70 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDeleteAccount}
-                  disabled={deleting}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-red-500 py-2.5 text-sm font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {deleting ? (
-                    <span className="h-[18px] w-[18px] animate-spin rounded-full border-[3px] border-white border-t-transparent" />
-                  ) : (
-                    <FiTrash2 />
-                  )}
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
