@@ -12,8 +12,8 @@ import {
   FiEyeOff,
 } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
-import "flag-icons/css/flag-icons.min.css";
 
+import "react-phone-input-2/lib/style.css";
 import loginpage from "../../assets/loginpage.png";
 
 const COUNTRIES = [

@@ -20,6 +20,7 @@ import {
   FiUser,
   FiEdit3,
   FiChevronRight,
+  FiImage // Added for fallback icon
 } from "react-icons/fi";
 import "./Navbar.css";
 
@@ -281,10 +282,12 @@ function Navbar() {
             }}
             className="group flex min-w-0 cursor-pointer items-center gap-2 md:gap-3"
           >
+            {/* Added fallback for PTO logo just in case */}
             <img
               src={ptoLogo}
               alt="logo"
               className="h-8 w-8 flex-shrink-0 object-contain transition-transform group-hover:scale-105 md:h-9 md:w-9"
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
 
             <div className="hidden min-w-0 flex-col leading-tight sm:flex">
@@ -394,6 +397,11 @@ function Navbar() {
                       src={user.photoURL}
                       alt="profile"
                       className="h-9 w-9 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] md:h-10 md:w-10"
+                      // Fallback if the Google profile image URL is broken
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://ui-avatars.com/api/?name=" + displayInitial + "&background=3b82f6&color=fff";
+                      }}
                     />
                   ) : (
                     <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-sm font-bold text-white shadow-[0_0_0_4px_rgba(37,99,235,0.10)] md:h-10 md:w-10">
@@ -424,6 +432,10 @@ function Navbar() {
                             src={user.photoURL}
                             alt="profile"
                             className="h-12 w-12 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)]"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://ui-avatars.com/api/?name=" + displayInitial + "&background=3b82f6&color=fff";
+                            }}
                           />
                         ) : (
                           <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-base font-bold text-white shadow-[0_0_0_4px_rgba(37,99,235,0.10)]">
@@ -633,13 +645,24 @@ function Navbar() {
                     <div
                       key={`${item.routeType}-${item.id}`}
                       onClick={() => handleResultClick(item)}
-                      className="search-result-card flex cursor-pointer items-center gap-4 p-3"
+                      className="search-result-card flex cursor-pointer items-center gap-4 p-3 hover:bg-blue-50/50 rounded-xl transition"
                     >
-                      <img
-                        src={item.imageURL || "/default-image.png"}
-                        alt={item.title}
-                        className="search-result-img h-20 w-20"
-                      />
+                      {/* FIXED BROKEN IMAGE LOGIC HERE */}
+                      {item.imageURL ? (
+                        <img
+                          src={item.imageURL}
+                          alt={item.title}
+                          className="search-result-img h-20 w-20 rounded-xl object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null; 
+                            e.target.src = "https://placehold.co/150x150/eff6ff/2563eb?text=No+Image"; 
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-blue-50 text-blue-300">
+                          <FiImage size={28} />
+                        </div>
+                      )}
 
                       <div className="min-w-0">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
@@ -723,6 +746,7 @@ function Navbar() {
                   src={explorePreview}
                   className="h-38 w-80 rounded-[18px] object-cover"
                   alt="Explore Preview"
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
               </div>
 
@@ -826,6 +850,7 @@ function Navbar() {
                   src={featurePreview}
                   className="h-38 w-80 rounded-[18px] object-cover"
                   alt="Features Preview"
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
               </div>
 
