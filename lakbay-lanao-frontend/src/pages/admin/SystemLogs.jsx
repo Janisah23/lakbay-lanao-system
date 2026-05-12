@@ -18,12 +18,10 @@ function SystemLogs() {
   const [logs, setLogs] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
 
-  // Filters State
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAction, setFilterAction] = useState("");
   const [filterUser, setFilterUser] = useState("");
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const logsPerPage = 10;
 
@@ -39,21 +37,26 @@ function SystemLogs() {
       setLogs(logList);
 
       const today = new Date().toDateString();
+
       const todayLogs = logList.filter((log) => {
         if (!log.timestamp) return false;
         return log.timestamp.toDate().toDateString() === today;
       });
+
       setTodayCount(todayLogs.length);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Extract unique values for dropdowns
-  const uniqueActions = [...new Set(logs.map((log) => log.action).filter(Boolean))].sort();
-  const uniqueUsers = [...new Set(logs.map((log) => log.userName).filter(Boolean))].sort();
+  const uniqueActions = [
+    ...new Set(logs.map((log) => log.action).filter(Boolean)),
+  ].sort();
 
-  // Apply Filters
+  const uniqueUsers = [
+    ...new Set(logs.map((log) => log.userName).filter(Boolean)),
+  ].sort();
+
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =
       log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,162 +70,252 @@ function SystemLogs() {
     return matchesSearch && matchesAction && matchesUser;
   });
 
-  // Calculate Pagination
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / logsPerPage));
   const startIndex = (currentPage - 1) * logsPerPage;
-  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + logsPerPage);
 
-  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const paginatedLogs = filteredLogs.slice(
+    startIndex,
+    startIndex + logsPerPage
+  );
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   const getActionBadge = (action = "") => {
     const lowerAction = action.toLowerCase();
 
-    if (lowerAction.includes("login") || lowerAction.includes("active") || lowerAction.includes("publish")) {
+    if (
+      lowerAction.includes("login") ||
+      lowerAction.includes("logout") ||
+      lowerAction.includes("active") ||
+      lowerAction.includes("publish")
+    ) {
       return "bg-green-50 text-green-600 border-green-100";
     }
-    if (lowerAction.includes("delete") || lowerAction.includes("remove") || lowerAction.includes("deactivate") || lowerAction.includes("error")) {
+
+    if (
+      lowerAction.includes("delete") ||
+      lowerAction.includes("remove") ||
+      lowerAction.includes("deactivate") ||
+      lowerAction.includes("error")
+    ) {
       return "bg-red-50 text-red-600 border-red-100";
     }
-    if (lowerAction.includes("update") || lowerAction.includes("edit") || lowerAction.includes("reset")) {
-      return "bg-yellow-50 text-yellow-600 border-yellow-100";
+
+    if (
+      lowerAction.includes("update") ||
+      lowerAction.includes("edit") ||
+      lowerAction.includes("reset")
+    ) {
+      return "bg-amber-50 text-amber-600 border-amber-100";
     }
+
     if (lowerAction.includes("add") || lowerAction.includes("create")) {
-      return "bg-blue-50 text-[#2563EB] border-blue-100";
+      return "bg-blue-50 text-[#2563eb] border-blue-100";
     }
+
     return "bg-gray-50 text-gray-600 border-gray-200";
   };
 
+  const inputStyle =
+    "w-full rounded-[18px] border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-gray-600 outline-none shadow-sm transition duration-300 placeholder:text-gray-400 hover:border-[#2563eb]/40 hover:bg-blue-50/40 focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100";
+
+  const StatCard = ({ icon, label, value }) => (
+    <div className="rounded-[28px] border border-blue-100 bg-white p-6 shadow-[0_8px_24px_rgba(37,99,235,0.06)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
+      <div className="flex items-center gap-5">
+        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-2xl text-[#2563eb]">
+          {icon}
+        </div>
+
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            {label}
+          </p>
+
+          <h3 className="mt-1 text-3xl font-bold text-[#2563eb]">{value}</h3>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-        <div className="w-full">
-          <div className="max-w-7xl mx-auto pt-10 pb-20 px-6 lg:px-10">       
-        
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#2563eb] tracking-tight">
+    <div className="min-h-screen w-full bg-[#f8fbff] font-['Poppins']">
+      <main className="mx-auto max-w-7xl px-6 pb-24 pt-10 lg:px-10">
+        {/* HEADER */}
+        <section className="mb-10">
+          <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+            Audit Trail
+          </span>
+
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
             System Logs
           </h1>
-          <p className="text-gray-500 mt-2">
-            Platform activity monitoring and security audit trail.
+
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-gray-500">
+            Monitor platform activity, account actions, and security events
+            recorded across the system.
           </p>
-        </div>
+        </section>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition duration-300">
-            <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563EB] flex items-center justify-center text-2xl flex-shrink-0">
-              <FiActivity />
-            </div>
+        {/* KPI CARDS */}
+        <section className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+          <StatCard
+            icon={<FiActivity />}
+            label="Total Logs"
+            value={logs.length}
+          />
+
+          <StatCard
+            icon={<FiClock />}
+            label="Activity Today"
+            value={todayCount}
+          />
+        </section>
+
+        {/* FILTERS */}
+        <section className="mb-6 rounded-[28px] border border-blue-100 bg-white p-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+          <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-center">
             <div>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">
-                Total Logs
-              </p>
-              <h3 className="text-3xl font-extrabold text-[#2563EB]">
-                {logs.length}
-              </h3>
-            </div>
-          </div>
+              <h2 className="text-lg font-bold text-[#2563eb]">
+                Filter Logs
+              </h2>
 
-          <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm p-6 flex items-center gap-5 hover:shadow-md transition duration-300">
-            <div className="w-14 h-14 rounded-full bg-blue-50 text-[#2563EB] flex items-center justify-center text-2xl flex-shrink-0">
-              <FiClock />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">
-                Activity Today
+              <p className="mt-1 text-sm text-gray-500">
+                Search by user, action, or module to review specific activity.
               </p>
-              <h3 className="text-3xl font-extrabold text-[#2563EB]">
-                {todayCount}
-              </h3>
             </div>
-          </div>
-        </div>
 
-        {/* Advanced Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* Search Bar */}
-          <div className="relative w-full">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search logs..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Fix: Reset page directly in handler
-              }}
-              className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 pl-11 pr-10 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
-            />
-            {searchTerm && (
+            {(searchTerm || filterAction || filterUser) && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchTerm("");
-                  setCurrentPage(1); // Fix: Reset page directly in handler
+                  setFilterAction("");
+                  setFilterUser("");
+                  setCurrentPage(1);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition p-1"
+                className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-red-100 bg-white px-4 py-2.5 text-sm font-medium text-red-500 shadow-sm transition hover:bg-red-50"
               >
-                <FiX className="text-base" />
+                <FiX />
+                Clear Filters
               </button>
             )}
           </div>
 
-          {/* Action Filter */}
-          <div className="relative w-full">
-            <FiFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none" />
-            <select
-              value={filterAction}
-              onChange={(e) => {
-                setFilterAction(e.target.value);
-                setCurrentPage(1); // Fix: Reset page directly in handler
-              }}
-              className="w-full rounded-[12px] border border-gray-200 bg-white pl-11 pr-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer"
-            >
-              <option value="">All Actions</option>
-              {uniqueActions.map((action, idx) => (
-                <option key={idx} value={action}>{action}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="relative w-full">
+              <FiSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className={`${inputStyle} pl-11 pr-11`}
+              />
+
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                >
+                  <FiX className="text-base" />
+                </button>
+              )}
+            </div>
+
+            <div className="relative w-full">
+              <FiFilter className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+
+              <select
+                value={filterAction}
+                onChange={(e) => {
+                  setFilterAction(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className={`${inputStyle} cursor-pointer appearance-none pl-11`}
+              >
+                <option value="">All Actions</option>
+                {uniqueActions.map((action, idx) => (
+                  <option key={idx} value={action}>
+                    {action}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative w-full">
+              <FiUser className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+
+              <select
+                value={filterUser}
+                onChange={(e) => {
+                  setFilterUser(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className={`${inputStyle} cursor-pointer appearance-none pl-11`}
+              >
+                <option value="">All Users</option>
+                {uniqueUsers.map((user, idx) => (
+                  <option key={idx} value={user}>
+                    {user}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </section>
+
+        {/* TABLE PANEL */}
+        <section className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+          <div className="flex flex-col justify-between gap-3 border-b border-blue-50 bg-[#f8fbff] px-6 py-5 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-lg font-bold text-[#2563eb]">
+                Audit Records
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Showing real-time activity logs from the system.
+              </p>
+            </div>
+
+            <span className="inline-flex w-fit rounded-full border border-blue-100 bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+              {filteredLogs.length} entries
+            </span>
           </div>
 
-          {/* User Filter */}
-          <div className="relative w-full">
-            <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none" />
-            <select
-              value={filterUser}
-              onChange={(e) => {
-                setFilterUser(e.target.value);
-                setCurrentPage(1); // Fix: Reset page directly in handler
-              }}
-              className="w-full rounded-[12px] border border-gray-200 bg-white pl-11 pr-4 py-3 text-sm outline-none transition hover:border-[#2563eb] focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer"
-            >
-              <option value="">All Users</option>
-              {uniqueUsers.map((user, idx) => (
-                <option key={idx} value={user}>{user}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Audit Table Panel */}
-        <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm overflow-hidden flex flex-col transition duration-300 hover:shadow-md">
           <div className="overflow-x-auto">
             <div className="min-w-[900px]">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 px-8 py-5 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div className="grid grid-cols-12 gap-4 border-b border-blue-50 bg-white px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <span className="col-span-3">Timestamp</span>
-                <span className="col-span-3">User ID/Name</span>
+                <span className="col-span-3">User</span>
                 <span className="col-span-4">Action Performed</span>
                 <span className="col-span-2 text-right">Target Module</span>
               </div>
 
-              {/* Table Body */}
               {paginatedLogs.length === 0 ? (
-                <div className="py-20 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-[#2563EB] mb-4 shadow-sm">
+                <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
                     <FiClipboard className="text-2xl" />
                   </div>
-                  <h3 className="text-gray-800 font-bold text-lg mb-1">No logs found</h3>
-                  <p className="text-gray-500 text-sm">
+
+                  <h3 className="text-lg font-semibold text-gray-700">
+                    No logs found
+                  </h3>
+
+                  <p className="mt-1 text-sm text-gray-500">
                     Try adjusting your search or filter criteria.
                   </p>
                 </div>
@@ -234,11 +327,13 @@ function SystemLogs() {
 
                     if (log.timestamp) {
                       const d = log.timestamp.toDate();
+
                       logDate = d.toLocaleDateString(undefined, {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
                       });
+
                       logTime = d.toLocaleTimeString(undefined, {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -249,35 +344,37 @@ function SystemLogs() {
                     return (
                       <div
                         key={log.id}
-                        className="grid grid-cols-12 gap-4 px-8 py-5 text-sm border-b border-gray-50 items-center hover:bg-blue-50/40 transition-colors last:border-b-0"
+                        className="grid grid-cols-12 items-center gap-4 border-b border-blue-50 px-8 py-5 text-sm transition duration-300 last:border-b-0 hover:bg-blue-50/50"
                       >
-                        {/* Timestamp */}
                         <div className="col-span-3 flex flex-col justify-center">
-                          <span className="font-semibold text-gray-800">{logDate}</span>
-                          <span className="text-xs text-gray-500 font-medium mt-0.5">
-                            {logTime}
+                          <span className="font-semibold text-gray-700">
+                            {logDate}
+                          </span>
+
+                          <span className="mt-0.5 text-xs font-medium text-gray-500">
+                            {logTime || "No time"}
                           </span>
                         </div>
 
-                        {/* User */}
-                        <div className="col-span-3 flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
+                        <div className="col-span-3 flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
                             <FiUser />
                           </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-gray-900 truncate">
+
+                          <div className="min-w-0">
+                            <span className="block truncate font-semibold text-gray-700">
                               {log.userName || "System"}
                             </span>
-                            <span className="text-xs text-gray-500 truncate">
+
+                            <span className="mt-0.5 block truncate text-xs text-gray-500">
                               {log.userId || "N/A"}
                             </span>
                           </div>
                         </div>
 
-                        {/* Action */}
                         <div className="col-span-4 flex items-center">
                           <span
-                            className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold border shadow-sm ${getActionBadge(
+                            className={`inline-flex items-center rounded-full border px-4 py-1.5 text-xs font-bold capitalize shadow-sm ${getActionBadge(
                               log.action
                             )}`}
                           >
@@ -285,9 +382,8 @@ function SystemLogs() {
                           </span>
                         </div>
 
-                        {/* Target Module */}
-                        <div className="col-span-2 flex justify-end items-center">
-                          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-full text-xs font-bold text-gray-600 shadow-sm capitalize">
+                        <div className="col-span-2 flex justify-end">
+                          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold capitalize text-gray-600">
                             <FiLayers className="text-gray-400" />
                             {log.targetModule || log.module || "System"}
                           </div>
@@ -300,35 +396,51 @@ function SystemLogs() {
             </div>
           </div>
 
-          {/* Pagination Controls */}
+          {/* PAGINATION */}
           {filteredLogs.length > 0 && (
-            <div className="px-8 py-5 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
+            <div className="flex flex-col items-center justify-between gap-4 border-t border-blue-50 bg-[#f8fbff] px-6 py-5 sm:flex-row">
               <span className="text-sm font-medium text-gray-500">
-                Showing <span className="font-bold text-gray-800">{startIndex + 1}</span> to <span className="font-bold text-gray-800">{Math.min(startIndex + logsPerPage, filteredLogs.length)}</span> of <span className="font-bold text-gray-800">{filteredLogs.length}</span> entries
+                Showing{" "}
+                <span className="font-semibold text-gray-700">
+                  {startIndex + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-semibold text-gray-700">
+                  {Math.min(startIndex + logsPerPage, filteredLogs.length)}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-gray-700">
+                  {filteredLogs.length}
+                </span>{" "}
+                entries
               </span>
-              
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all shadow-sm ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition ${
                     currentPage === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] hover:border-[#2563eb]"
+                      ? "cursor-not-allowed border-blue-50 bg-white text-gray-300"
+                      : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                   }`}
                 >
                   <FiChevronLeft className="text-lg" />
                 </button>
-                <span className="text-sm font-bold text-gray-700 px-2">
+
+                <span className="rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-sm">
                   Page {currentPage} of {totalPages}
                 </span>
+
                 <button
+                  type="button"
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all shadow-sm ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition ${
                     currentPage === totalPages
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:text-[#2563eb] hover:border-[#2563eb]"
+                      ? "cursor-not-allowed border-blue-50 bg-white text-gray-300"
+                      : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                   }`}
                 >
                   <FiChevronRight className="text-lg" />
@@ -336,9 +448,8 @@ function SystemLogs() {
               </div>
             </div>
           )}
-        </div>
-
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
