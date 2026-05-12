@@ -17,7 +17,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
-import { FiHeart } from "react-icons/fi";
+import { FiHeart, FiMousePointer, FiMove } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { onAuthStateChanged } from "firebase/auth";
 import { useFavorites } from "../../components/context/FavoritesContext";
@@ -64,15 +64,15 @@ function Home() {
   };
 
   const scrollToMap = () => {
-  const mapSection = document.getElementById("map-section");
+    const mapSection = document.getElementById("map-section");
 
-  if (mapSection) {
-    mapSection.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }
-};
+    if (mapSection) {
+      mapSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
 
   const headingReveal = {
     hidden: {
@@ -163,7 +163,7 @@ function Home() {
         host.includes("m.facebook.com") ||
         host.includes("fb.watch")
       ) {
-       return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+        return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
           cleanUrl
         )}&show_text=false&width=900`;
       }
@@ -283,7 +283,7 @@ function Home() {
   };
 
   return (
-   <div className="font-sans min-h-screen bg-[#f3f9ff] text-gray-900">
+    <div className="font-sans min-h-screen bg-[#f3f9ff] text-gray-900">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -312,6 +312,19 @@ function Home() {
             transform: scale(1);
             opacity: 0;
           }
+        }
+
+        @keyframes mapHintFloat {
+          0%, 100% {
+            transform: translateX(-50%) translateY(0);
+          }
+          50% {
+            transform: translateX(-50%) translateY(-3px);
+          }
+        }
+
+        .map-hint-float {
+          animation: mapHintFloat 2.8s ease-in-out infinite;
         }
       `}</style>
 
@@ -351,12 +364,12 @@ function Home() {
             culture and breathtaking destinations of Lanao del Sur.
           </p>
 
-        <button
-          className="explore-btn transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(37,99,235,0.18)] active:scale-[0.98]"
-          onClick={scrollToMap}
-        >
-          Explore Lanao
-        </button>
+          <button
+            className="explore-btn transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(37,99,235,0.18)] active:scale-[0.98]"
+            onClick={scrollToMap}
+          >
+            Explore Lanao
+          </button>
         </div>
       </section>
 
@@ -420,27 +433,27 @@ function Home() {
                   return (
                     <SwiperSlide key={item.id || index}>
                       <div className="relative overflow-hidden rounded-[24px] bg-gray-100">
-                     {hasVideo && isActive ? (
-                       <div className="relative w-full overflow-hidden bg-black aspect-video">
-                        <iframe
-                          key={embedURL}
-                          src={embedURL}
-                          title={item.title || "Highlight Video"}
-                          className="absolute inset-0 h-full w-full border-0 bg-black"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        />
-                      </div>
-                      ) : (
-                        <img
-                          src={item.imageURL || fallbackHighlightImage}
-                          alt={item.title || "Travel Highlight"}
-                         className="aspect-video w-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = fallbackHighlightImage;
-                          }}
-                        />
-                      )}
+                        {hasVideo && isActive ? (
+                          <div className="relative w-full overflow-hidden bg-black aspect-video">
+                            <iframe
+                              key={embedURL}
+                              src={embedURL}
+                              title={item.title || "Highlight Video"}
+                              className="absolute inset-0 h-full w-full border-0 bg-black"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
+                          </div>
+                        ) : (
+                          <img
+                            src={item.imageURL || fallbackHighlightImage}
+                            alt={item.title || "Travel Highlight"}
+                            className="aspect-video w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = fallbackHighlightImage;
+                            }}
+                          />
+                        )}
 
                         {!hasVideo && (
                           <>
@@ -636,7 +649,6 @@ function Home() {
       </motion.section>
 
       {/* MAP */}
-     
       <motion.section
         id="map-section"
         className="scroll-mt-24 bg-transparent px-6 py-24 md:px-12 lg:px-20"
@@ -662,7 +674,25 @@ function Home() {
             </p>
           </motion.div>
 
-          <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
+          <div className="relative overflow-hidden rounded-[28px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
+            {/* MAP INTERACTION HINT - DESKTOP */}
+            <div className="map-hint-float pointer-events-none absolute left-1/2 top-6 z-[30] hidden -translate-x-1/2 items-center gap-2 rounded-full border border-blue-100 bg-white/95 px-4 py-2 text-xs font-semibold text-[#2563eb] shadow-[0_8px_24px_rgba(37,99,235,0.10)] backdrop-blur-[2px] md:flex">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-[#2563eb]">
+                <FiMove className="text-sm" />
+              </span>
+
+              <span>Drag to explore the map</span>
+            </div>
+
+            {/* MAP INTERACTION HINT - MOBILE */}
+            <div className="pointer-events-none absolute bottom-5 left-1/2 z-[30] flex -translate-x-1/2 items-center gap-2 rounded-full border border-blue-100 bg-white/95 px-4 py-2 text-[11px] font-semibold text-[#2563eb] shadow-[0_8px_24px_rgba(37,99,235,0.10)] backdrop-blur-[2px] md:hidden">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-[#2563eb]">
+                <FiMousePointer className="text-xs" />
+              </span>
+
+              <span>Swipe or pinch to explore</span>
+            </div>
+
             <div className="overflow-hidden rounded-[24px]">
               <LanaoMap />
             </div>

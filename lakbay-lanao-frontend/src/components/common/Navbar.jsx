@@ -297,7 +297,7 @@ function Navbar() {
 
             <div className="hidden min-w-0 flex-col leading-tight sm:flex">
               <span className="truncate whitespace-nowrap text-xs font-bold tracking-tight text-blue-600 md:text-sm">
-                Provincial Tourism Office
+                Provincial Tourism, Culture, and the Arts Office
               </span>
 
               <span className="mt-0.8 truncate whitespace-nowrap text-[8px] font-semibold uppercase tracking-[0.1em] text-blue-900">
