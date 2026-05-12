@@ -1,40 +1,8 @@
-import L from "leaflet";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-const redIcon = new L.Icon({
-  iconUrl: "src/assets/marker-red.png",
-  iconSize: [35, 45],
-  iconAnchor: [17, 45],
-  popupAnchor: [0, -40],
-});
-
-const blueIcon = new L.Icon({
-  iconUrl: "src/assets/marker-blue.png",
-  iconSize: [35, 45],
-  iconAnchor: [17, 45],
-  popupAnchor: [0, -40],
-});
-
-const goldIcon = new L.Icon({
-  iconUrl: "src/assets/marker-gold.png",
-  iconSize: [35, 45],
-  iconAnchor: [17, 45],
-  popupAnchor: [0, -40],
-});
-
-const greenIcon = new L.Icon({
-  iconUrl: "src/assets/marker-green.png",
-  iconSize: [35, 45],
-  iconAnchor: [17, 45],
-  popupAnchor: [0, -40],
-});
-
-export { redIcon, blueIcon, goldIcon, greenIcon };
+// MapSetup.js
+export const getIconUrl = (category) => {
+  if (category === "Destination") return "src/assets/marker-red.png";
+  if (category === "Landmark") return "src/assets/marker-blue.png";
+  if (category === "Establishment") return "src/assets/marker-gold.png";
+  if (category === "Cultural Heritage Site") return "src/assets/marker-green.png";
+  return "src/assets/marker-red.png"; // Default
+};

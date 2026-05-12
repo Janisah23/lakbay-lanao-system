@@ -12,7 +12,9 @@
     "cypress:run": "cypress run"
   },
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@hello-pangea/dnd": "^18.0.1",
+    "@vis.gl/react-google-maps": "^1.8.3",
     "date-fns": "^4.1.0",
     "firebase": "^12.9.0",
     "flag-icons": "^7.5.0",
