@@ -13,8 +13,6 @@ import {
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { getIconUrl } from "./MapSetup";
 
-// FIX: Import your default fallback image here!
-import defaultFallbackImg from "../../assets/default.jpg"; // Adjust path if needed
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const defaultCenter = { lat: 7.8731, lng: 124.2863 };
@@ -84,7 +82,6 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
           ref={(marker) => setMarkerRef(marker, spot.id)}
           position={{ lat: spot.coordinates.lat, lng: spot.coordinates.lng }}
           icon={{
-            // This now calls the updated MapSetup which returns the correct bundled image!
             url: getIconUrl(spot.category),
             scaledSize: { width: 35, height: 45 },
           }}

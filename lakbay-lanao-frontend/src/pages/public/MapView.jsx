@@ -5,7 +5,6 @@ import { FiSearch, FiMapPin, FiMap } from "react-icons/fi";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
 
-// NEW: Use a reliable fallback if an image is missing
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
 const FILTERS = [
