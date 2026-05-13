@@ -26,7 +26,6 @@ import lakbayLogo from "../../assets/lakbay-logos.png";
 import itineraryHero from "../../assets/itinerary-hero.png";
 import html2pdf from "html2pdf.js";
 
-/* ── helpers ──────────────────────────────────────────────────────── */
 const ITINERARY_CATEGORIES = [
   "Destination",
   "Establishment",
@@ -188,7 +187,6 @@ const sanitizeFileName = (name) =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
-/* ── SaveStatus badge ─────────────────────────────────────────────── */
 function SaveBadge({ status, mode }) {
   if (status === "saving") {
     return (
@@ -210,7 +208,6 @@ function SaveBadge({ status, mode }) {
   return null;
 }
 
-/* ── PlaceCard ────────────────────────────────────────────────────── */
 function PlaceCard({ place, index }) {
   const catClass =
     CAT_COLORS[place.category] || "text-blue-600 bg-blue-50 border-blue-100";
@@ -222,7 +219,7 @@ function PlaceCard({ place, index }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`flex cursor-grab items-center gap-3 rounded-[18px] border bg-white p-3 active:cursor-grabbing transition-all duration-200 ${
+          className={`flex cursor-grab items-center gap-2 rounded-[16px] border bg-white p-2.5 active:cursor-grabbing transition-all duration-200 sm:gap-3 sm:rounded-[18px] sm:p-3 ${
             snapshot.isDragging
               ? "scale-[1.01] border-blue-200 shadow-[0_12px_28px_rgba(37,99,235,0.12)]"
               : "border-blue-100 shadow-sm hover:border-blue-200 hover:shadow-[0_8px_20px_rgba(37,99,235,0.07)]"
@@ -230,7 +227,7 @@ function PlaceCard({ place, index }) {
         >
           <MdDragIndicator className="flex-shrink-0 text-xl text-gray-300" />
 
-          <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-[14px] border border-blue-100 bg-[#f8fbff] shadow-sm">
+          <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-[12px] border border-blue-100 bg-[#f8fbff] shadow-sm sm:h-12 sm:w-12 sm:rounded-[14px]">
             <img
               src={place.imageURL || "/default.jpg"}
               alt={place.name || place.title}
@@ -239,7 +236,7 @@ function PlaceCard({ place, index }) {
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold leading-tight text-[#2563eb]">
+            <p className="truncate text-xs font-semibold leading-tight text-[#2563eb] sm:text-sm">
               {place.name || place.title}
             </p>
 
@@ -257,7 +254,6 @@ function PlaceCard({ place, index }) {
   );
 }
 
-/* ── DayCard ──────────────────────────────────────────────────────── */
 function DayCard({
   dayKey,
   dayIndex,
@@ -268,8 +264,8 @@ function DayCard({
   onUpdateNote,
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
-      <div className="flex items-center gap-3 border-b border-blue-50 bg-[#f8fbff] px-6 py-5">
+    <div className="overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:rounded-[28px]">
+      <div className="flex items-center gap-3 border-b border-blue-50 bg-[#f8fbff] px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-sm font-bold text-white shadow-sm">
           {dayIndex + 1}
         </div>
@@ -292,7 +288,7 @@ function DayCard({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`min-h-[120px] px-5 pb-4 pt-5 transition-colors duration-200 ${
+            className={`min-h-[120px] px-3 pb-4 pt-4 transition-colors duration-200 sm:px-5 sm:pt-5 ${
               snapshot.isDraggingOver ? "bg-blue-50/60" : "bg-white"
             }`}
           >
@@ -318,13 +314,13 @@ function DayCard({
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className={`group flex flex-col gap-3 rounded-[18px] border bg-white p-3.5 transition-all duration-200 md:flex-row md:items-center ${
+                        className={`group flex flex-col gap-3 rounded-[16px] border bg-white p-3 transition-all duration-200 sm:rounded-[18px] sm:p-3.5 md:flex-row md:items-center ${
                           snapshot.isDragging
                             ? "border-blue-200 shadow-[0_12px_28px_rgba(37,99,235,0.12)]"
                             : "border-blue-100 shadow-sm hover:border-blue-200 hover:shadow-[0_8px_20px_rgba(37,99,235,0.07)]"
                         }`}
                       >
-                        <div className="flex min-w-0 flex-1 items-center gap-4">
+                        <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
                           <div
                             {...provided.dragHandleProps}
                             className="flex-shrink-0 cursor-grab p-1 text-gray-300 hover:text-gray-500 active:cursor-grabbing"
@@ -336,7 +332,7 @@ function DayCard({
                             {idx + 1}
                           </div>
 
-                          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[14px] border border-blue-100 bg-[#f8fbff] shadow-sm">
+                          <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-[12px] border border-blue-100 bg-[#f8fbff] shadow-sm sm:h-14 sm:w-14 sm:rounded-[14px]">
                             <img
                               src={place.imageURL || "/default.jpg"}
                               alt={place.name || place.title}
@@ -345,7 +341,7 @@ function DayCard({
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-bold leading-tight text-[#2563eb]">
+                            <p className="truncate text-xs font-bold leading-tight text-[#2563eb] sm:text-sm">
                               {place.name || place.title}
                             </p>
 
@@ -368,7 +364,7 @@ function DayCard({
                           </div>
                         </div>
 
-                        <div className="flex flex-shrink-0 items-center gap-2 pl-10 md:pl-0">
+                        <div className="flex flex-shrink-0 items-center gap-2 pl-8 sm:pl-10 md:pl-0">
                           <div className="flex items-center gap-1.5 rounded-[12px] border border-blue-100 bg-[#f8fbff] px-2.5 py-1.5 transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
                             <FiClock className="flex-shrink-0 text-xs text-gray-500" />
 
@@ -415,7 +411,6 @@ function DayCard({
   );
 }
 
-/* ── SavedTripsPanel ──────────────────────────────────────────────── */
 function SavedTripsPanel({
   trips,
   currentTripId,
@@ -429,7 +424,7 @@ function SavedTripsPanel({
   onSaveRenameTrip,
 }) {
   return (
-    <div className="rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
+    <div className="rounded-[24px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:rounded-[28px]">
       <div className="flex items-start justify-between gap-4 border-b border-blue-50 px-5 py-5">
         <div>
           <div className="flex items-center gap-2">
@@ -565,7 +560,6 @@ function SavedTripsPanel({
   );
 }
 
-/* ── Hidden Tailwind PDF Template ─────────────────────────────────── */
 function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops }) {
   const date = new Date().toLocaleDateString("en-PH", {
     year: "numeric",
@@ -722,7 +716,6 @@ function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops }) {
   );
 }
 
-/* ── Main Itinerary ───────────────────────────────────────────────── */
 function Itinerary() {
   const { favorites } = useFavorites();
 
@@ -1318,7 +1311,7 @@ function Itinerary() {
       </div>
 
       {/* HERO */}
-      <section className="relative mx-4 mt-0 h-[340px] overflow-hidden rounded-b-[48px] md:mx-8">
+      <section className="relative mx-4 mt-0 h-[300px] overflow-hidden rounded-b-[32px] sm:h-[340px] sm:rounded-b-[48px] md:mx-8">
         <img
           src={itineraryHero}
           alt="Itinerary"
@@ -1327,49 +1320,58 @@ function Itinerary() {
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-black/70" />
 
-        <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end px-6 pb-14">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end px-4 pb-10 sm:px-6 sm:pb-14">
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              <h1 className="text-4xl font-bold leading-tight text-white drop-shadow md:text-5xl">
+              <h1 className="text-3xl font-bold leading-tight text-white drop-shadow sm:text-4xl md:text-5xl">
                 My Itinerary
               </h1>
 
-              <p className="mt-2 max-w-lg text-base font-light text-gray-100">
+              <p className="mt-2 max-w-lg text-sm font-light leading-relaxed text-gray-100 sm:text-base">
                 Create multiple trips, organize saved destinations by day, and
                 download each itinerary as a PDF.
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <div className="rounded-2xl border border-white/30 bg-white/15 px-5 py-3 text-center shadow-sm backdrop-blur-[2px]">
-                <p className="text-2xl font-bold text-white">{trips.length}</p>
-                <p className="mt-0.5 text-xs text-white/80">Trips</p>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+              <div className="rounded-[18px] border border-white/30 bg-white/15 px-4 py-2.5 text-center shadow-sm backdrop-blur-[2px] sm:rounded-2xl sm:px-5 sm:py-3">
+                <p className="text-xl font-bold text-white sm:text-2xl">
+                  {trips.length}
+                </p>
+                <p className="mt-0.5 text-[11px] text-white/80 sm:text-xs">
+                  Trips
+                </p>
               </div>
 
-              <div className="rounded-2xl border border-white/30 bg-white/15 px-5 py-3 text-center shadow-sm backdrop-blur-[2px]">
-                <p className="text-2xl font-bold text-white">{totalStops}</p>
-                <p className="mt-0.5 text-xs text-white/80">Stops</p>
+              <div className="rounded-[18px] border border-white/30 bg-white/15 px-4 py-2.5 text-center shadow-sm backdrop-blur-[2px] sm:rounded-2xl sm:px-5 sm:py-3">
+                <p className="text-xl font-bold text-white sm:text-2xl">
+                  {totalStops}
+                </p>
+                <p className="mt-0.5 text-[11px] text-white/80 sm:text-xs">
+                  Stops
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CURRENT TRIP BAR - restored placement like Favorites */}
-      <div className="relative z-10 mx-auto -mt-5 max-w-7xl px-6">
-        <div className="flex flex-col items-start justify-between gap-5 rounded-[26px] border border-white/80 bg-white/95 px-7 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] lg:flex-row lg:items-center">
-          
-         <h2 className="pl-3 text-lg font-bold text-[#2563eb]">
-          {tripName || "Untitled Trip"}
-        </h2>
+      {/* CURRENT TRIP BAR */}
+      <div className="relative z-10 mx-auto -mt-5 max-w-7xl px-4 sm:px-6 lg:px-10">
+        <div className="flex flex-col items-start justify-between gap-5 rounded-[24px] border border-white/80 bg-white/95 px-4 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[26px] sm:px-7 lg:flex-row lg:items-center">
+          <h2 className="text-base font-bold text-[#2563eb] sm:pl-3 sm:text-lg">
+            {tripName || "Untitled Trip"}
+          </h2>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <SaveBadge status={saveStatus} mode={saveMode} />
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:flex lg:flex-wrap lg:items-center lg:gap-3">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <SaveBadge status={saveStatus} mode={saveMode} />
+            </div>
 
             <button
               type="button"
               onClick={handleDownloadPDF}
-              className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:border-[#2563eb] hover:bg-blue-50 hover:text-[#2563eb]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-4 py-2 text-xs font-medium text-gray-600 shadow-sm transition hover:border-[#2563eb] hover:bg-blue-50 hover:text-[#2563eb] sm:text-sm lg:w-auto"
             >
               <FiDownload className="text-sm" />
               Download PDF
@@ -1378,13 +1380,13 @@ function Itinerary() {
             <button
               type="button"
               onClick={resetPlan}
-              className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-white px-4 py-2 text-sm font-medium text-red-500 shadow-sm transition hover:bg-red-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-red-100 bg-white px-4 py-2 text-xs font-medium text-red-500 shadow-sm transition hover:bg-red-50 sm:text-sm lg:w-auto"
             >
               <FiRotateCcw className="text-sm" />
               Reset
             </button>
 
-            <div className="flex items-center gap-3 rounded-full border border-blue-100 bg-[#f8fbff] px-4 py-2">
+            <div className="flex w-full items-center justify-center gap-3 rounded-full border border-blue-100 bg-[#f8fbff] px-4 py-2 sm:col-span-2 lg:w-auto">
               <button
                 type="button"
                 onClick={() => handleDayChange(-1)}
@@ -1419,9 +1421,9 @@ function Itinerary() {
       </div>
 
       {/* MAIN CONTENT */}
-      <section className="mx-auto max-w-7xl px-6 pb-24 pt-8">
+      <section className="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-[320px_1fr]">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr] lg:gap-7">
             {/* LEFT SIDEBAR */}
             <aside className="space-y-6 lg:sticky lg:top-28">
               <SavedTripsPanel
@@ -1442,7 +1444,7 @@ function Itinerary() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex max-h-[520px] flex-col rounded-[28px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)]"
+                    className="flex max-h-[520px] flex-col rounded-[24px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:rounded-[28px]"
                   >
                     <div className="border-b border-blue-50 px-5 pb-4 pt-5">
                       <div className="mb-1 flex items-center gap-2">
@@ -1529,9 +1531,9 @@ function Itinerary() {
       </section>
 
       {!uid && loaded && (
-        <div className="mx-auto -mt-14 max-w-7xl px-6 pb-20">
-          <div className="flex items-center gap-3 rounded-[18px] border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-700 shadow-sm">
-            <FiInfo className="flex-shrink-0 text-amber-500" />
+        <div className="mx-auto -mt-14 max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
+          <div className="flex items-start gap-3 rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-4 text-xs leading-relaxed text-amber-700 shadow-sm sm:px-6 sm:text-sm">
+            <FiInfo className="mt-0.5 flex-shrink-0 text-amber-500" />
             You are currently signed out. Your itineraries are still saved on
             this device. Sign in anytime to keep them in the cloud too.
           </div>

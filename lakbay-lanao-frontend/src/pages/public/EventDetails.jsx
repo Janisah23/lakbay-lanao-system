@@ -283,10 +283,10 @@ const EventDetails = () => {
     return (
       <article
         onClick={() => handleMoreEventClick(event.id)}
-        className="group flex h-full min-h-[330px] cursor-pointer flex-col overflow-hidden rounded-[30px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)]"
+        className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[310px] sm:rounded-[24px] lg:min-h-[330px] lg:rounded-[30px]"
       >
-        <div className="p-2.5 pb-0">
-          <div className="relative h-[190px] overflow-hidden rounded-[24px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm">
+        <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
+          <div className="relative h-[120px] overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[190px] lg:rounded-[24px]">
             <img
               src={event.imageURL || "/default.jpg"}
               alt={title}
@@ -296,19 +296,19 @@ const EventDetails = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-white/5 to-white/10" />
             <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/20 to-transparent" />
 
-            <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
+            <span className="absolute left-2 top-2 max-w-[105px] truncate rounded-full bg-white/95 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md sm:left-3 sm:top-3 sm:max-w-[140px] sm:px-2.5 sm:py-1 sm:text-[9px] lg:left-4 lg:top-4 lg:px-3 lg:text-[10px]">
               {event.category || event.eventType || "Event"}
             </span>
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col px-6 pb-6 pt-4">
-          <h4 className="line-clamp-2 min-h-[46px] text-base font-bold leading-snug text-[#2563eb] transition group-hover:text-blue-700">
+        <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 lg:px-6 lg:pb-6 lg:pt-4">
+          <h4 className="line-clamp-2 min-h-[34px] text-xs font-bold leading-tight text-[#2563eb] transition group-hover:text-blue-700 sm:min-h-[40px] sm:text-sm lg:min-h-[46px] lg:text-base lg:leading-snug">
             {title}
           </h4>
 
-          <div className="mt-auto pt-4">
-            <div className="mb-3 flex items-center gap-2 text-xs font-medium text-gray-400">
+          <div className="mt-auto pt-2 sm:pt-3 lg:pt-4">
+            <div className="mb-2 flex items-center gap-1.5 text-[10px] font-medium text-gray-400 sm:mb-3 sm:gap-2 sm:text-xs">
               <FiCalendar className="shrink-0 text-[#2563eb]" />
               <span className="line-clamp-1">
                 {formatEventDate(event.eventDate)}
@@ -321,9 +321,9 @@ const EventDetails = () => {
                 e.stopPropagation();
                 handleMoreEventClick(event.id);
               }}
-              className="inline-flex items-center gap-2 self-start rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+              className="w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:w-fit sm:px-4 sm:py-2 sm:text-[11px] lg:inline-flex lg:items-center lg:gap-2 lg:self-start lg:px-5 lg:py-2.5 lg:text-xs"
             >
-              View event <FiChevronRight />
+              View event <FiChevronRight className="hidden lg:inline" />
             </button>
           </div>
         </div>
@@ -336,23 +336,21 @@ const EventDetails = () => {
       <Navbar />
 
       {/* HEADER */}
-      <section className="mx-auto max-w-7xl px-6 pb-10 pt-32">
-        
-
-        <div className="flex flex-wrap items-start justify-between gap-8">
+      <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-start">
           <div className="min-w-0 flex-1">
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700 shadow-sm">
               <FiCalendar className="text-xs" />
               Event Experience
             </span>
 
-            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight text-[#2563eb] md:text-5xl">
+            <h1 className="mb-4 max-w-4xl text-2xl font-bold leading-snug tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl lg:text-5xl">
               {eventDetail.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-600 sm:text-sm">
               <div className="flex items-center gap-1.5">
-                <span className="text-base tracking-widest text-yellow-400">
+                <span className="text-sm tracking-widest text-yellow-400 sm:text-base">
                   {"★".repeat(Math.floor(eventDetail.rating || 4))}
                   <span className="text-yellow-200">
                     {"★".repeat(5 - Math.floor(eventDetail.rating || 4))}
@@ -368,14 +366,14 @@ const EventDetails = () => {
                 </span>
               </div>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiBookmark className="text-sm" />
                 <span>{saveCount.toLocaleString()} saves</span>
               </div>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiMapPin className="text-sm" />
@@ -384,18 +382,18 @@ const EventDetails = () => {
             </div>
           </div>
 
-          <div className="mt-2 flex flex-shrink-0 items-center gap-3">
-            <div className="relative">
+          <div className="flex w-full flex-shrink-0 items-center gap-3 sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <button
                 onClick={() => setShowSharePanel(!showSharePanel)}
-                className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb]"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb] sm:w-auto"
               >
                 <FiShare2 className="text-base" />
                 Share
               </button>
 
               {showSharePanel && (
-                <div className="absolute right-0 top-12 z-30 w-56 rounded-[16px] border border-gray-200 bg-white p-4 shadow-xl">
+                <div className="absolute left-0 top-12 z-30 w-56 rounded-[16px] border border-gray-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Share this event
                   </p>
@@ -439,7 +437,7 @@ const EventDetails = () => {
 
             <button
               onClick={() => toggleFavorite(eventDetail)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
                 isFav
                   ? "bg-[#2563eb] text-white hover:bg-blue-700"
                   : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
@@ -453,9 +451,9 @@ const EventDetails = () => {
       </section>
 
       {/* GALLERY */}
-      <section className="mx-auto mb-16 max-w-7xl px-6">
-        <div className="relative h-[320px] w-full overflow-hidden rounded-[28px] border border-white/80 bg-white/80 p-2 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm md:h-[460px] lg:h-[540px]">
-          <div className="relative h-full w-full overflow-hidden rounded-[24px]">
+      <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
+        <div className="relative h-[240px] w-full overflow-hidden rounded-[20px] border border-white/80 bg-white/80 p-1.5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm sm:h-[320px] sm:rounded-[24px] sm:p-2 md:h-[460px] lg:h-[540px] lg:rounded-[28px]">
+          <div className="relative h-full w-full overflow-hidden rounded-[16px] sm:rounded-[20px] lg:rounded-[24px]">
             <img
               src={galleryImages[activeGalleryIndex] || "/default.jpg"}
               alt={eventDetail.title}
@@ -470,7 +468,7 @@ const EventDetails = () => {
                   onClick={() =>
                     setActiveGalleryIndex((i) => Math.max(i - 1, 0))
                   }
-                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white sm:left-4"
                 >
                   <FiChevronLeft className="text-lg text-gray-700" />
                 </button>
@@ -481,7 +479,7 @@ const EventDetails = () => {
                       Math.min(i + 1, galleryImages.length - 1)
                     )
                   }
-                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white sm:right-4"
                 >
                   <FiChevronRight className="text-lg text-gray-700" />
                 </button>
@@ -506,17 +504,17 @@ const EventDetails = () => {
       </section>
 
       {/* CONTENT + SIDEBAR */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3 lg:gap-10">
           <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-sm md:p-10">
-              <h2 className="mb-6 border-b border-gray-100 pb-4 text-2xl font-bold text-[#2563eb]">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-8 md:p-10">
+              <h2 className="mb-6 border-b border-gray-100 pb-4 text-xl font-bold text-[#2563eb] sm:text-2xl">
                 About this Experience
               </h2>
 
               {eventDetail.summary && (
-                <div className="mb-10">
-                  <div className="article-summary rounded-2xl border border-blue-50 bg-[#f8fbff] p-6 text-[1rem] leading-[1.8] text-gray-600 shadow-sm md:p-8">
+                <div className="mb-8 sm:mb-10">
+                  <div className="article-summary rounded-2xl border border-blue-50 bg-[#f8fbff] p-5 text-sm leading-[1.8] text-gray-600 shadow-sm sm:p-6 sm:text-[1rem] md:p-8">
                     <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#2563eb]">
                       <span className="h-[1px] w-8 bg-[#2563eb]" />
                       Event Overview
@@ -533,7 +531,7 @@ const EventDetails = () => {
                 </div>
               )}
 
-              <div className="mt-10 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5">
+              <div className="mt-8 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5 sm:mt-10">
                 <FiInfo className="mt-0.5 flex-shrink-0 text-xl text-[#2563eb]" />
 
                 <div>
@@ -550,7 +548,7 @@ const EventDetails = () => {
           </div>
 
           <div className="space-y-5 lg:sticky lg:top-24">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
               <h3 className="mb-5 font-bold text-gray-900">Key Details</h3>
 
               <div className="space-y-4">
@@ -585,7 +583,7 @@ const EventDetails = () => {
             </div>
 
             {/* RATING / FEEDBACK CARD */}
-            <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px]">
+            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
               {showPopup && (
                 <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
                   ✔ Rating submitted!
@@ -635,7 +633,7 @@ const EventDetails = () => {
               )}
 
               <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
-                <div className="mb-2 flex gap-2 text-4xl">
+                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span
                       key={star}
@@ -686,7 +684,7 @@ const EventDetails = () => {
       </section>
 
       {/* MORE EVENTS */}
-      <section className="border-t border-blue-50 bg-[#f3f9ff] px-6 py-20">
+      <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
@@ -694,7 +692,7 @@ const EventDetails = () => {
                 Nearby
               </span>
 
-              <h3 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
+              <h3 className="mt-4 text-2xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
                 More Events to Explore
               </h3>
 
@@ -719,8 +717,8 @@ const EventDetails = () => {
               </p>
             </div>
           ) : (
-            <div className="rounded-[28px] border border-white/75 bg-white/70 p-5 shadow-sm backdrop-blur-md md:p-7">
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="rounded-[24px] border border-white/75 bg-white/70 p-3 shadow-sm backdrop-blur-md sm:rounded-[28px] sm:p-5 md:p-7">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
                 {morePlaces.slice(0, 4).map((event) => (
                   <MoreEventCard key={event.id} event={event} />
                 ))}
@@ -730,7 +728,7 @@ const EventDetails = () => {
 
           <button
             onClick={() => navigate("/events")}
-            className="mt-8 flex items-center justify-center gap-2 rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50 md:hidden"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50 sm:w-auto md:hidden"
           >
             View all events <FiChevronRight />
           </button>
@@ -751,7 +749,6 @@ const EventDetails = () => {
         }
       `}</style>
 
-      
       <Footer />
     </div>
   );

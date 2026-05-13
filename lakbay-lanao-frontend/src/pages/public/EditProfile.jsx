@@ -10,12 +10,7 @@ import {
 } from "firebase/auth";
 
 import { auth, db } from "../../firebase/config";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 import { useNavigate } from "react-router-dom";
 import {
@@ -91,7 +86,7 @@ function EditProfile() {
     "w-full rounded-[12px] border border-[#e2ebff] bg-white/60 px-3.5 py-2.5 pr-11 text-sm text-gray-700 outline-none backdrop-blur transition hover:border-[#c3d4ff] focus:border-[#0D27F7] focus:ring-2 focus:ring-[#0D27F7]/15";
 
   const compactCard =
-    "rounded-[22px] border border-[#e2ebff] bg-white/60 p-4 shadow-[0_2px_10px_rgba(13,39,247,0.04)] ring-1 ring-white/70 backdrop-blur-xl";
+    "rounded-[20px] border border-[#e2ebff] bg-white/60 p-4 shadow-[0_2px_10px_rgba(13,39,247,0.04)] ring-1 ring-white/70 backdrop-blur-xl sm:rounded-[22px]";
 
   const clearMessages = () => {
     setErrorMsg("");
@@ -128,7 +123,7 @@ function EditProfile() {
     (provider) => provider.providerId === "password"
   );
 
-  const displayName = fullName || user?.displayName || username || "Tourist";
+  const displayName = fullName || user?.displayName || username || "User";
   const displayInitial = displayName?.charAt(0)?.toUpperCase() || "U";
   const displayEmail = user?.email || "No email";
 
@@ -312,41 +307,41 @@ function EditProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] px-5 pb-14 pt-24 font-inter">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] px-4 pb-12 pt-20 font-inter sm:px-5 sm:pb-14 sm:pt-24">
       <main className="mx-auto max-w-5xl">
         <button
           type="button"
           onClick={() => navigate("/profile")}
-          className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e2ebff] bg-white/60 px-4 py-2 text-sm font-medium text-gray-600 shadow-[0_2px_10px_rgba(13,39,247,0.04)] ring-1 ring-white/70 backdrop-blur transition-all duration-200 hover:-translate-y-[2px] hover:border-[#c3d4ff] hover:bg-blue-50 hover:text-[#0D27F7] hover:shadow-[0_8px_30px_rgba(13,39,247,0.08)]"
+          className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#e2ebff] bg-white/60 px-4 py-2.5 text-sm font-medium text-gray-600 shadow-[0_2px_10px_rgba(13,39,247,0.04)] ring-1 ring-white/70 backdrop-blur transition-all duration-200 hover:-translate-y-[2px] hover:border-[#c3d4ff] hover:bg-blue-50 hover:text-[#0D27F7] hover:shadow-[0_8px_30px_rgba(13,39,247,0.08)] sm:mb-5 sm:w-auto sm:justify-start sm:py-2"
         >
           <FiArrowLeft />
           Back to View Profile
         </button>
 
-        <section className="overflow-hidden rounded-[24px] border border-[#d6e2ff] bg-white/70 shadow-[0_4px_20px_rgba(13,39,247,0.06)] ring-1 ring-white/80 backdrop-blur-xl">
-          <div className="relative px-6 py-7 md:px-8">
+        <section className="overflow-hidden rounded-[22px] border border-[#d6e2ff] bg-white/70 shadow-[0_4px_20px_rgba(13,39,247,0.06)] ring-1 ring-white/80 backdrop-blur-xl sm:rounded-[24px]">
+          <div className="relative px-4 py-6 sm:px-6 sm:py-7 md:px-8">
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/80 via-blue-50/60 to-white/60" />
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#0D27F7]/10 blur-3xl" />
 
-            <div className="relative flex flex-col items-center gap-5 text-center md:flex-row md:text-left">
+            <div className="relative flex flex-col items-center gap-4 text-center sm:gap-5 md:flex-row md:text-left">
               {user?.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt="Profile"
-                  className="h-20 w-20 rounded-full border border-white/80 object-cover shadow-[0_8px_30px_rgba(13,39,247,0.12)] ring-4 ring-white/70"
+                  className="h-18 w-18 rounded-full border border-white/80 object-cover shadow-[0_8px_30px_rgba(13,39,247,0.12)] ring-4 ring-white/70 sm:h-20 sm:w-20"
                 />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/80 bg-gradient-to-b from-[#0D27F7] to-[#0E1BEF] text-3xl font-semibold text-white shadow-[0_8px_30px_rgba(13,39,247,0.18)] ring-4 ring-white/70">
+                <div className="flex h-18 w-18 items-center justify-center rounded-full border border-white/80 bg-gradient-to-b from-[#0D27F7] to-[#0E1BEF] text-2xl font-semibold text-white shadow-[0_8px_30px_rgba(13,39,247,0.18)] ring-4 ring-white/70 sm:h-20 sm:w-20 sm:text-3xl">
                   {displayInitial}
                 </div>
               )}
 
               <div className="min-w-0 flex-1">
-                <h1 className="bg-gradient-to-b from-[#0D27F7] to-[#0E1BEF] bg-clip-text text-2xl font-semibold tracking-tight text-transparent md:text-3xl">
+                <h1 className="bg-gradient-to-b from-[#0D27F7] to-[#0E1BEF] bg-clip-text text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
                   Edit Profile
                 </h1>
 
-                <p className="mt-1.5 text-sm text-gray-500">
+                <p className="mt-1.5 break-all text-sm text-gray-500">
                   {displayName} • {displayEmail}
                 </p>
 
@@ -365,7 +360,7 @@ function EditProfile() {
                 type="button"
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#0D27F7] to-[#0E1BEF] px-5 py-2.5 text-sm font-medium text-white shadow-[0_2px_10px_rgba(13,39,247,0.2)] transition hover:opacity-95 hover:shadow-[0_6px_20px_rgba(13,39,247,0.25)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#0D27F7] to-[#0E1BEF] px-5 py-2.5 text-sm font-medium text-white shadow-[0_2px_10px_rgba(13,39,247,0.2)] transition hover:opacity-95 hover:shadow-[0_6px_20px_rgba(13,39,247,0.25)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
                 {saving ? (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -377,7 +372,7 @@ function EditProfile() {
             </div>
           </div>
 
-          <div className="grid gap-4 p-5 md:grid-cols-2 md:p-7">
+          <div className="grid gap-3 p-4 sm:gap-4 sm:p-5 md:grid-cols-2 md:p-7">
             <div className={compactCard}>
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl border border-[#e2ebff] bg-white/70 text-[#0D27F7]">
                 <FiUser className="text-lg" />
@@ -516,10 +511,10 @@ function EditProfile() {
           </div>
         </section>
 
-        <section className="mt-5 overflow-hidden rounded-[24px] border border-[#d6e2ff] bg-white/70 shadow-[0_4px_20px_rgba(13,39,247,0.06)] ring-1 ring-white/80 backdrop-blur-xl">
-          <div className="px-5 py-5 md:px-7">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#e2ebff] bg-white/70 text-[#0D27F7]">
+        <section className="mt-5 overflow-hidden rounded-[22px] border border-[#d6e2ff] bg-white/70 shadow-[0_4px_20px_rgba(13,39,247,0.06)] ring-1 ring-white/80 backdrop-blur-xl sm:rounded-[24px]">
+          <div className="px-4 py-5 sm:px-5 md:px-7">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#e2ebff] bg-white/70 text-[#0D27F7]">
                 <FiLock className="text-lg" />
               </div>
 
@@ -528,19 +523,19 @@ function EditProfile() {
                   Change Password
                 </h2>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm leading-relaxed text-gray-500">
                   For email/password accounts only.
                 </p>
               </div>
             </div>
 
             {!isPasswordProvider ? (
-              <div className="rounded-[16px] border border-[#e2ebff] bg-white/60 px-4 py-3 text-sm text-gray-600 backdrop-blur">
+              <div className="rounded-[16px] border border-[#e2ebff] bg-white/60 px-4 py-3 text-sm leading-relaxed text-gray-600 backdrop-blur">
                 This account is signed in using Google. Manage password through
                 Google.
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
                 <div className="relative">
                   <input
                     type={showCurrentPassword ? "text" : "password"}

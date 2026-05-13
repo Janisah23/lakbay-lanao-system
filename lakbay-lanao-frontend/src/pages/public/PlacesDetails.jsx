@@ -314,10 +314,10 @@ const PlacesDetails = () => {
     <article
       key={place.id}
       onClick={() => navigate(`/destination/${place.id}`)}
-      className="group flex h-full min-h-[330px] cursor-pointer flex-col overflow-hidden rounded-[30px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)]"
+      className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[310px] sm:rounded-[24px] lg:min-h-[330px] lg:rounded-[30px]"
     >
-      <div className="p-2.5 pb-0">
-        <div className="relative h-[190px] overflow-hidden rounded-[24px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm">
+      <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
+        <div className="relative h-[120px] overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[190px] lg:rounded-[24px]">
           <img
             src={place.imageURL || "/default.jpg"}
             alt={place.title || place.name}
@@ -332,23 +332,23 @@ const PlacesDetails = () => {
               e.stopPropagation();
               toggleFavorite(place);
             }}
-            className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50"
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
           >
             {favorites.some((fav) => String(fav.id) === String(place.id)) ? (
-              <FaHeart className="text-sm text-[#2563eb]" />
+              <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
             ) : (
-              <FiHeart className="text-sm text-gray-500" />
+              <FiHeart className="text-xs text-gray-500 sm:text-sm" />
             )}
           </button>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col px-6 pb-6 pt-4">
-        <span className="mb-2 self-start rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 lg:px-6 lg:pb-6 lg:pt-4">
+        <span className="mb-1.5 max-w-[110px] truncate self-start rounded-full bg-blue-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#2563eb] sm:mb-2 sm:max-w-[140px] sm:px-2.5 sm:py-1 sm:text-[9px] lg:px-3 lg:text-[10px]">
           {place.type || place.category || "Place"}
         </span>
 
-        <h4 className="line-clamp-2 min-h-[44px] text-base font-bold leading-snug text-[#2563eb] transition group-hover:text-blue-700">
+        <h4 className="line-clamp-2 min-h-[34px] text-xs font-bold leading-tight text-[#2563eb] transition group-hover:text-blue-700 sm:min-h-[40px] sm:text-sm lg:min-h-[44px] lg:text-base lg:leading-snug">
           {place.name || place.title}
         </h4>
 
@@ -358,9 +358,9 @@ const PlacesDetails = () => {
             e.stopPropagation();
             navigate(`/destination/${place.id}`);
           }}
-          className="mt-auto inline-flex items-center gap-2 self-start rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+          className="mt-auto w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:w-fit sm:px-4 sm:py-2 sm:text-[11px] lg:inline-flex lg:items-center lg:gap-2 lg:self-start lg:px-5 lg:py-2.5 lg:text-xs"
         >
-          {buttonLabel} <FiChevronRight />
+          {buttonLabel} <FiChevronRight className="hidden lg:inline" />
         </button>
       </div>
     </article>
@@ -408,10 +408,8 @@ const PlacesDetails = () => {
       <Navbar />
 
       {/* HEADER */}
-      <section className="mx-auto max-w-7xl px-6 pb-10 pt-32">
-        
-
-        <div className="flex flex-wrap items-start justify-between gap-8">
+      <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-start">
           <div className="min-w-0 flex-1">
             {destinationDetail.isTopDestination ||
             (destinationDetail.rating >= 4.5 &&
@@ -428,18 +426,18 @@ const PlacesDetails = () => {
               </span>
             )}
 
-            <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-[#2563eb] md:text-5xl">
+            <h1 className="mb-4 max-w-4xl text-2xl font-bold leading-snug tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl lg:text-5xl">
               {destinationDetail.title || destinationDetail.name}
             </h1>
 
-            <p className="mb-6 max-w-2xl text-lg font-light leading-relaxed text-gray-500">
+            <p className="mb-6 max-w-2xl text-sm font-light leading-relaxed text-gray-500 sm:text-base md:text-lg">
               {destinationDetail.summary ||
                 "Discover the cultural heritage and stunning natural beauty of Lanao del Sur."}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-600 sm:text-sm">
               <div className="flex items-center gap-1.5">
-                <span className="text-base tracking-widest text-yellow-400">
+                <span className="text-sm tracking-widest text-yellow-400 sm:text-base">
                   {"★".repeat(Math.floor(destinationDetail.rating || 4))}
                   <span className="text-yellow-200">
                     {"★".repeat(
@@ -459,14 +457,14 @@ const PlacesDetails = () => {
                 </span>
               </div>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiBookmark className="text-sm" />
                 <span>{saveCount.toLocaleString()} saves</span>
               </div>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiMapPin className="text-sm" />
@@ -475,18 +473,18 @@ const PlacesDetails = () => {
             </div>
           </div>
 
-          <div className="mt-2 flex flex-shrink-0 items-center gap-3">
-            <div className="relative">
+          <div className="flex w-full flex-shrink-0 items-center gap-3 sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <button
                 onClick={() => setShowSharePanel(!showSharePanel)}
-                className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb]"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb] sm:w-auto"
               >
                 <FiShare2 className="text-base" />
                 Share
               </button>
 
               {showSharePanel && (
-                <div className="absolute right-0 top-12 z-30 w-56 rounded-[16px] border border-gray-200 bg-white p-4 shadow-xl">
+                <div className="absolute left-0 top-12 z-30 w-56 rounded-[16px] border border-gray-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Share this place
                   </p>
@@ -532,7 +530,7 @@ const PlacesDetails = () => {
 
             <button
               onClick={() => toggleFavorite(destinationDetail)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
                 isFav
                   ? "bg-[#2563eb] text-white hover:bg-blue-700"
                   : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
@@ -550,13 +548,12 @@ const PlacesDetails = () => {
       </section>
 
       {/* GALLERY */}
-     
-      <section className="mx-auto mb-16 max-w-7xl px-6">
+      <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
         <div
           onClick={() => setLightboxOpen(true)}
-          className="group relative h-[320px] w-full cursor-zoom-in overflow-hidden rounded-[28px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)] md:h-[460px] lg:h-[540px]"
+          className="group relative h-[240px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:h-[320px] sm:rounded-[24px] sm:p-2 md:h-[460px] lg:h-[540px] lg:rounded-[28px]"
         >
-          <div className="relative h-full w-full overflow-hidden rounded-[24px] bg-blue-50">
+          <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
             <img
               src={galleryImages[activeGalleryIndex] || "/default.jpg"}
               alt={destinationDetail.title || destinationDetail.name}
@@ -565,14 +562,13 @@ const PlacesDetails = () => {
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
 
-            {/* Fullscreen button */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setLightboxOpen(true);
               }}
-              className="absolute bottom-4 right-4 rounded-full border border-white/70 bg-white px-4 py-2 text-xs font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb]"
+              className="absolute bottom-3 right-3 rounded-full border border-white/70 bg-white px-3 py-1.5 text-[10px] font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb] sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-xs"
             >
               View fullscreen
             </button>
@@ -585,7 +581,7 @@ const PlacesDetails = () => {
                     e.stopPropagation();
                     setActiveGalleryIndex((i) => Math.max(i - 1, 0));
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50 sm:left-4"
                 >
                   <FiChevronLeft className="text-lg text-gray-700" />
                 </button>
@@ -598,7 +594,7 @@ const PlacesDetails = () => {
                       Math.min(i + 1, galleryImages.length - 1)
                     );
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50 sm:right-4"
                 >
                   <FiChevronRight className="text-lg text-gray-700" />
                 </button>
@@ -649,62 +645,6 @@ const PlacesDetails = () => {
         )}
       </section>
 
-      {/* LIGHTBOX */}
-      {lightboxOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/92 p-4">
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
-            className="absolute right-5 top-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/20"
-          >
-            <FiX className="text-2xl" />
-          </button>
-
-          {galleryImages.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveGalleryIndex((i) =>
-                    i === 0 ? galleryImages.length - 1 : i - 1
-                  )
-                }
-                className="absolute left-4 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/20"
-              >
-                <FiChevronLeft className="text-4xl" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveGalleryIndex((i) =>
-                    i === galleryImages.length - 1 ? 0 : i + 1
-                  )
-                }
-                className="absolute right-4 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/20"
-              >
-                <FiChevronRight className="text-4xl" />
-              </button>
-            </>
-          )}
-
-          <div className="w-full max-w-6xl">
-            <img
-              src={galleryImages[activeGalleryIndex] || "/default.jpg"}
-              alt={destinationDetail.title || destinationDetail.name}
-              className="mx-auto max-h-[88vh] max-w-full rounded-[18px] object-contain shadow-2xl"
-            />
-          </div>
-
-          {galleryImages.length > 1 && (
-            <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/70">
-              {activeGalleryIndex + 1} / {galleryImages.length}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* LIGHTBOX */}
       {/* LIGHTBOX */}
       {lightboxOpen && (
         <div
@@ -768,15 +708,15 @@ const PlacesDetails = () => {
       )}
 
       {/* CONTENT + SIDEBAR */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3 lg:gap-10">
           <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-sm md:p-10">
-              <h2 className="mb-6 border-b border-gray-100 pb-4 text-2xl font-bold text-[#2563eb]">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-8 md:p-10">
+              <h2 className="mb-6 border-b border-gray-100 pb-4 text-xl font-bold text-[#2563eb] sm:text-2xl">
                 About this Destination
               </h2>
 
-              <div className="space-y-5 text-[1.0625rem] leading-[1.9] text-gray-700">
+              <div className="space-y-5 text-sm leading-[1.8] text-gray-700 sm:text-[1.0625rem] sm:leading-[1.9]">
                 {destinationDetail.description ? (
                   destinationDetail.description
                     .split("\n")
@@ -790,7 +730,7 @@ const PlacesDetails = () => {
                 )}
               </div>
 
-              <div className="mt-10 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5">
+              <div className="mt-8 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5 sm:mt-10">
                 <FiInfo className="mt-0.5 flex-shrink-0 text-xl text-[#2563eb]" />
 
                 <div>
@@ -808,7 +748,7 @@ const PlacesDetails = () => {
             </div>
 
             {/* MAP MOBILE */}
-            <div className="overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm lg:hidden">
+            <div className="overflow-hidden rounded-[24px] border border-gray-200 bg-white shadow-sm sm:rounded-[28px] lg:hidden">
               <div className="relative h-[220px] w-full">
                 <iframe
                   title="Location Map"
@@ -821,7 +761,7 @@ const PlacesDetails = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4">
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
                     {locationStr}
@@ -835,7 +775,7 @@ const PlacesDetails = () => {
                   href={mapDirectionsUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
                 >
                   <FaDirections />
                   Directions
@@ -846,7 +786,7 @@ const PlacesDetails = () => {
 
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
               <h3 className="mb-5 font-bold text-gray-900">Key Details</h3>
 
               <div className="space-y-4">
@@ -891,7 +831,7 @@ const PlacesDetails = () => {
             </div>
 
             {/* RATING */}
-            <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px]">
+            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
               {showPopup && (
                 <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
                   <span className="text-lg leading-none text-green-400">
@@ -942,7 +882,7 @@ const PlacesDetails = () => {
               )}
 
               <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
-                <div className="mb-2 flex gap-2 text-4xl">
+                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span
                       key={star}
@@ -1037,7 +977,7 @@ const PlacesDetails = () => {
 
       {/* NEARBY HOTELS */}
       {nearbyHotels.length > 0 && (
-        <section className="border-t border-blue-50 bg-[#f3f9ff] px-6 py-20">
+        <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
           <div className="mx-auto max-w-7xl">
             <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
               <div>
@@ -1045,7 +985,7 @@ const PlacesDetails = () => {
                   Recommended Stays
                 </span>
 
-                <h3 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
+                <h3 className="mt-4 text-2xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
                   Hotels Near{" "}
                   {destinationDetail.location?.municipality || "This Place"}
                 </h3>
@@ -1057,7 +997,7 @@ const PlacesDetails = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
               {nearbyHotels.map((place) => renderPlaceCard(place, "View stay"))}
             </div>
           </div>
@@ -1066,7 +1006,7 @@ const PlacesDetails = () => {
 
       {/* MORE TO EXPLORE */}
       {morePlaces.length > 0 && (
-        <section className="border-t border-blue-50 bg-[#f3f9ff] px-6 py-20">
+        <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
           <div className="mx-auto max-w-7xl">
             <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
               <div>
@@ -1074,7 +1014,7 @@ const PlacesDetails = () => {
                   Explore More
                 </span>
 
-                <h3 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
+                <h3 className="mt-4 text-2xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
                   Similar Places to Explore
                 </h3>
 
@@ -1094,14 +1034,13 @@ const PlacesDetails = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
               {morePlaces.slice(0, 4).map((place) => renderPlaceCard(place))}
             </div>
           </div>
         </section>
       )}
 
-     
       <Footer />
     </div>
   );
