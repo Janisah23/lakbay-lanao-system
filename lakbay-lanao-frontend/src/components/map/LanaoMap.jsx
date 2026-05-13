@@ -402,19 +402,25 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             )}
           </Map>
 
-          <button
-            onClick={handleFindMyLocation}
-            disabled={isLocating}
-            className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 z-10 flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-4 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] transition hover:border-[#2563eb] hover:text-[#2563eb] active:scale-95 disabled:opacity-70"
-          >
-            {isLocating ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" /> : <FiNavigation className="text-sm sm:text-lg text-[#2563eb]" />}
-            {isLocating ? "Locating..." : "Find My Location"}
-            </span>
+         <button
+          onClick={handleFindMyLocation}
+          disabled={isLocating}
+          className="absolute left-4 top-4 z-10 flex items-center justify-center gap-1.5 rounded-full border border-blue-100 bg-white/95 px-3.5 py-2 text-xs font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] backdrop-blur-md transition hover:border-[#2563eb] hover:text-[#2563eb] active:scale-95 disabled:opacity-70 sm:left-6 sm:top-auto sm:bottom-6 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm"
+        >
+          {isLocating ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" />
+          ) : (
+            <FiNavigation className="text-sm text-[#2563eb] sm:text-lg" />
+          )}
 
-            <span className="sm:hidden">
-              {isLocating ? "Locating..." : "Locate"}
-            </span>
-          </button>
+          <span className="hidden sm:inline">
+            {isLocating ? "Locating..." : "Find My Location"}
+          </span>
+
+          <span className="sm:hidden">
+            {isLocating ? "Locating..." : "Locate"}
+          </span>
+        </button>
         </APIProvider>
       </div>
     </>
