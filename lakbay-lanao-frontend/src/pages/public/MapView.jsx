@@ -5,6 +5,9 @@ import { FiSearch, FiMapPin, FiMap } from "react-icons/fi";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
 
+// NEW: Use a reliable fallback if an image is missing
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
+
 const FILTERS = [
   "All",
   "Destination",
@@ -203,9 +206,10 @@ function Map() {
                     >
                       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[16px] border border-blue-100 bg-blue-50 shadow-sm">
                         <img
-                          src={place.imageURL || "/default.jpg"}
+                          src={place.imageURL || FALLBACK_IMAGE}
                           alt={place.name || "Tourism place"}
                           className="h-full w-full object-cover transition-transform duration-700 hover:scale-110"
+                          onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                         />
                       </div>
 

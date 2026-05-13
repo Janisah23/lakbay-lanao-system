@@ -119,7 +119,6 @@ function Navbar() {
     const currentUser = auth.currentUser;
 
     if (currentUser) {
-      // 1. Log the action BEFORE signing out
       await logAction({
         action: "Logout",
         module: "Authentication",
@@ -128,7 +127,6 @@ function Navbar() {
       }, currentUser);
     }
 
-    // 2. Perform the actual logout
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
@@ -276,7 +274,6 @@ function Navbar() {
 
   useEffect(() => {
     document.body.style.overflow = showSearch ? "hidden" : "auto";
-
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -427,50 +424,51 @@ function Navbar() {
                   />
                 </button>
 
+                {/* PROFILE DROPDOWN - Responsive Bounding & Scroll */}
                 {openMenu && (
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 top-[calc(100%+22px)] z-[1200] w-[300px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[28px] border border-blue-100 bg-white/95 shadow-[0_24px_60px_rgba(37,99,235,0.20)] backdrop-blur-xl animate-dropdown"
+                    className="absolute right-0 top-[calc(100%+16px)] sm:top-[calc(100%+22px)] z-[1200] w-[280px] sm:w-[300px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar rounded-[20px] sm:rounded-[28px] border border-blue-100 bg-white/95 shadow-[0_24px_60px_rgba(37,99,235,0.20)] backdrop-blur-xl animate-dropdown"
                   >
-                    <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 px-4 py-4">
+                    <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 px-3 py-3 sm:px-4 sm:py-4">
                       <div className="flex items-center gap-3">
                         {user.photoURL ? (
                           <img
                             src={user.photoURL}
                             alt="profile"
-                            className="h-12 w-12 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)]"
+                            className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)]"
                             onError={(e) => {
                               e.target.onerror = null;
                               e.target.src = "https://ui-avatars.com/api/?name=" + displayInitial + "&background=3b82f6&color=fff";
                             }}
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-base font-bold text-white shadow-[0_0_0_4px_rgba(37,99,235,0.10)]">
+                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-sm sm:text-base font-bold text-white shadow-[0_0_0_4px_rgba(37,99,235,0.10)]">
                             {displayInitial}
                           </div>
                         )}
 
                         <div className="min-w-0">
-                          <h4 className="truncate text-sm font-bold text-gray-800">
+                          <h4 className="truncate text-xs sm:text-sm font-bold text-gray-800">
                             {displayFullName}
                           </h4>
 
-                          <p className="truncate text-xs text-gray-500">
+                          <p className="truncate text-[11px] sm:text-xs text-gray-500">
                             {displayEmail}
                           </p>
 
                           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                            <span className="inline-flex rounded-full bg-blue-100 px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide text-blue-700">
                               {displayRole}
                             </span>
 
-                            <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700">
+                            <span className="inline-flex rounded-full bg-green-100 px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide text-green-700">
                               Verified
                             </span>
                           </div>
 
                           {displayLocation && (
-                            <p className="mt-1 truncate text-[11px] text-gray-400">
+                            <p className="mt-1 truncate text-[10px] sm:text-[11px] text-gray-400">
                               {displayLocation}
                             </p>
                           )}
@@ -478,20 +476,20 @@ function Navbar() {
                       </div>
                     </div>
 
-                    <div className="p-1.5">
+                    <div className="p-1 sm:p-1.5">
                       <button
                         onClick={() => refreshNavigate("/profile")}
-                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                        className="flex w-full items-center gap-3 rounded-[14px] sm:rounded-[16px] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
-                        <FiUser className="text-lg text-blue-600" />
+                        <FiUser className="text-base sm:text-lg text-blue-600" />
                         View Profile
                       </button>
 
                       <button
                         onClick={() => refreshNavigate("/profile/edit")}
-                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                        className="flex w-full items-center gap-3 rounded-[14px] sm:rounded-[16px] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
-                        <FiEdit3 className="text-lg text-blue-600" />
+                        <FiEdit3 className="text-base sm:text-lg text-blue-600" />
                         Edit Profile
                       </button>
 
@@ -499,25 +497,25 @@ function Navbar() {
 
                       <button
                         onClick={() => refreshNavigate("/favorites")}
-                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                        className="flex w-full items-center gap-3 rounded-[14px] sm:rounded-[16px] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
-                        <FiHeart className="text-lg text-blue-600" />
+                        <FiHeart className="text-base sm:text-lg text-blue-600" />
                         Top Picks
                       </button>
 
                       <button
                         onClick={() => refreshNavigate("/itinerary")}
-                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                        className="flex w-full items-center gap-3 rounded-[14px] sm:rounded-[16px] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                       >
-                        <FiMap className="text-lg text-blue-600" />
+                        <FiMap className="text-base sm:text-lg text-blue-600" />
                         My Itinerary
                       </button>
 
                       <button
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-[16px] px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
+                        className="flex w-full items-center gap-3 rounded-[14px] sm:rounded-[16px] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-red-500 transition hover:bg-red-50"
                       >
-                        <FiLogOut className="text-lg text-red-500" />
+                        <FiLogOut className="text-base sm:text-lg text-red-500" />
                         Logout
                       </button>
                     </div>
@@ -529,13 +527,14 @@ function Navbar() {
         </div>
       </nav>
 
+      {/* MOBILE MENU - Responsive Bounding & Scroll */}
       {showMobileMenu && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="fixed left-0 top-[82px] z-[999] flex w-full justify-center px-4 lg:hidden"
+          className="fixed left-0 top-[70px] sm:top-[86px] z-[999] flex w-full justify-center px-4 lg:hidden"
         >
-          <div className="w-[92%] rounded-[26px] border border-blue-100 bg-white p-4 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
-            <div className="grid gap-2">
+          <div className="w-full max-w-sm max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar rounded-[20px] sm:rounded-[24px] border border-blue-100 bg-white p-3 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
+            <div className="grid gap-1.5 sm:gap-2">
               {[
                 { label: "Home", path: "/" },
                 { label: "Discover", path: "/destinations" },
@@ -546,7 +545,7 @@ function Navbar() {
                 <button
                   key={item.path}
                   onClick={() => refreshNavigate(item.path)}
-                  className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                  className="rounded-[14px] sm:rounded-[16px] px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb] w-full"
                 >
                   {item.label}
                 </button>
@@ -554,7 +553,7 @@ function Navbar() {
 
               <button
                 onClick={handleOpenChatbot}
-                className="rounded-[16px] px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                className="rounded-[14px] sm:rounded-[16px] px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb] w-full"
               >
                 AI Chatbot
               </button>
@@ -563,115 +562,118 @@ function Navbar() {
         </div>
       )}
 
+      {/* SEARCH MODAL - Fully Bounded & Responsive Card Application */}
       {showSearch && (
-        <div className="search-overlay fixed inset-0 z-[1100] flex items-start justify-center px-4 pt-28 animate-fadeIn">
-          <div className="search-glass-card w-full max-w-3xl p-4 md:p-6">
-            <div className="search-inner-card p-5 md:p-6">
-              <div className="search-input-box flex items-center gap-3 px-5 py-3.5">
-                <FiSearch className="text-xl text-[#2563eb]" />
+        <div className="fixed inset-0 z-[1100] flex items-start justify-center px-4 pt-20 sm:pt-28 bg-gray-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[20px] sm:rounded-[30px] border border-blue-100 bg-white shadow-[0_20px_50px_rgba(37,99,235,0.15)] overflow-hidden">
+            
+            {/* Search Input Header */}
+            <div className="flex items-center gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 bg-white shrink-0">
+              <FiSearch className="text-lg sm:text-xl text-[#2563eb]" />
 
-                <input
-                  type="text"
-                  placeholder="Search destinations, events, establishments..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
-                  autoFocus
-                />
+              <input
+                type="text"
+                placeholder="Search destinations, events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 bg-transparent text-xs sm:text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
+                autoFocus
+              />
 
+              <button
+                onClick={closeSearch}
+                className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500 shrink-0"
+              >
+                <FiX className="text-sm sm:text-base" />
+              </button>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-gray-50/50 shrink-0 border-b border-gray-100">
+              {[
+                { label: "All", value: "all" },
+                { label: "Destination", value: "destination" },
+                { label: "Event", value: "event" },
+                { label: "Establishment", value: "establishment" },
+                { label: "Cultural", value: "culturalheritagesite" },
+                { label: "Landmark", value: "landmark" },
+              ].map((filter) => (
                 <button
-                  onClick={closeSearch}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                  key={filter.value}
+                  onClick={() => setActiveFilter(filter.value)}
+                  className={`rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-semibold w-auto transition-all ${
+                    activeFilter === filter.value 
+                      ? "bg-[#2563eb] text-white shadow-sm" 
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-blue-50"
+                  }`}
                 >
-                  ✕
+                  {filter.label}
                 </button>
-              </div>
+              ))}
+            </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                {[
-                  { label: "All", value: "all" },
-                  { label: "Destination", value: "destination" },
-                  { label: "Event", value: "event" },
-                  { label: "Establishment", value: "establishment" },
-                  {
-                    label: "Cultural & Heritage",
-                    value: "culturalheritagesite",
-                  },
-                  { label: "Landmark", value: "landmark" },
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setActiveFilter(filter.value)}
-                    className={`search-filter-btn px-4 py-2 text-xs font-semibold ${
-                      activeFilter === filter.value ? "active" : ""
-                    }`}
+            {/* Scrollable Results Area */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 bg-white min-h-0">
+              {searchTerm === "" && (
+                <div className="py-10 sm:py-14 text-center">
+                  <p className="text-xs sm:text-sm font-medium text-gray-400">
+                    Start typing to search Lanao del Sur
+                  </p>
+                </div>
+              )}
+
+              {searchTerm !== "" && filteredResults.length === 0 && (
+                <div className="py-10 sm:py-14 text-center">
+                  <p className="text-xs sm:text-sm font-medium text-gray-400">
+                    No results found for "{searchTerm}"
+                  </p>
+                </div>
+              )}
+
+              {searchTerm !== "" &&
+                filteredResults.map((item) => (
+                  <div
+                    key={`${item.routeType}-${item.id}`}
+                    onClick={() => handleResultClick(item)}
+                    className="flex cursor-pointer items-center gap-3 sm:gap-4 p-2.5 sm:p-3 hover:bg-blue-50/60 rounded-[16px] sm:rounded-[20px] transition-colors mb-1 sm:mb-2"
                   >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
-                {searchTerm === "" && (
-                  <div className="search-empty-state py-14 text-center">
-                    <p className="text-sm font-medium text-gray-400">
-                      Start typing to search Lanao del Sur
-                    </p>
-                  </div>
-                )}
-
-                {searchTerm !== "" && filteredResults.length === 0 && (
-                  <div className="search-empty-state py-14 text-center">
-                    <p className="text-sm font-medium text-gray-400">
-                      No results found for "{searchTerm}"
-                    </p>
-                  </div>
-                )}
-
-                {searchTerm !== "" &&
-                  filteredResults.map((item) => (
-                    <div
-                      key={`${item.routeType}-${item.id}`}
-                      onClick={() => handleResultClick(item)}
-                      className="search-result-card flex cursor-pointer items-center gap-4 p-3 hover:bg-blue-50/50 rounded-xl transition"
-                    >
-                      {item.imageURL ? (
-                        <img
-                          src={item.imageURL}
-                          alt={item.title}
-                          className="search-result-img h-20 w-20 rounded-xl object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null; 
-                            e.target.src = "https://placehold.co/150x150/eff6ff/2563eb?text=No+Image"; 
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-blue-50 text-blue-300">
-                          <FiImage size={28} />
-                        </div>
-                      )}
-
-                      <div className="min-w-0">
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
-                          {item.searchType || "General"}
-                        </span>
-
-                        <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
-                          {item.title}
-                        </h3>
-
-                        <p className="mt-1 line-clamp-1 text-sm text-gray-500">
-                          {item.summary || "No description available."}
-                        </p>
+                    {item.imageURL ? (
+                      <img
+                        src={item.imageURL}
+                        alt={item.title}
+                        className="h-14 w-14 sm:h-20 sm:w-20 shrink-0 rounded-[12px] sm:rounded-[16px] object-cover border border-gray-100"
+                        onError={(e) => {
+                          e.target.onerror = null; 
+                          e.target.src = "https://placehold.co/150x150/eff6ff/2563eb?text=No+Image"; 
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-[12px] sm:rounded-[16px] bg-blue-50 text-blue-300">
+                        <FiImage size={24} className="sm:text-[28px]" />
                       </div>
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <span className="inline-block rounded-full bg-blue-50 border border-blue-100 px-2 sm:px-3 py-0.5 sm:py-1 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-700">
+                        {item.searchType || "General"}
+                      </span>
+
+                      <h3 className="mt-1 sm:mt-1.5 line-clamp-1 font-bold text-[#1e3a8a] text-xs sm:text-sm">
+                        {item.title}
+                      </h3>
+
+                      <p className="mt-0.5 line-clamp-1 text-[10px] sm:text-[11px] text-gray-500">
+                        {item.summary || "No description available."}
+                      </p>
                     </div>
-                  ))}
-              </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
       )}
 
+      {/* Explore Mega Menu - (Hidden on mobile via lg:flex) */}
       {showExplore && (
         <div
           className="fixed left-0 top-[90px] z-[990] hidden w-full justify-center animate-fadeIn lg:flex"
@@ -738,6 +740,7 @@ function Navbar() {
         </div>
       )}
 
+      {/* Features Mega Menu - (Hidden on mobile via lg:flex) */}
       {showFeatures && (
         <div
           className="fixed left-0 top-[90px] z-[990] hidden w-full justify-center animate-fadeIn lg:flex"
