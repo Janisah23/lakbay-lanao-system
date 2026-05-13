@@ -8,55 +8,139 @@ import {
   Map, 
   Marker, 
   InfoWindow, 
-  useMap,
-  StreetViewPanorama 
-} from "@vis.gl/react-google-maps";
+  useMap 
+} from "@vis.gl/react-google-maps"; 
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { getIconUrl } from "./MapSetup";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const defaultCenter = { lat: 7.8731, lng: 124.2863 };
+const defaultZoom = 10;
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
-// 1. UPDATED: Handles flying to spots OR zooming back out
-function FlyToSpot({ spot, defaultCenter }) {
+// 1. MAP CHILD: Flies to a selected tourist destination
+function FlyToSpot({ lat, lng }) {
   const map = useMap();
-  
   useEffect(() => {
-    if (!map) return;
-
-    if (spot?.coordinates?.lat && spot?.coordinates?.lng) {
-      // Zoom in to the selected spot
-      map.panTo({ lat: spot.coordinates.lat, lng: spot.coordinates.lng });
+    if (map && lat && lng) {
+      map.panTo({ lat, lng });
       map.setZoom(15);
-    } else if (defaultCenter) {
-      // Zoom back out to the full map when deselected (spot is null)
-      map.panTo(defaultCenter);
-      map.setZoom(10);
     }
-  }, [spot, map, defaultCenter]);
-
+  }, [lat, lng, map]); 
   return null;
 }
 
-// 2. INNER COMPONENT
-function MapContent({ selectedSpot, onSpotClick }) {
+// 2. MAP CHILD: Flies to the user's GPS location
+function FlyToLocation({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map && lat && lng) {
+      map.panTo({ lat, lng });
+      map.setZoom(14);
+    }
+  }, [lat, lng, map]); 
+  return null;
+}
+
+// 3. MAP CHILD: Resets the map to the default full view
+function FlyToDefault({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map && trigger > 0) {
+      map.panTo(defaultCenter);
+      map.setZoom(defaultZoom);
+    }
+  }, [trigger, map]);
+  return null;
+}
+
+// 4. MAP CHILD: Handles all Markers and Clustering safely
+function ClusteredMarkers({ spots, onMarkerClick }) {
+  const map = useMap();
+  const clusterer = useRef(null);
+  const markersRef = useRef({}); 
+
+  // Initialize Clusterer
+  useEffect(() => {
+    if (!map) return;
+    if (!clusterer.current) {
+      clusterer.current = new MarkerClusterer({ map });
+    }
+  }, [map]);
+
+  const setMarkerRef = useCallback((marker, key) => {
+    if (marker) {
+      markersRef.current[key] = marker;
+    } else {
+      delete markersRef.current[key];
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (clusterer.current) {
+        clusterer.current.clearMarkers();
+        clusterer.current.addMarkers(Object.values(markersRef.current));
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [spots]);
+
+  return (
+    <>
+      {spots.map((spot) => (
+        <Marker
+          key={spot.id}
+          ref={(marker) => setMarkerRef(marker, spot.id)}
+          position={{ lat: spot.coordinates.lat, lng: spot.coordinates.lng }}
+          icon={{
+            url: getIconUrl(spot.category),
+            scaledSize: { width: 35, height: 45 },
+          }}
+          onClick={() => onMarkerClick(spot)}
+        />
+      ))}
+    </>
+  );
+}
+
+// 5. Custom Component to render the 360 Panorama natively and safely
+function CustomStreetView({ lat, lng }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current && window.google) {
+      new window.google.maps.StreetViewPanorama(containerRef.current, {
+        position: { lat, lng },
+        disableDefaultUI: true, 
+        visible: true,
+      });
+    }
+  }, [lat, lng]); 
+
+  return <div ref={containerRef} className="h-full w-full" />;
+}
+
+// 6. MAIN WRAPPER
+export default function LanaoMap({ selectedSpot, onSpotClick }) {
   const [spots, setSpots] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
   const [showStreetView, setShowStreetView] = useState(false);
+  
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [markers, setMarkers] = useState({});
+  const [resetTrigger, setResetTrigger] = useState(0); 
   
-  const clusterer = useRef(null);
-  const map = useMap(); 
+  const previousPopup = useRef(null); // Keeps track of what was open
   const navigate = useNavigate();
 
-  // Reset Street View when popup changes
+  // Reset street view when a new popup opens
   useEffect(() => {
     if (activePopup) setShowStreetView(false);
   }, [activePopup]);
 
-  // Fetch Data
+  // Fetch data
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "tourismData"), (snapshot) => {
       const data = snapshot.docs
@@ -67,38 +151,40 @@ function MapContent({ selectedSpot, onSpotClick }) {
     return () => unsubscribe();
   }, []);
 
-  // Sync external prop selection
+  // Sync external selection from sidebar Map.jsx
   useEffect(() => {
-    setActivePopup(selectedSpot || null);
+    if (selectedSpot !== undefined) {
+      setActivePopup(selectedSpot);
+    }
   }, [selectedSpot]);
 
-  // Clustering Logic
-  const setMarkerRef = useCallback((marker, key) => {
-    if (marker && markers[key]) return;
-    if (!marker && !markers[key]) return;
-    setMarkers((prev) => {
-      if (marker) return { ...prev, [key]: marker };
-      const newMarkers = { ...prev };
-      delete newMarkers[key];
-      return newMarkers;
-    });
-  }, [markers]);
-
+  // SMART ZOOM OUT: Watch activePopup and trigger reset if it becomes null
   useEffect(() => {
-    if (!map) return;
-    if (!clusterer.current) {
-      clusterer.current = new MarkerClusterer({ map });
+    if (previousPopup.current !== null && activePopup === null) {
+      // If we had a popup open and now we don't, trigger zoom out!
+      setResetTrigger(prev => prev + 1);
     }
-  }, [map]);
+    previousPopup.current = activePopup;
+  }, [activePopup]);
 
-  useEffect(() => {
-    if (clusterer.current) {
-      clusterer.current.clearMarkers();
-      clusterer.current.addMarkers(Object.values(markers));
+  // Handle Marker Toggle Logic
+  const handleMarkerClick = (spot) => {
+    if (activePopup && activePopup.id === spot.id) {
+      // Deselect (clicking the same active marker)
+      if (onSpotClick) onSpotClick(null);
+      else setActivePopup(null);
+    } else {
+      // Select
+      if (onSpotClick) onSpotClick(spot);
+      else setActivePopup(spot);
     }
-  }, [markers]);
+  };
 
-  // Geolocation Logic
+  const handleCloseClick = () => {
+    if (onSpotClick) onSpotClick(null);
+    else setActivePopup(null);
+  };
+
   const handleFindMyLocation = () => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
@@ -108,14 +194,8 @@ function MapContent({ selectedSpot, onSpotClick }) {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
-        const currentLoc = { lat: latitude, lng: longitude };
-        setUserLocation(currentLoc);
+        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         setIsLocating(false);
-        if (map) {
-          map.panTo(currentLoc);
-          map.setZoom(14);
-        }
       },
       () => {
         alert("Unable to retrieve your location. Please check your browser permissions.");
@@ -132,115 +212,6 @@ function MapContent({ selectedSpot, onSpotClick }) {
     return spot.location?.municipality || "Lanao del Sur";
   };
 
-  return (
-    <>
-      <Map
-        defaultCenter={defaultCenter}
-        defaultZoom={10}
-        minZoom={8}
-        maxZoom={18}
-        disableDefaultUI={true} 
-        zoomControl={true}
-        gestureHandling="greedy"
-        clickableIcons={false} 
-      >
-        {/* UPDATED: Render FlyToSpot unconditionally so it can trigger the zoom-out */}
-        <FlyToSpot spot={selectedSpot} defaultCenter={defaultCenter} />
-
-        {spots.map((spot) => (
-          <Marker
-            key={spot.id}
-            ref={(marker) => setMarkerRef(marker, spot.id)}
-            position={{ lat: spot.coordinates.lat, lng: spot.coordinates.lng }}
-            icon={{
-              url: getIconUrl(spot.category),
-              scaledSize: { width: 35, height: 45 },
-            }}
-            onClick={() => {
-              // UPDATED: Toggle logic for map markers
-              if (activePopup?.id === spot.id) {
-                setActivePopup(null);
-                if (onSpotClick) onSpotClick(null);
-              } else {
-                setActivePopup(spot);
-                if (onSpotClick) onSpotClick(spot);
-              }
-            }}
-          />
-        ))}
-
-        {userLocation && (
-          <InfoWindow position={userLocation} headerDisabled={true} style={{ background: 'transparent', boxShadow: 'none' }}>
-            <div className="user-location-dot" title="You are here" />
-          </InfoWindow>
-        )}
-
-        {activePopup && (
-          <InfoWindow
-            position={{ lat: activePopup.coordinates.lat, lng: activePopup.coordinates.lng }}
-            onCloseClick={() => {
-              setActivePopup(null);
-              if (onSpotClick) onSpotClick(null);
-            }}
-            pixelOffset={[0, -40]}
-          >
-            <div className="w-[280px] rounded-[28px] p-2.5 text-gray-900">
-              {!showStreetView ? (
-                <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)]">
-                  <img src={activePopup.imageURL || "/default.jpg"} alt={getTitle(activePopup)} className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
-                  <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
-                  <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
-                    {activePopup.category || "Place"}
-                  </span>
-                  <button onClick={() => setShowStreetView(true)} className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-[#2563eb] shadow-md backdrop-blur-md transition hover:bg-white">
-                    <FiNavigation className="text-xs" /> 360° View
-                  </button>
-                </div>
-              ) : (
-                <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-blue-100 shadow-inner">
-                  <StreetViewPanorama
-                    options={{
-                      position: { lat: activePopup.coordinates.lat, lng: activePopup.coordinates.lng },
-                      disableDefaultUI: true,
-                      visible: true
-                    }}
-                  />
-                  <button onClick={() => setShowStreetView(false)} className="absolute right-3 top-3 z-[10] rounded-full bg-white/90 p-1.5 text-gray-800 shadow-md backdrop-blur-md transition hover:bg-white">
-                    <FiChevronRight className="rotate-180 text-sm" />
-                  </button>
-                </div>
-              )}
-
-              <div className="px-2 pb-2 pt-4">
-                <h4 className="line-clamp-2 text-[15px] font-bold leading-snug text-[#2563eb]">{getTitle(activePopup)}</h4>
-                <div className="mt-2 flex items-start gap-2 text-xs font-medium leading-relaxed text-gray-500">
-                  <FiMapPin className="mt-0.5 shrink-0 text-[#2563eb]" />
-                  <span className="line-clamp-2">{getLocation(activePopup)}</span>
-                </div>
-                <button type="button" onClick={() => navigate(`/destination/${activePopup.id}`)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md">
-                  Explore place <FiChevronRight />
-                </button>
-              </div>
-            </div>
-          </InfoWindow>
-        )}
-      </Map>
-
-      <button
-        onClick={handleFindMyLocation}
-        disabled={isLocating}
-        className="absolute bottom-6 left-6 z-10 flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] transition hover:border-[#2563eb] hover:text-[#2563eb] active:scale-95 disabled:opacity-70"
-      >
-        {isLocating ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" /> : <FiNavigation className="text-lg text-[#2563eb]" />}
-        {isLocating ? "Locating..." : "Find My Location"}
-      </button>
-    </>
-  );
-}
-
-// 3. WRAPPER COMPONENT
-export default function LanaoMap({ selectedSpot, onSpotClick }) {
   return (
     <>
       <style>{`
@@ -265,9 +236,84 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
         }
       `}</style>
 
-      <div className="relative h-full w-full overflow-hidden rounded-[28px] shadow-sm">
+      <div className="relative h-full min-h-[400px] lg:h-[680px] w-full overflow-hidden rounded-[20px] sm:rounded-[28px] shadow-sm">
         <APIProvider apiKey={GOOGLE_MAPS_KEY}>
-          <MapContent selectedSpot={selectedSpot} onSpotClick={onSpotClick} />
+          <Map
+            defaultCenter={defaultCenter}
+            defaultZoom={defaultZoom}
+            minZoom={8}
+            maxZoom={18}
+            disableDefaultUI={true} 
+            zoomControl={true}
+            gestureHandling="greedy"
+            clickableIcons={false} 
+          >
+            {activePopup && <FlyToSpot lat={activePopup.coordinates.lat} lng={activePopup.coordinates.lng} />}
+            {userLocation && <FlyToLocation lat={userLocation.lat} lng={userLocation.lng} />}
+            <FlyToDefault trigger={resetTrigger} />
+            
+            <ClusteredMarkers 
+              spots={spots} 
+              onMarkerClick={handleMarkerClick} 
+            />
+
+            {userLocation && (
+              <InfoWindow position={userLocation} headerDisabled={true} style={{ background: 'transparent', boxShadow: 'none' }}>
+                <div className="user-location-dot" title="You are here" />
+              </InfoWindow>
+            )}
+
+            {activePopup && (
+              <InfoWindow
+                position={{ lat: activePopup.coordinates.lat, lng: activePopup.coordinates.lng }}
+                onCloseClick={handleCloseClick}
+                pixelOffset={[0, -40]}
+              >
+                <div className="w-[260px] sm:w-[280px] rounded-[28px] p-2.5 text-gray-900">
+                  {!showStreetView ? (
+                    <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)]">
+                      <img src={activePopup.imageURL || FALLBACK_IMAGE} alt={getTitle(activePopup)} className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
+                      <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
+                      <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
+                        {activePopup.category || "Place"}
+                      </span>
+                      <button onClick={() => setShowStreetView(true)} className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-[#2563eb] shadow-md backdrop-blur-md transition hover:bg-white">
+                        <FiNavigation className="text-xs" /> 360° View
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-blue-100 shadow-inner">
+                      <CustomStreetView lat={activePopup.coordinates.lat} lng={activePopup.coordinates.lng} />
+                      <button onClick={() => setShowStreetView(false)} className="absolute right-3 top-3 z-[10] rounded-full bg-white/90 p-1.5 text-gray-800 shadow-md backdrop-blur-md transition hover:bg-white">
+                        <FiChevronRight className="rotate-180 text-sm" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="px-2 pb-2 pt-4">
+                    <h4 className="line-clamp-2 text-[14px] sm:text-[15px] font-bold leading-snug text-[#2563eb]">{getTitle(activePopup)}</h4>
+                    <div className="mt-2 flex items-start gap-2 text-xs font-medium leading-relaxed text-gray-500">
+                      <FiMapPin className="mt-0.5 shrink-0 text-[#2563eb]" />
+                      <span className="line-clamp-2">{getLocation(activePopup)}</span>
+                    </div>
+                    <button type="button" onClick={() => navigate(`/destination/${activePopup.id}`)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] sm:text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md">
+                      Explore place <FiChevronRight />
+                    </button>
+                  </div>
+                </div>
+              </InfoWindow>
+            )}
+          </Map>
+
+          <button
+            onClick={handleFindMyLocation}
+            disabled={isLocating}
+            className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 z-10 flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-4 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] transition hover:border-[#2563eb] hover:text-[#2563eb] active:scale-95 disabled:opacity-70"
+          >
+            {isLocating ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" /> : <FiNavigation className="text-sm sm:text-lg text-[#2563eb]" />}
+            {isLocating ? "Locating..." : "Find My Location"}
+          </button>
         </APIProvider>
       </div>
     </>

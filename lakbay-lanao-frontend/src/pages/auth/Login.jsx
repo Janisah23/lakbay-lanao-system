@@ -245,6 +245,19 @@ function Login() {
         <button type="button" onClick={handleGoogleLogin} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-[14px] border border-blue-100 bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-blue-50 disabled:opacity-70">
           <img src={googleIcon} alt="Google" className="h-4 w-4" /> Continue with Google
         </button>
+
+        {/* --- SIGN UP SECTION --- */}
+        <div className="mt-8 pt-6 border-t border-blue-50 text-[13px] font-medium text-gray-500">
+          Don't have an account?{" "}
+          <button 
+            type="button" 
+            onClick={() => navigate("/signup")} 
+            className="font-bold text-[#2563eb] transition-all hover:text-blue-700 hover:underline"
+          >
+            Sign up now
+          </button>
+        </div>
+
       </div>
     </div>
   );
