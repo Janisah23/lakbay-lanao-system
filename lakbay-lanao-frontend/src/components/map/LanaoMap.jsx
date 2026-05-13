@@ -2,14 +2,14 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
-import { FiMapPin, FiChevronRight, FiNavigation } from "react-icons/fi";
-import { 
-  APIProvider, 
-  Map, 
-  Marker, 
-  InfoWindow, 
-  useMap 
-} from "@vis.gl/react-google-maps"; 
+import { FiMapPin, FiChevronRight, FiNavigation, FiX } from "react-icons/fi";
+import {
+  APIProvider,
+  Map,
+  Marker,
+  InfoWindow,
+  useMap,
+} from "@vis.gl/react-google-maps";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { getIconUrl } from "./MapSetup";
 
@@ -21,24 +21,28 @@ const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506744626753-1fa44f22
 // 1. MAP CHILD: Flies to a selected tourist destination
 function FlyToSpot({ lat, lng }) {
   const map = useMap();
+
   useEffect(() => {
     if (map && lat && lng) {
       map.panTo({ lat, lng });
       map.setZoom(15);
     }
-  }, [lat, lng, map]); 
+  }, [lat, lng, map]);
+
   return null;
 }
 
 // 2. MAP CHILD: Flies to the user's GPS location
 function FlyToLocation({ lat, lng }) {
   const map = useMap();
+
   useEffect(() => {
     if (map && lat && lng) {
       map.panTo({ lat, lng });
       map.setZoom(14);
     }
-  }, [lat, lng, map]); 
+  }, [lat, lng, map]);
+
   return null;
 }
 
@@ -58,11 +62,12 @@ function FlyToDefault({ trigger }) {
 function ClusteredMarkers({ spots, onMarkerClick }) {
   const map = useMap();
   const clusterer = useRef(null);
-  const markersRef = useRef({}); 
+  const markersRef = useRef({});
 
   // Initialize Clusterer
   useEffect(() => {
     if (!map) return;
+
     if (!clusterer.current) {
       clusterer.current = new MarkerClusterer({ map });
     }
@@ -113,11 +118,11 @@ function CustomStreetView({ lat, lng }) {
     if (containerRef.current && window.google) {
       new window.google.maps.StreetViewPanorama(containerRef.current, {
         position: { lat, lng },
-        disableDefaultUI: true, 
+        disableDefaultUI: true,
         visible: true,
       });
     }
-  }, [lat, lng]); 
+  }, [lat, lng]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }
@@ -127,7 +132,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
   const [spots, setSpots] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
   const [showStreetView, setShowStreetView] = useState(false);
-  
+
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(0); 
@@ -145,9 +150,16 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     const unsubscribe = onSnapshot(collection(db, "tourismData"), (snapshot) => {
       const data = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((item) => item.status !== "archived" && item.coordinates?.lat && item.coordinates?.lng);
+        .filter(
+          (item) =>
+            item.status !== "archived" &&
+            item.coordinates?.lat &&
+            item.coordinates?.lng
+        );
+
       setSpots(data);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -190,25 +202,36 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
       alert("Geolocation is not supported by your browser");
       return;
     }
-    
+
     setIsLocating(true);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
         setIsLocating(false);
       },
       () => {
-        alert("Unable to retrieve your location. Please check your browser permissions.");
+        alert(
+          "Unable to retrieve your location. Please check your browser permissions."
+        );
         setIsLocating(false);
       }
     );
   };
 
   const getTitle = (spot) => spot.name || spot.title || "Untitled Place";
+
   const getLocation = (spot) => {
     if (!spot.location) return "Lanao del Sur";
     if (typeof spot.location === "string") return spot.location;
-    if (spot.location?.municipality && spot.location?.province) return `${spot.location.municipality}, ${spot.location.province}`;
+
+    if (spot.location?.municipality && spot.location?.province) {
+      return `${spot.location.municipality}, ${spot.location.province}`;
+    }
+
     return spot.location?.municipality || "Lanao del Sur";
   };
 
@@ -216,23 +239,54 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     <>
       <style>{`
         .gm-style-iw-c {
-          padding: 0 !important; border-radius: 28px !important; background: rgba(255, 255, 255, 0.88) !important;
-          box-shadow: 0 18px 45px rgba(37, 99, 235, 0.16) !important; backdrop-filter: blur(18px) !important;
-          -webkit-backdrop-filter: blur(18px) !important; border: 1px solid rgba(255, 255, 255, 0.85) !important;
+          padding: 0 !important;
+          border-radius: 28px !important;
+          background: rgba(255, 255, 255, 0.88) !important;
+          box-shadow: 0 18px 45px rgba(37, 99, 235, 0.16) !important;
+          backdrop-filter: blur(18px) !important;
+          -webkit-backdrop-filter: blur(18px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.85) !important;
+          max-width: calc(100vw - 32px) !important;
         }
-        .gm-style-iw-d { overflow: hidden !important; }
+
+        .gm-style-iw-d {
+          overflow: hidden !important;
+          max-width: calc(100vw - 32px) !important;
+        }
+
+        .gm-style-iw-tc::after {
+          background: rgba(255, 255, 255, 0.88) !important;
+        }
+
         .gm-ui-hover-effect {
-          top: 10px !important; right: 10px !important; background: rgba(255, 255, 255, 0.92) !important;
-          border-radius: 999px !important; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+          display: none !important;
         }
+
         @keyframes pulse-ring {
-          0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
-          70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
-          100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+          0% {
+            transform: scale(0.8);
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+          }
+
+          70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 15px rgba(37, 99, 235, 0);
+          }
+
+          100% {
+            transform: scale(0.8);
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+          }
         }
+
         .user-location-dot {
-          width: 16px; height: 16px; background-color: #2563eb; border-radius: 50%;
-          border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); animation: pulse-ring 2s infinite;
+          width: 16px;
+          height: 16px;
+          background-color: #2563eb;
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          animation: pulse-ring 2s infinite;
         }
       `}</style>
 
@@ -243,10 +297,10 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             defaultZoom={defaultZoom}
             minZoom={8}
             maxZoom={18}
-            disableDefaultUI={true} 
+            disableDefaultUI={true}
             zoomControl={true}
             gestureHandling="greedy"
-            clickableIcons={false} 
+            clickableIcons={false}
           >
             {activePopup && <FlyToSpot lat={activePopup.coordinates.lat} lng={activePopup.coordinates.lng} />}
             {userLocation && <FlyToLocation lat={userLocation.lat} lng={userLocation.lng} />}
@@ -258,7 +312,11 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             />
 
             {userLocation && (
-              <InfoWindow position={userLocation} headerDisabled={true} style={{ background: 'transparent', boxShadow: 'none' }}>
+              <InfoWindow
+                position={userLocation}
+                headerDisabled={true}
+                style={{ background: "transparent", boxShadow: "none" }}
+              >
                 <div className="user-location-dot" title="You are here" />
               </InfoWindow>
             )}
@@ -268,6 +326,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
                 position={{ lat: activePopup.coordinates.lat, lng: activePopup.coordinates.lng }}
                 onCloseClick={handleCloseClick}
                 pixelOffset={[0, -40]}
+                headerDisabled={true}
               >
                 <div className="w-[260px] sm:w-[280px] rounded-[28px] p-2.5 text-gray-900">
                   {!showStreetView ? (
@@ -275,17 +334,52 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
                       <img src={activePopup.imageURL || FALLBACK_IMAGE} alt={getTitle(activePopup)} className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
                       <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
-                      <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
+
+                      {/* X BUTTON INSIDE IMAGE */}
+                      <button
+                        type="button"
+                        onClick={() => setActivePopup(null)}
+                        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
+                        aria-label="Close popup"
+                      >
+                        <FiX className="text-base" />
+                      </button>
+
+                      <span className="absolute left-3 top-3 max-w-[132px] truncate rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
                         {activePopup.category || "Place"}
                       </span>
-                      <button onClick={() => setShowStreetView(true)} className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-[#2563eb] shadow-md backdrop-blur-md transition hover:bg-white">
-                        <FiNavigation className="text-xs" /> 360° View
+
+                      <button
+                        type="button"
+                        onClick={() => setShowStreetView(true)}
+                        className="absolute bottom-3 right-3 z-20 inline-flex max-w-[96px] items-center justify-center gap-1 rounded-full border border-white/80 bg-white/95 px-2.5 py-1.5 text-[10px] font-bold text-[#2563eb] shadow-md backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white sm:max-w-[112px] sm:px-3"
+                      >
+                        <FiNavigation className="shrink-0 text-xs" />
+                        <span className="whitespace-nowrap">360° View</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-blue-100 shadow-inner">
-                      <CustomStreetView lat={activePopup.coordinates.lat} lng={activePopup.coordinates.lng} />
-                      <button onClick={() => setShowStreetView(false)} className="absolute right-3 top-3 z-[10] rounded-full bg-white/90 p-1.5 text-gray-800 shadow-md backdrop-blur-md transition hover:bg-white">
+                    <div className="relative h-[145px] overflow-hidden rounded-[22px] border border-blue-100 shadow-inner sm:h-[170px] lg:h-[180px]">
+                      <CustomStreetView
+                        lat={activePopup.coordinates.lat}
+                        lng={activePopup.coordinates.lng}
+                      />
+
+                      {/* X BUTTON INSIDE STREET VIEW */}
+                      <button
+                        type="button"
+                        onClick={() => setActivePopup(null)}
+                        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
+                        aria-label="Close popup"
+                      >
+                        <FiX className="text-base" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowStreetView(false)}
+                        className="absolute left-3 top-3 z-20 rounded-full bg-white/90 p-1.5 text-gray-800 shadow-md backdrop-blur-md transition hover:bg-white"
+                      >
                         <FiChevronRight className="rotate-180 text-sm" />
                       </button>
                     </div>
@@ -295,7 +389,9 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
                     <h4 className="line-clamp-2 text-[14px] sm:text-[15px] font-bold leading-snug text-[#2563eb]">{getTitle(activePopup)}</h4>
                     <div className="mt-2 flex items-start gap-2 text-xs font-medium leading-relaxed text-gray-500">
                       <FiMapPin className="mt-0.5 shrink-0 text-[#2563eb]" />
-                      <span className="line-clamp-2">{getLocation(activePopup)}</span>
+                      <span className="line-clamp-2">
+                        {getLocation(activePopup)}
+                      </span>
                     </div>
                     <button type="button" onClick={() => navigate(`/destination/${activePopup.id}`)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] sm:text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md">
                       Explore place <FiChevronRight />
@@ -313,6 +409,11 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
           >
             {isLocating ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" /> : <FiNavigation className="text-sm sm:text-lg text-[#2563eb]" />}
             {isLocating ? "Locating..." : "Find My Location"}
+            </span>
+
+            <span className="sm:hidden">
+              {isLocating ? "Locating..." : "Locate"}
+            </span>
           </button>
         </APIProvider>
       </div>

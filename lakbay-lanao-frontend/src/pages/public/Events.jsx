@@ -138,42 +138,41 @@ function Events() {
   const visibleEvents = filteredEvents.slice(0, visibleCount);
 
   return (
-    <div className="font-sans text-gray-900 min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff]">
+    <div className="font-sans min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] text-gray-900">
       <Navbar />
 
       {/* HEADER */}
-      <section className="pt-32 pb-10 px-6 max-w-7xl mx-auto">
-        
-
-        <div className="flex items-start justify-between gap-8 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-white/70 px-3 py-1 text-xs font-semibold text-[#2563eb] mb-4 shadow-sm backdrop-blur-md">
+      <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pb-10 md:pt-32 lg:px-10">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div className="max-w-2xl">
+            <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-semibold text-[#2563eb] shadow-sm backdrop-blur-md">
               <FiCalendar className="text-sm" />
               Lakbay Lanao Events
             </span>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-[#2563eb] mb-6 tracking-tight leading-tight">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#2563eb] sm:text-4xl md:text-5xl">
               Events & Local Experiences
             </h1>
 
-            <p className="text-gray-500 max-w-2xl leading-relaxed">
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-gray-500 md:text-base">
               Discover cultural celebrations, community gatherings, tourism
               activities, and upcoming experiences across Lanao del Sur.
             </p>
           </div>
 
-          <div className="rounded-full border border-white/70 bg-white/80 px-5 py-3 text-sm font-medium text-gray-600 shadow-sm backdrop-blur-md">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/70 bg-white/80 px-5 py-3 text-sm font-medium text-gray-600 shadow-sm backdrop-blur-md">
+            <FiCalendar className="text-[#2563eb]" />
             {events.length} event{events.length !== 1 ? "s" : ""} available
           </div>
         </div>
       </section>
 
       {/* FILTER PANEL */}
-      <section className="px-6 max-w-7xl mx-auto mb-10">
+      <section className="mx-auto mb-10 max-w-7xl px-4 sm:px-6 lg:px-10">
         <div className="rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-md md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3 rounded-full border border-gray-200/80 bg-white/85 px-5 py-3.5 shadow-sm transition focus-within:border-[#2563eb]/40 focus-within:ring-2 focus-within:ring-blue-100 lg:w-[420px]">
-              <FiSearch className="text-[#2563eb] text-xl" />
+              <FiSearch className="text-xl text-[#2563eb]" />
 
               <input
                 type="text"
@@ -187,7 +186,7 @@ function Events() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
               {categories.map((category) => (
                 <button
                   key={category}
@@ -198,7 +197,7 @@ function Events() {
                   className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                     activeCategory === category
                       ? "bg-[#2563eb] text-white shadow-sm"
-                      : "bg-white/75 text-gray-600 border border-white/80 hover:bg-blue-50 hover:text-[#2563eb]"
+                      : "border border-white/80 bg-white/75 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                   }`}
                 >
                   {category === "all" ? "All" : category}
@@ -210,7 +209,7 @@ function Events() {
       </section>
 
       {/* EVENTS GRID */}
-      <section className="pb-20 px-6 max-w-7xl mx-auto">
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
         {filteredEvents.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-gray-200 bg-white/75 py-20 text-center shadow-sm backdrop-blur-md">
             <p className="text-sm font-medium text-gray-400">
@@ -219,16 +218,16 @@ function Events() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {visibleEvents.map((event) => (
                 <article
                   key={event.id}
                   onClick={() => navigate(`/event/${event.id}`)}
-                  className="group flex h-full min-h-[438px] cursor-pointer flex-col overflow-hidden rounded-[30px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)]"
+                  className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[310px] sm:rounded-[24px] lg:min-h-[438px] lg:rounded-[30px]"
                 >
                   {/* IMAGE */}
-                  <div className="p-2.5 pb-0">
-                    <div className="relative h-[248px] shrink-0 overflow-hidden rounded-[24px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm">
+                  <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
+                    <div className="relative h-[120px] shrink-0 overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[248px] lg:rounded-[24px]">
                       <img
                         src={event.imageURL || "/default.jpg"}
                         alt={event.title}
@@ -241,34 +240,43 @@ function Events() {
                   </div>
 
                   {/* CONTENT */}
-                  <div className="flex flex-1 flex-col px-5 pb-5 pt-3">
-                    <h2 className="line-clamp-2 text-lg font-bold leading-[1.25] text-[#2563eb]">
+                  <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 lg:px-5 lg:pb-5">
+                    <h2 className="line-clamp-2 min-h-[34px] text-xs font-bold leading-tight text-[#2563eb] sm:min-h-[40px] sm:text-sm lg:min-h-0 lg:text-lg lg:leading-[1.25]">
                       {event.title}
                     </h2>
 
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-gray-400">
-                      <div className="flex items-center gap-2">
-                        <FiCalendar className="text-[#2563eb]" />
-                        <span>{formatDate(event.eventDate)}</span>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-medium text-gray-400 sm:text-xs lg:gap-x-4">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <FiCalendar className="shrink-0 text-[#2563eb]" />
+                        <span className="line-clamp-1">
+                          {formatDate(event.eventDate)}
+                        </span>
                       </div>
 
                       {event.eventTime && (
-                        <div className="flex items-center gap-2">
-                          <FiClock className="text-[#2563eb]" />
-                          <span>{event.eventTime}</span>
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <FiClock className="shrink-0 text-[#2563eb]" />
+                          <span className="line-clamp-1">
+                            {event.eventTime}
+                          </span>
                         </div>
                       )}
                     </div>
 
-                    <p className="mt-1.5 line-clamp-1 text-sm leading-6 text-gray-500">
+                    <p className="mt-1.5 line-clamp-2 flex-1 text-[11px] leading-relaxed text-gray-500 sm:text-xs lg:line-clamp-1 lg:text-sm lg:leading-6">
                       {getShortDescription(event.summary)}
                     </p>
 
                     <button
                       type="button"
-                      className="mt-auto flex items-center gap-2 self-start rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/event/${event.id}`);
+                      }}
+                      className="mt-3 w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:mt-4 sm:w-fit sm:px-4 sm:py-2 sm:text-[11px] lg:mt-auto lg:flex lg:items-center lg:gap-2 lg:self-start lg:px-5 lg:py-2.5 lg:text-xs"
                     >
-                      View event <FiChevronRight />
+                      <span>View event</span>
+                      <FiChevronRight className="hidden lg:block" />
                     </button>
                   </div>
                 </article>
@@ -279,7 +287,7 @@ function Events() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setVisibleCount((prev) => prev + 10)}
-                  className="rounded-full border border-white/80 bg-white/80 px-7 py-3 text-sm font-semibold text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-blue-50"
+                  className="w-full rounded-full border border-white/80 bg-white/80 px-7 py-3 text-sm font-semibold text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:w-auto"
                 >
                   Load more events
                 </button>
@@ -289,7 +297,6 @@ function Events() {
         )}
       </section>
 
-      
       <Footer />
     </div>
   );

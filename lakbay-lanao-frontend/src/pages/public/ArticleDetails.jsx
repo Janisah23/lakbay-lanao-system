@@ -125,6 +125,17 @@ const ArticleDetails = () => {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  const getShortDescription = (text) => {
+    const fallback = "Discover more stories from Lanao del Sur.";
+    if (!text) return fallback;
+
+    const cleanText = String(text).replace(/\s+/g, " ").trim();
+    const firstSentence = cleanText.match(/[^.!?]+[.!?]/)?.[0] || cleanText;
+
+    if (firstSentence.length <= 72) return firstSentence;
+    return `${firstSentence.slice(0, 72).trim()}...`;
+  };
+
   if (!articleDetail) {
     return (
       <div className="font-sans flex min-h-screen items-center justify-center bg-[#f3f9ff]">
@@ -151,34 +162,32 @@ const ArticleDetails = () => {
       <Navbar />
 
       {/* HEADER */}
-      <section className="mx-auto max-w-7xl px-6 pb-10 pt-32">
-        
-
-        <div className="flex flex-wrap items-start justify-between gap-8">
+      <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-start">
           <div className="min-w-0 flex-1">
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold text-[#2563eb] shadow-sm">
               <FiTag className="text-xs" />
               {articleDetail.category || "Travel Guide"}
             </span>
 
-            <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-[#2563eb] md:text-5xl">
+            <h1 className="mb-4 max-w-4xl text-2xl font-bold leading-snug tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl lg:text-5xl">
               {articleDetail.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-600 sm:text-sm">
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiBookmark className="text-sm" />
                 <span>{saveCount.toLocaleString()} saves</span>
               </div>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiClock className="text-sm" />
                 <span>{articleDetail.readTime || "5 Min"} read</span>
               </div>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiCalendar className="text-sm" />
@@ -187,18 +196,18 @@ const ArticleDetails = () => {
             </div>
           </div>
 
-          <div className="mt-2 flex flex-shrink-0 items-center gap-3">
-            <div className="relative">
+          <div className="flex w-full flex-shrink-0 items-center gap-3 sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <button
                 onClick={() => setShowSharePanel(!showSharePanel)}
-                className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb]"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-[#2563eb] hover:text-[#2563eb] sm:w-auto"
               >
                 <FiShare2 className="text-base" />
                 Share
               </button>
 
               {showSharePanel && (
-                <div className="absolute right-0 top-12 z-30 w-56 rounded-[16px] border border-gray-200 bg-white p-4 shadow-xl">
+                <div className="absolute left-0 top-12 z-30 w-56 rounded-[16px] border border-gray-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Share this article
                   </p>
@@ -242,7 +251,7 @@ const ArticleDetails = () => {
 
             <button
               onClick={() => toggleFavorite(articleDetail)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
                 isFav
                   ? "bg-[#2563eb] text-white hover:bg-blue-700"
                   : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
@@ -260,8 +269,8 @@ const ArticleDetails = () => {
       </section>
 
       {/* HERO IMAGE */}
-      <section className="mx-auto mb-16 max-w-7xl px-6">
-        <div className="relative h-[320px] w-full overflow-hidden rounded-[28px] border border-gray-100 shadow-lg md:h-[460px] lg:h-[540px]">
+      <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
+        <div className="relative h-[240px] w-full overflow-hidden rounded-[20px] border border-gray-100 shadow-lg sm:h-[320px] sm:rounded-[24px] md:h-[460px] lg:h-[540px] lg:rounded-[28px]">
           <img
             src={
               galleryImages[activeGalleryIndex] ||
@@ -272,7 +281,7 @@ const ArticleDetails = () => {
             className="h-full w-full object-cover"
           />
 
-          <div className="absolute inset-0 rounded-[28px] bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+          <div className="absolute inset-0 rounded-[20px] bg-gradient-to-t from-black/30 via-transparent to-transparent sm:rounded-[24px] lg:rounded-[28px]" />
 
           {galleryImages.length > 1 && (
             <>
@@ -280,7 +289,7 @@ const ArticleDetails = () => {
                 onClick={() =>
                   setActiveGalleryIndex((i) => Math.max(i - 1, 0))
                 }
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white"
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white sm:left-4"
               >
                 <FiChevronLeft className="text-lg text-gray-700" />
               </button>
@@ -291,7 +300,7 @@ const ArticleDetails = () => {
                     Math.min(i + 1, galleryImages.length - 1)
                   )
                 }
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white sm:right-4"
               >
                 <FiChevronRight className="text-lg text-gray-700" />
               </button>
@@ -315,18 +324,18 @@ const ArticleDetails = () => {
       </section>
 
       {/* CONTENT + SIDEBAR */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3 lg:gap-10">
           {/* LEFT CONTENT */}
           <div className="space-y-8 lg:col-span-2">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-sm md:p-10">
-              <h2 className="mb-6 border-b border-gray-100 pb-4 text-2xl font-bold text-[#2563eb]">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-8 md:p-10">
+              <h2 className="mb-6 border-b border-gray-100 pb-4 text-xl font-bold text-[#2563eb] sm:text-2xl">
                 Read Article
               </h2>
 
               {articleDetail.summary && (
-                <div className="mb-10">
-                  <div className="article-summary rounded-2xl border border-blue-50 bg-[#f8fbff] p-6 text-[1rem] leading-[1.8] text-gray-600 shadow-sm md:p-8">
+                <div className="mb-8 sm:mb-10">
+                  <div className="article-summary rounded-2xl border border-blue-50 bg-[#f8fbff] p-5 text-sm leading-[1.8] text-gray-600 shadow-sm sm:p-6 sm:text-[1rem] md:p-8">
                     <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#2563eb]">
                       <span className="h-[1px] w-8 bg-[#2563eb]" />
                       Quick Summary
@@ -343,7 +352,7 @@ const ArticleDetails = () => {
                 </div>
               )}
 
-              <div className="mt-12 flex items-start gap-4 rounded-[20px] border border-gray-100 bg-gray-50 p-6">
+              <div className="mt-8 flex items-start gap-4 rounded-[20px] border border-gray-100 bg-gray-50 p-5 sm:mt-12 sm:p-6">
                 <FiInfo className="mt-0.5 flex-shrink-0 text-xl text-gray-400" />
 
                 <div>
@@ -362,7 +371,7 @@ const ArticleDetails = () => {
 
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
               <h3 className="mb-5 font-bold text-gray-900">
                 Article Details
               </h3>
@@ -416,7 +425,7 @@ const ArticleDetails = () => {
       </section>
 
       {/* RELATED ARTICLES */}
-      <section className="border-t border-blue-50 bg-[#f3f9ff] px-6 py-20">
+      <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
@@ -424,7 +433,7 @@ const ArticleDetails = () => {
                 Keep Reading
               </span>
 
-              <h3 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
+              <h3 className="mt-4 text-2xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
                 Related Articles
               </h3>
 
@@ -449,15 +458,15 @@ const ArticleDetails = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {moreArticles.map((article) => (
                 <article
                   key={article.id}
                   onClick={() => navigate(`/article/${article.id}`)}
-                  className="group flex h-full min-h-[360px] cursor-pointer flex-col overflow-hidden rounded-[30px] border border-blue-50 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md"
+                  className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-blue-50 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md sm:min-h-[310px] sm:rounded-[24px]"
                 >
-                  <div className="p-2.5 pb-0">
-                    <div className="relative h-[190px] overflow-hidden rounded-[24px] bg-blue-50">
+                  <div className="p-1.5 pb-0 sm:p-2 sm:pb-0">
+                    <div className="relative h-[120px] overflow-hidden rounded-[16px] bg-blue-50 sm:h-[165px] sm:rounded-[20px]">
                       <img
                         src={article.imageURL || "/default.jpg"}
                         alt={article.title}
@@ -466,16 +475,20 @@ const ArticleDetails = () => {
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
 
-                      <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm">
+                      <span className="absolute left-2 top-2 max-w-[105px] truncate rounded-full bg-white/95 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm sm:left-3 sm:top-3 sm:max-w-[140px] sm:px-2.5 sm:py-1 sm:text-[9px]">
                         {article.category || "Article"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-1 flex-col px-6 pb-6 pt-4">
-                    <h4 className="line-clamp-2 min-h-[48px] text-base font-bold leading-snug text-[#2563eb] transition group-hover:text-blue-700">
+                  <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3">
+                    <h4 className="line-clamp-2 min-h-[34px] text-xs font-bold leading-tight text-[#2563eb] transition group-hover:text-blue-700 sm:min-h-[40px] sm:text-sm">
                       {article.title}
                     </h4>
+
+                    <p className="mt-1.5 line-clamp-2 flex-1 text-[11px] leading-relaxed text-gray-500 sm:mt-2 sm:text-xs">
+                      {getShortDescription(article.summary)}
+                    </p>
 
                     <button
                       type="button"
@@ -483,9 +496,9 @@ const ArticleDetails = () => {
                         e.stopPropagation();
                         navigate(`/article/${article.id}`);
                       }}
-                      className="mt-auto inline-flex items-center gap-2 self-start rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+                      className="mt-3 w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 sm:mt-4 sm:w-fit sm:px-4 sm:py-2 sm:text-[11px]"
                     >
-                      Read more <FiChevronRight />
+                      Read more →
                     </button>
                   </div>
                 </article>
@@ -495,14 +508,14 @@ const ArticleDetails = () => {
 
           <button
             onClick={() => navigate("/articles")}
-            className="mt-8 flex items-center justify-center gap-2 rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50 md:hidden"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50 sm:w-auto md:hidden"
           >
             View all articles <FiChevronRight />
           </button>
         </div>
       </section>
 
-     
+      <Footer />
 
       <style jsx>{`
         .article-body p,

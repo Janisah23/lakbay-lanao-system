@@ -3,7 +3,6 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  /* Matches md:pt-32 and lg:px-20 spacing rules */
   padding: 128px 80px 0;
   color: #ffffffec;
   overflow: hidden;
@@ -39,11 +38,10 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  /* Adds the dark overlay so text is readable */
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.3) 0%,
-    rgba(0, 0, 0, 0.5) 100%
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(0, 0, 0, 0.52) 100%
   );
   pointer-events: none;
 }
@@ -98,11 +96,10 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* BUTTON RULES: bg-[#2563eb], rounded-full, sm:w-fit */
 .explore-btn {
   background: #2563eb;
   padding: 14px 32px;
-  border-radius: 9999px; /* rounded-full */
+  border-radius: 9999px;
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -123,7 +120,7 @@
 /* Tablet */
 @media (max-width: 1024px) {
   .hero {
-    padding: 120px 48px 0; /* Matches md:px-12 */
+    padding: 120px 48px 0;
   }
 
   .hero-content {
@@ -132,7 +129,7 @@
 
   .hero-content h1 {
     font-size: 54px;
-    line-height: 60px;
+    line-height: 1;
   }
 
   .hero-content p {
@@ -144,80 +141,144 @@
 /* Mobile */
 @media (max-width: 768px) {
   .hero {
-    min-height: 100vh;
+    min-height: 100svh;
     justify-content: center;
     align-items: center;
-    padding: 112px 16px 32px; /* pt-28 px-4 */
+    padding: 96px 16px 24px;
     text-align: center;
   }
 
   .hero-swiper {
-    /* Mobile Card Size Rule: rounded-[20px] or [24px] */
-    inset: 92px 16px 24px;
-    border-radius: 24px; 
+    top: 86px;
+    left: 16px;
+    right: 16px;
+    bottom: 22px;
+    border-radius: 24px;
   }
 
   .hero-content {
-    position: relative;
-    z-index: 2;
     width: 100%;
-    max-width: 100%;
-    margin-left: 0; /* FIX: Removes the off-center alignment */
+    max-width: 310px;
     margin: 0 auto;
-    padding: 0 16px; /* px-4 */
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+
+    /* slight center adjustment inside the image card */
+    transform: translateY(6px);
   }
 
   .hero-title {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
   .hero-logo {
-    width: 72px;
-    height: 72px;
+    width: 58px;
+    height: 58px;
     margin-bottom: 0;
   }
 
   .hero-content h1 {
-    font-size: 48px;
-    line-height: 1;
-    margin-bottom: 16px;
-    letter-spacing: 2px;
+    font-size: 42px;
+    line-height: 1.08;
+    margin-bottom: 12px;
+    letter-spacing: 1.5px;
   }
 
   .hero-content p {
-    font-size: 16px;
-    line-height: 1.5;
-    margin-bottom: 32px;
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 24px;
+    text-align: center;
   }
 
-  /* BUTTON RULE: w-full on mobile */
   .explore-btn {
-    width: 100%;
-    padding: 16px 24px;
-    font-size: 16px;
+    width: auto;
+    min-width: 210px;
+    padding: 13px 26px;
+    font-size: 14px;
+    font-weight: 700;
   }
 }
 
 /* Small mobile */
 @media (max-width: 420px) {
-  .hero-content h1 {
-    font-size: 42px;
-    letter-spacing: 1px;
+  .hero {
+    padding: 92px 16px 22px;
+  }
+
+  .hero-swiper {
+    top: 86px;
+    left: 16px;
+    right: 16px;
+    bottom: 22px;
+    border-radius: 22px;
+  }
+
+  .hero-content {
+    max-width: 285px;
+    transform: translateY(4px);
   }
 
   .hero-logo {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .hero-content h1 {
+    font-size: 38px;
+    line-height: 1.08;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
   }
 
   .hero-content p {
-    font-size: 15px;
+    max-width: 260px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin-bottom: 22px;
+  }
+
+  .explore-btn {
+    min-width: 190px;
+    padding: 12px 22px;
+    font-size: 13.5px;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 360px) {
+  .hero-content {
+    max-width: 255px;
+  }
+
+  .hero-logo {
+    width: 46px;
+    height: 46px;
+  }
+
+  .hero-content h1 {
+    font-size: 34px;
+    line-height: 1.08;
+  }
+
+  .hero-content p {
+    max-width: 245px;
+    font-size: 12px;
+    line-height: 1.45;
+    margin-bottom: 20px;
+  }
+
+  .explore-btn {
+    min-width: 175px;
+    padding: 11px 20px;
+    font-size: 13px;
   }
 }
 
@@ -226,10 +287,12 @@
     transform: scale(0.5);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.2);
     opacity: 1;
   }
+
   100% {
     transform: scale(1);
     opacity: 0;
