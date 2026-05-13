@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { collection, onSnapshot, doc, getDoc } from "firebase/firestore";
@@ -20,13 +20,14 @@ import {
   FiUser,
   FiEdit3,
   FiChevronRight,
-  FiImage // Added for fallback icon
+  FiImage
 } from "react-icons/fi";
 import "./Navbar.css";
 
 import ptoLogo from "../../assets/pto.png";
 import explorePreview from "../../assets/explore-preview.png";
 import featurePreview from "../../assets/feature-preview.png";
+import { logAction } from "../../utils/logAction";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -115,11 +116,24 @@ function Navbar() {
   };
 
   const handleLogout = async () => {
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      // 1. Log the action BEFORE signing out
+      await logAction({
+        action: "Logout",
+        module: "Authentication",
+        targetModule: "System",
+        details: "User successfully logged out of the session."
+      }, currentUser);
+    }
+
+    // 2. Perform the actual logout
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
     setOpenMenu(false);
-    window.location.href = "/";
+    navigate("/login");
   };
 
   const handleOpenChatbot = () => {
@@ -287,7 +301,6 @@ function Navbar() {
             onClick={() => refreshNavigate("/")}
             className="group flex min-w-0 cursor-pointer items-center gap-2 md:gap-3"
           >
-            {/* Added fallback for PTO logo just in case */}
             <img
               src={ptoLogo}
               alt="logo"
@@ -392,7 +405,6 @@ function Navbar() {
                       src={user.photoURL}
                       alt="profile"
                       className="h-9 w-9 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_0_4px_rgba(37,99,235,0.10)] md:h-10 md:w-10"
-                      // Fallback if the Google profile image URL is broken
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = "https://ui-avatars.com/api/?name=" + displayInitial + "&background=3b82f6&color=fff";
@@ -623,7 +635,6 @@ function Navbar() {
                       onClick={() => handleResultClick(item)}
                       className="search-result-card flex cursor-pointer items-center gap-4 p-3 hover:bg-blue-50/50 rounded-xl transition"
                     >
-                      {/* FIXED BROKEN IMAGE LOGIC HERE */}
                       {item.imageURL ? (
                         <img
                           src={item.imageURL}
