@@ -15,6 +15,8 @@ import { getIconUrl } from "./MapSetup";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const defaultCenter = { lat: 7.8731, lng: 124.2863 };
+const defaultZoom = 10;
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
 // 1. MAP CHILD: Flies to a selected tourist destination
 function FlyToSpot({ lat, lng }) {
@@ -44,7 +46,19 @@ function FlyToLocation({ lat, lng }) {
   return null;
 }
 
-// 3. MAP CHILD: Handles all Markers and Clustering safely
+// 3. MAP CHILD: Resets the map to the default full view
+function FlyToDefault({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map && trigger > 0) {
+      map.panTo(defaultCenter);
+      map.setZoom(defaultZoom);
+    }
+  }, [trigger, map]);
+  return null;
+}
+
+// 4. MAP CHILD: Handles all Markers and Clustering safely
 function ClusteredMarkers({ spots, onMarkerClick }) {
   const map = useMap();
   const clusterer = useRef(null);
@@ -96,7 +110,7 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
   );
 }
 
-// 4. Custom Component to render the 360 Panorama natively and safely
+// 5. Custom Component to render the 360 Panorama natively and safely
 function CustomStreetView({ lat, lng }) {
   const containerRef = useRef(null);
 
@@ -113,7 +127,7 @@ function CustomStreetView({ lat, lng }) {
   return <div ref={containerRef} className="h-full w-full" />;
 }
 
-// 5. MAIN WRAPPER
+// 6. MAIN WRAPPER
 export default function LanaoMap({ selectedSpot, onSpotClick }) {
   const [spots, setSpots] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
@@ -121,13 +135,17 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
-
+  const [resetTrigger, setResetTrigger] = useState(0); 
+  
+  const previousPopup = useRef(null); // Keeps track of what was open
   const navigate = useNavigate();
 
+  // Reset street view when a new popup opens
   useEffect(() => {
     if (activePopup) setShowStreetView(false);
   }, [activePopup]);
 
+  // Fetch data
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "tourismData"), (snapshot) => {
       const data = snapshot.docs
@@ -145,9 +163,39 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     return () => unsubscribe();
   }, []);
 
+  // Sync external selection from sidebar Map.jsx
   useEffect(() => {
-    if (selectedSpot) setActivePopup(selectedSpot);
+    if (selectedSpot !== undefined) {
+      setActivePopup(selectedSpot);
+    }
   }, [selectedSpot]);
+
+  // SMART ZOOM OUT: Watch activePopup and trigger reset if it becomes null
+  useEffect(() => {
+    if (previousPopup.current !== null && activePopup === null) {
+      // If we had a popup open and now we don't, trigger zoom out!
+      setResetTrigger(prev => prev + 1);
+    }
+    previousPopup.current = activePopup;
+  }, [activePopup]);
+
+  // Handle Marker Toggle Logic
+  const handleMarkerClick = (spot) => {
+    if (activePopup && activePopup.id === spot.id) {
+      // Deselect (clicking the same active marker)
+      if (onSpotClick) onSpotClick(null);
+      else setActivePopup(null);
+    } else {
+      // Select
+      if (onSpotClick) onSpotClick(spot);
+      else setActivePopup(spot);
+    }
+  };
+
+  const handleCloseClick = () => {
+    if (onSpotClick) onSpotClick(null);
+    else setActivePopup(null);
+  };
 
   const handleFindMyLocation = () => {
     if (!navigator.geolocation) {
@@ -242,11 +290,11 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
         }
       `}</style>
 
-      <div className="relative h-[680px] w-full overflow-hidden rounded-[28px] shadow-sm">
+      <div className="relative h-full min-h-[400px] lg:h-[680px] w-full overflow-hidden rounded-[20px] sm:rounded-[28px] shadow-sm">
         <APIProvider apiKey={GOOGLE_MAPS_KEY}>
           <Map
             defaultCenter={defaultCenter}
-            defaultZoom={10}
+            defaultZoom={defaultZoom}
             minZoom={8}
             maxZoom={18}
             disableDefaultUI={true}
@@ -254,23 +302,13 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             gestureHandling="greedy"
             clickableIcons={false}
           >
-            {selectedSpot && (
-              <FlyToSpot
-                lat={selectedSpot.coordinates.lat}
-                lng={selectedSpot.coordinates.lng}
-              />
-            )}
-
-            {userLocation && (
-              <FlyToLocation lat={userLocation.lat} lng={userLocation.lng} />
-            )}
-
-            <ClusteredMarkers
-              spots={spots}
-              onMarkerClick={(spot) => {
-                setActivePopup(spot);
-                if (onSpotClick) onSpotClick(spot);
-              }}
+            {activePopup && <FlyToSpot lat={activePopup.coordinates.lat} lng={activePopup.coordinates.lng} />}
+            {userLocation && <FlyToLocation lat={userLocation.lat} lng={userLocation.lng} />}
+            <FlyToDefault trigger={resetTrigger} />
+            
+            <ClusteredMarkers 
+              spots={spots} 
+              onMarkerClick={handleMarkerClick} 
             />
 
             {userLocation && (
@@ -285,23 +323,15 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
             {activePopup && (
               <InfoWindow
-                position={{
-                  lat: activePopup.coordinates.lat,
-                  lng: activePopup.coordinates.lng,
-                }}
-                onCloseClick={() => setActivePopup(null)}
+                position={{ lat: activePopup.coordinates.lat, lng: activePopup.coordinates.lng }}
+                onCloseClick={handleCloseClick}
                 pixelOffset={[0, -40]}
                 headerDisabled={true}
               >
-                <div className="w-[260px] max-w-[calc(100vw-44px)] rounded-[28px] p-2.5 text-gray-900 sm:w-[320px] lg:w-[340px]">
+                <div className="w-[260px] sm:w-[280px] rounded-[28px] p-2.5 text-gray-900">
                   {!showStreetView ? (
-                    <div className="relative h-[145px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)] sm:h-[170px] lg:h-[180px]">
-                      <img
-                        src={activePopup.imageURL || "/default.jpg"}
-                        alt={getTitle(activePopup)}
-                        className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]"
-                      />
-
+                    <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)]">
+                      <img src={activePopup.imageURL || FALLBACK_IMAGE} alt={getTitle(activePopup)} className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
                       <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
 
@@ -356,22 +386,14 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
                   )}
 
                   <div className="px-2 pb-2 pt-4">
-                    <h4 className="line-clamp-2 text-[15px] font-bold leading-snug text-[#2563eb]">
-                      {getTitle(activePopup)}
-                    </h4>
-
+                    <h4 className="line-clamp-2 text-[14px] sm:text-[15px] font-bold leading-snug text-[#2563eb]">{getTitle(activePopup)}</h4>
                     <div className="mt-2 flex items-start gap-2 text-xs font-medium leading-relaxed text-gray-500">
                       <FiMapPin className="mt-0.5 shrink-0 text-[#2563eb]" />
                       <span className="line-clamp-2">
                         {getLocation(activePopup)}
                       </span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/destination/${activePopup.id}`)}
-                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
-                    >
+                    <button type="button" onClick={() => navigate(`/destination/${activePopup.id}`)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] sm:text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md">
                       Explore place <FiChevronRight />
                     </button>
                   </div>
@@ -383,15 +405,9 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
           <button
             onClick={handleFindMyLocation}
             disabled={isLocating}
-            className="absolute left-4 top-4 z-10 flex items-center justify-center gap-1.5 rounded-full border border-blue-100 bg-white/95 px-3.5 py-2 text-xs font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] backdrop-blur-md transition hover:border-[#2563eb] hover:text-[#2563eb] active:scale-95 disabled:opacity-70 sm:left-6 sm:top-auto sm:bottom-6 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm"
+            className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 z-10 flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-4 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] transition hover:border-[#2563eb] hover:text-[#2563eb] active:scale-95 disabled:opacity-70"
           >
-            {isLocating ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" />
-            ) : (
-              <FiNavigation className="text-lg text-[#2563eb]" />
-            )}
-
-           <span className="hidden sm:inline">
+            {isLocating ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2563eb] border-t-transparent" /> : <FiNavigation className="text-sm sm:text-lg text-[#2563eb]" />}
             {isLocating ? "Locating..." : "Find My Location"}
             </span>
 
