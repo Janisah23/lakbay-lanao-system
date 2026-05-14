@@ -46,12 +46,16 @@ function Map() {
       (snapshot) => {
         const data = snapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter(
-            (item) =>
-              item.status !== "archived" &&
-              item.coordinates?.lat &&
-              item.coordinates?.lng
-          );
+          .filter((item) => {
+            // STRICT VALIDATION: Ensure coordinates exist and are valid numbers
+            if (item.status === "archived") return false;
+            if (!item.coordinates?.lat || !item.coordinates?.lng) return false;
+            
+            const lat = parseFloat(item.coordinates.lat);
+            const lng = parseFloat(item.coordinates.lng);
+            
+            return !isNaN(lat) && !isNaN(lng);
+          });
 
         setPlaces(data);
       },
@@ -90,12 +94,25 @@ function Map() {
   }, [filteredPlaces, selectedSpot]);
 
   const handlePlaceClick = (place) => {
+    // Safety check: ensure strict numbers before passing to the map
+    const safeLat = parseFloat(place.coordinates?.lat);
+    const safeLng = parseFloat(place.coordinates?.lng);
+
+    if (isNaN(safeLat) || isNaN(safeLng)) {
+      console.warn("Invalid coordinates for:", place.name);
+      return; 
+    }
+
     if (selectedSpot?.id === place.id) {
       setSelectedSpot(null);
     } else {
-      setSelectedSpot(place);
+      // Pass perfectly parsed data down to the map component
+      setSelectedSpot({
+        ...place,
+        coordinates: { lat: safeLat, lng: safeLng }
+      });
       
-      // FIX: Smoothly scroll back up to the map so the user can see the location!
+      // Smoothly scroll back up to the map so the user can see the location
       const mapEl = document.getElementById("mobile-map-container");
       if (mapEl) {
         const yOffset = -100; // Account for the sticky Navbar height
@@ -174,7 +191,7 @@ function Map() {
           {/* MAIN GRID */}
           <div className="mt-6 sm:mt-8 flex flex-col lg:grid lg:grid-cols-4 gap-6">
             
-            {/* MAP CONTAINER - Added the ID so we can scroll back to it */}
+            {/* MAP CONTAINER */}
             <div id="mobile-map-container" className="order-1 lg:order-2 lg:col-span-3">
               <div className="h-[380px] sm:h-[480px] lg:h-[680px] w-full overflow-hidden rounded-[20px] sm:rounded-[28px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
                 <LanaoMap
