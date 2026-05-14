@@ -14,12 +14,16 @@ import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { getIconUrl } from "./MapSetup";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
 const defaultCenter = { lat: 7.8731, lng: 124.2863 };
 const defaultZoom = 10;
+
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
-const smoothZoom = (map, targetZoom, delay = 110) => {
+const smoothZoomTo = (map, targetZoom, delay = 85) => {
+  if (!map) return () => {};
+
   const currentZoom = Math.round(map.getZoom() || defaultZoom);
 
   if (currentZoom === targetZoom) return () => {};
@@ -39,64 +43,92 @@ const smoothZoom = (map, targetZoom, delay = 110) => {
   return () => clearInterval(timer);
 };
 
-// 1. MAP CHILD: Smoothly flies to a selected tourist destination
-function FlyToSpot({ lat, lng }) {
+// 1. MAP CHILD: One safe controller for all map movements
+function MapCameraController({ activePopup, userLocation, resetTrigger }) {
   const map = useMap();
+  const lastTargetRef = useRef("");
 
   useEffect(() => {
-    if (!map || !lat || !lng) return;
+    if (!map) return;
 
-    map.panTo({ lat, lng });
+    let clearZoom = () => {};
+    let zoomTimer;
 
-    const zoomDelay = setTimeout(() => {
-      smoothZoom(map, 15, 105);
-    }, 250);
+    // Priority 1: selected pin / active popup
+    if (activePopup?.coordinates?.lat && activePopup?.coordinates?.lng) {
+      const target = {
+        lat: Number(activePopup.coordinates.lat),
+        lng: Number(activePopup.coordinates.lng),
+      };
 
-    return () => clearTimeout(zoomDelay);
-  }, [lat, lng, map]);
+      const targetKey = spot-${activePopup.id}-${target.lat}-${target.lng};
+
+      if (lastTargetRef.current === targetKey) return;
+
+      lastTargetRef.current = targetKey;
+
+      map.panTo(target);
+
+      zoomTimer = setTimeout(() => {
+        clearZoom = smoothZoomTo(map, 15, 85);
+      }, 250);
+
+      return () => {
+        clearTimeout(zoomTimer);
+        clearZoom();
+      };
+    }
+
+    // Priority 2: user location
+    if (userLocation?.lat && userLocation?.lng) {
+      const target = {
+        lat: Number(userLocation.lat),
+        lng: Number(userLocation.lng),
+      };
+
+      const targetKey = user-${target.lat}-${target.lng};
+
+      if (lastTargetRef.current === targetKey) return;
+
+      lastTargetRef.current = targetKey;
+
+      map.panTo(target);
+
+      zoomTimer = setTimeout(() => {
+        clearZoom = smoothZoomTo(map, 14, 90);
+      }, 250);
+
+      return () => {
+        clearTimeout(zoomTimer);
+        clearZoom();
+      };
+    }
+
+    // Priority 3: reset when popup closes
+    if (resetTrigger > 0) {
+      const targetKey = reset-${resetTrigger};
+
+      if (lastTargetRef.current === targetKey) return;
+
+      lastTargetRef.current = targetKey;
+
+      map.panTo(defaultCenter);
+
+      zoomTimer = setTimeout(() => {
+        clearZoom = smoothZoomTo(map, defaultZoom, 90);
+      }, 250);
+
+      return () => {
+        clearTimeout(zoomTimer);
+        clearZoom();
+      };
+    }
+  }, [map, activePopup, userLocation, resetTrigger]);
 
   return null;
 }
 
-// 2. MAP CHILD: Smoothly flies to the user's GPS location
-function FlyToLocation({ lat, lng }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !lat || !lng) return;
-
-    map.panTo({ lat, lng });
-
-    const zoomDelay = setTimeout(() => {
-      smoothZoom(map, 14, 110);
-    }, 250);
-
-    return () => clearTimeout(zoomDelay);
-  }, [lat, lng, map]);
-
-  return null;
-}
-
-// 3. MAP CHILD: Smoothly resets the map to the default full view
-function FlyToDefault({ trigger }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || trigger <= 0) return;
-
-    map.panTo(defaultCenter);
-
-    const zoomDelay = setTimeout(() => {
-      smoothZoom(map, defaultZoom, 110);
-    }, 250);
-
-    return () => clearTimeout(zoomDelay);
-  }, [trigger, map]);
-
-  return null;
-}
-
-// 4. MAP CHILD: Handles all Markers and Clustering safely
+// 2. MAP CHILD: Handles all markers and clustering safely
 function ClusteredMarkers({ spots, onMarkerClick }) {
   const map = useMap();
   const clusterer = useRef(null);
@@ -135,7 +167,10 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
         <Marker
           key={spot.id}
           ref={(marker) => setMarkerRef(marker, spot.id)}
-          position={{ lat: spot.coordinates.lat, lng: spot.coordinates.lng }}
+          position={{
+            lat: Number(spot.coordinates.lat),
+            lng: Number(spot.coordinates.lng),
+          }}
           icon={{
             url: getIconUrl(spot.category),
             scaledSize: { width: 35, height: 45 },
@@ -147,14 +182,17 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
   );
 }
 
-// 5. Custom Component to render the 360 Panorama natively and safely
+// 3. Custom Component to render the 360 Panorama natively and safely
 function CustomStreetView({ lat, lng }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (containerRef.current && window.google) {
       new window.google.maps.StreetViewPanorama(containerRef.current, {
-        position: { lat, lng },
+        position: {
+          lat: Number(lat),
+          lng: Number(lng),
+        },
         disableDefaultUI: true,
         visible: true,
       });
@@ -164,7 +202,7 @@ function CustomStreetView({ lat, lng }) {
   return <div ref={containerRef} className="h-full w-full" />;
 }
 
-// 6. MAIN WRAPPER
+// 4. MAIN WRAPPER
 export default function LanaoMap({ selectedSpot, onSpotClick }) {
   const [spots, setSpots] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
@@ -237,10 +275,13 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        setActivePopup(null);
+
         setUserLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
+
         setIsLocating(false);
       },
       () => {
@@ -259,7 +300,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     if (typeof spot.location === "string") return spot.location;
 
     if (spot.location?.municipality && spot.location?.province) {
-      return `${spot.location.municipality}, ${spot.location.province}`;
+      return ${spot.location.municipality}, ${spot.location.province};
     }
 
     return spot.location?.municipality || "Lanao del Sur";
@@ -320,7 +361,6 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
         }
       `}</style>
 
-      {/* FIXED HEIGHT FOR MOBILE MAP */}
       <div className="relative h-[420px] w-full overflow-hidden rounded-[20px] shadow-sm sm:h-[560px] sm:rounded-[28px] lg:h-[680px]">
         <APIProvider apiKey={GOOGLE_MAPS_KEY}>
           <Map
@@ -334,18 +374,11 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             clickableIcons={false}
             style={{ width: "100%", height: "100%" }}
           >
-            {activePopup && (
-              <FlyToSpot
-                lat={activePopup.coordinates.lat}
-                lng={activePopup.coordinates.lng}
-              />
-            )}
-
-            {userLocation && (
-              <FlyToLocation lat={userLocation.lat} lng={userLocation.lng} />
-            )}
-
-            <FlyToDefault trigger={resetTrigger} />
+            <MapCameraController
+              activePopup={activePopup}
+              userLocation={userLocation}
+              resetTrigger={resetTrigger}
+            />
 
             <ClusteredMarkers spots={spots} onMarkerClick={handleMarkerClick} />
 
@@ -362,8 +395,8 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             {activePopup && (
               <InfoWindow
                 position={{
-                  lat: activePopup.coordinates.lat,
-                  lng: activePopup.coordinates.lng,
+                  lat: Number(activePopup.coordinates.lat),
+                  lng: Number(activePopup.coordinates.lng),
                 }}
                 onCloseClick={handleCloseClick}
                 pixelOffset={[0, -40]}
@@ -381,10 +414,12 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
                       <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
 
-                      {/* X BUTTON INSIDE IMAGE */}
                       <button
                         type="button"
-                        onClick={() => setActivePopup(null)}
+                        onClick={() => {
+                          if (onSpotClick) onSpotClick(null);
+                          else setActivePopup(null);
+                        }}
                         className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
                         aria-label="Close popup"
                       >
@@ -411,10 +446,12 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
                         lng={activePopup.coordinates.lng}
                       />
 
-                      {/* X BUTTON INSIDE STREET VIEW */}
                       <button
                         type="button"
-                        onClick={() => setActivePopup(null)}
+                        onClick={() => {
+                          if (onSpotClick) onSpotClick(null);
+                          else setActivePopup(null);
+                        }}
                         className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
                         aria-label="Close popup"
                       >
@@ -445,7 +482,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
                     <button
                       type="button"
-                      onClick={() => navigate(`/destination/${activePopup.id}`)}
+                      onClick={() => navigate(/destination/${activePopup.id})}
                       className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:text-xs"
                     >
                       Explore place <FiChevronRight />
