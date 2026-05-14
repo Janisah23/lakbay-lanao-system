@@ -61,7 +61,8 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
         lng: Number(activePopup.coordinates.lng),
       };
 
-      const targetKey = spot-${activePopup.id}-${target.lat}-${target.lng};
+      // FIXED: Added backticks
+      const targetKey = `spot-${activePopup.id}-${target.lat}-${target.lng}`;
 
       if (lastTargetRef.current === targetKey) return;
 
@@ -86,7 +87,8 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
         lng: Number(userLocation.lng),
       };
 
-      const targetKey = user-${target.lat}-${target.lng};
+      // FIXED: Added backticks
+      const targetKey = `user-${target.lat}-${target.lng}`;
 
       if (lastTargetRef.current === targetKey) return;
 
@@ -106,7 +108,8 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
 
     // Priority 3: reset when popup closes
     if (resetTrigger > 0) {
-      const targetKey = reset-${resetTrigger};
+      // FIXED: Added backticks
+      const targetKey = `reset-${resetTrigger}`;
 
       if (lastTargetRef.current === targetKey) return;
 
@@ -300,7 +303,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     if (typeof spot.location === "string") return spot.location;
 
     if (spot.location?.municipality && spot.location?.province) {
-      return ${spot.location.municipality}, ${spot.location.province};
+      return `${spot.location.municipality} ${spot.location.province}`;
     }
 
     return spot.location?.municipality || "Lanao del Sur";
@@ -482,7 +485,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
                     <button
                       type="button"
-                      onClick={() => navigate(/destination/${activePopup.id})}
+                      onClick={() => navigate(`/destination/${activePopup.id}`)}
                       className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:text-xs"
                     >
                       Explore place <FiChevronRight />
