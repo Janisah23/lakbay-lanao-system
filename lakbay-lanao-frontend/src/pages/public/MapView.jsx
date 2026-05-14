@@ -94,6 +94,14 @@ function Map() {
       setSelectedSpot(null);
     } else {
       setSelectedSpot(place);
+      
+      // FIX: Smoothly scroll back up to the map so the user can see the location!
+      const mapEl = document.getElementById("mobile-map-container");
+      if (mapEl) {
+        const yOffset = -100; // Account for the sticky Navbar height
+        const y = mapEl.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
     }
   };
 
@@ -101,7 +109,6 @@ function Map() {
     <>
       <Navbar />
 
-      {/* PAGE WRAPPER RULES APPLIED */}
       <section className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] px-4 sm:px-6 lg:px-10 pt-28 md:pt-32 pb-20 font-sans text-gray-900">
         <div className="mx-auto max-w-7xl">
           {/* HEADER */}
@@ -144,7 +151,7 @@ function Map() {
                 />
               </div>
 
-              {/* Filter buttons - Responsive wrapping */}
+              {/* Filter buttons */}
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {FILTERS.map((filter) => (
                   <button
@@ -164,11 +171,11 @@ function Map() {
             </div>
           </div>
 
-          {/* MAIN GRID - Mobile Stacked, Desktop Side-by-Side */}
+          {/* MAIN GRID */}
           <div className="mt-6 sm:mt-8 flex flex-col lg:grid lg:grid-cols-4 gap-6">
             
-            {/* MAP CONTAINER - Ordered first on mobile to prioritize the map */}
-            <div className="order-1 lg:order-2 lg:col-span-3">
+            {/* MAP CONTAINER - Added the ID so we can scroll back to it */}
+            <div id="mobile-map-container" className="order-1 lg:order-2 lg:col-span-3">
               <div className="h-[380px] sm:h-[480px] lg:h-[680px] w-full overflow-hidden rounded-[20px] sm:rounded-[28px] border border-blue-100 bg-white shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
                 <LanaoMap
                   selectedSpot={selectedSpot}
@@ -216,7 +223,7 @@ function Map() {
                 )}
               </div>
 
-              {/* TOURIST RESPONSIVE CARDS APPLIED */}
+              {/* LIST / CARDS */}
               <div
                 className="flex-1 overflow-y-auto pr-1 sm:pr-2 grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-1 lg:flex lg:flex-col lg:gap-3"
                 style={{ scrollbarWidth: "thin" }}
@@ -239,7 +246,7 @@ function Map() {
                           : "border-gray-100 bg-white hover:border-blue-200 hover:bg-[#f8fbff]"
                       }`}
                     >
-                      {/* Image - Tall on Mobile, Square on Desktop */}
+                      {/* Image */}
                       <div className="relative shrink-0 overflow-hidden rounded-[16px] sm:rounded-[20px] lg:rounded-[16px] bg-blue-50 shadow-sm h-[120px] sm:h-[165px] lg:h-14 lg:w-14 w-full">
                         <img
                           src={place.imageURL || FALLBACK_IMAGE}
@@ -276,7 +283,6 @@ function Map() {
                 )}
               </div>
             </aside>
-
           </div>
         </div>
       </section>

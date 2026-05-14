@@ -21,38 +21,13 @@ const defaultZoom = 10;
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
-const smoothZoomTo = (map, targetZoom, delay = 85) => {
-  if (!map) return () => {};
-
-  const currentZoom = Math.round(map.getZoom() || defaultZoom);
-
-  if (currentZoom === targetZoom) return () => {};
-
-  const direction = targetZoom > currentZoom ? 1 : -1;
-  let zoom = currentZoom;
-
-  const timer = setInterval(() => {
-    zoom += direction;
-    map.setZoom(zoom);
-
-    if (zoom === targetZoom) {
-      clearInterval(timer);
-    }
-  }, delay);
-
-  return () => clearInterval(timer);
-};
-
-// 1. MAP CHILD: One safe controller for all map movements
+// 1. MAP CHILD: Safely controls camera movements natively without halting animations
 function MapCameraController({ activePopup, userLocation, resetTrigger }) {
   const map = useMap();
   const lastTargetRef = useRef("");
 
   useEffect(() => {
     if (!map) return;
-
-    let clearZoom = () => {};
-    let zoomTimer;
 
     // Priority 1: selected pin / active popup
     if (activePopup?.coordinates?.lat && activePopup?.coordinates?.lng) {
@@ -61,23 +36,22 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
         lng: Number(activePopup.coordinates.lng),
       };
 
-      // FIXED: Added backticks
       const targetKey = `spot-${activePopup.id}-${target.lat}-${target.lng}`;
 
+      // Prevent redundant panning if we are already targeting this spot
       if (lastTargetRef.current === targetKey) return;
-
       lastTargetRef.current = targetKey;
 
+      // Use native map camera commands sequentially to prevent animation halting
+      map.setZoom(15);
       map.panTo(target);
 
-      zoomTimer = setTimeout(() => {
-        clearZoom = smoothZoomTo(map, 15, 85);
-      }, 250);
+      // Shift the camera UP slightly (-120px) so the popup isn't cut off at the top
+      setTimeout(() => {
+        map.panBy(0, -120); 
+      }, 150);
 
-      return () => {
-        clearTimeout(zoomTimer);
-        clearZoom();
-      };
+      return;
     }
 
     // Priority 2: user location
@@ -87,44 +61,24 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
         lng: Number(userLocation.lng),
       };
 
-      // FIXED: Added backticks
       const targetKey = `user-${target.lat}-${target.lng}`;
-
       if (lastTargetRef.current === targetKey) return;
-
       lastTargetRef.current = targetKey;
 
+      map.setZoom(14);
       map.panTo(target);
 
-      zoomTimer = setTimeout(() => {
-        clearZoom = smoothZoomTo(map, 14, 90);
-      }, 250);
-
-      return () => {
-        clearTimeout(zoomTimer);
-        clearZoom();
-      };
+      return;
     }
 
     // Priority 3: reset when popup closes
     if (resetTrigger > 0) {
-      // FIXED: Added backticks
       const targetKey = `reset-${resetTrigger}`;
-
       if (lastTargetRef.current === targetKey) return;
-
       lastTargetRef.current = targetKey;
 
+      map.setZoom(defaultZoom);
       map.panTo(defaultCenter);
-
-      zoomTimer = setTimeout(() => {
-        clearZoom = smoothZoomTo(map, defaultZoom, 90);
-      }, 250);
-
-      return () => {
-        clearTimeout(zoomTimer);
-        clearZoom();
-      };
     }
   }, [map, activePopup, userLocation, resetTrigger]);
 
@@ -139,7 +93,6 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
 
   useEffect(() => {
     if (!map) return;
-
     if (!clusterer.current) {
       clusterer.current = new MarkerClusterer({ map });
     }
@@ -239,6 +192,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     return () => unsubscribe();
   }, []);
 
+  // Sync external prop selection (Includes deselecting)
   useEffect(() => {
     if (selectedSpot !== undefined) {
       setActivePopup(selectedSpot);
@@ -303,7 +257,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     if (typeof spot.location === "string") return spot.location;
 
     if (spot.location?.municipality && spot.location?.province) {
-      return `${spot.location.municipality} ${spot.location.province}`;
+      return `${spot.location.municipality}, ${spot.location.province}`;
     }
 
     return spot.location?.municipality || "Lanao del Sur";
@@ -337,20 +291,9 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
         }
 
         @keyframes pulse-ring {
-          0% {
-            transform: scale(0.8);
-            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
-          }
-
-          70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 15px rgba(37, 99, 235, 0);
-          }
-
-          100% {
-            transform: scale(0.8);
-            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
-          }
+          0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
+          100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
 
         .user-location-dot {
@@ -419,10 +362,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
                       <button
                         type="button"
-                        onClick={() => {
-                          if (onSpotClick) onSpotClick(null);
-                          else setActivePopup(null);
-                        }}
+                        onClick={handleCloseClick}
                         className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
                         aria-label="Close popup"
                       >
@@ -451,10 +391,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
 
                       <button
                         type="button"
-                        onClick={() => {
-                          if (onSpotClick) onSpotClick(null);
-                          else setActivePopup(null);
-                        }}
+                        onClick={handleCloseClick}
                         className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
                         aria-label="Close popup"
                       >
