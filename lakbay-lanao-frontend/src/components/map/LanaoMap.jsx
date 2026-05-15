@@ -2,7 +2,14 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
-import { FiMapPin, FiChevronRight, FiNavigation, FiX } from "react-icons/fi";
+import {
+  FiMapPin,
+  FiChevronRight,
+  FiNavigation,
+  FiX,
+  FiMaximize2,
+  FiMinimize2,
+} from "react-icons/fi";
 import {
   APIProvider,
   Map,
@@ -21,7 +28,7 @@ const defaultZoom = 10;
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
-// 1. MAP CHILD: Safely controls camera movements natively without halting animations
+// 1. MAP CHILD: Safely controls camera movements
 function MapCameraController({ activePopup, userLocation, resetTrigger }) {
   const map = useMap();
   const lastTargetRef = useRef("");
@@ -38,20 +45,17 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
 
       const targetKey = `spot-${activePopup.id}-${target.lat}-${target.lng}`;
 
-      // Prevent redundant panning if we are already targeting this spot
       if (lastTargetRef.current === targetKey) return;
       lastTargetRef.current = targetKey;
 
-      // Use native map camera commands sequentially to prevent animation halting
       map.setZoom(15);
       map.panTo(target);
 
-      // Shift the camera UP slightly (-120px) so the popup isn't cut off at the top
-      setTimeout(() => {
-        map.panBy(0, -120); 
+      const timer = setTimeout(() => {
+        map.panBy(0, -120);
       }, 150);
 
-      return;
+      return () => clearTimeout(timer);
     }
 
     // Priority 2: user location
@@ -62,6 +66,7 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
       };
 
       const targetKey = `user-${target.lat}-${target.lng}`;
+
       if (lastTargetRef.current === targetKey) return;
       lastTargetRef.current = targetKey;
 
@@ -74,6 +79,7 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
     // Priority 3: reset when popup closes
     if (resetTrigger > 0) {
       const targetKey = `reset-${resetTrigger}`;
+
       if (lastTargetRef.current === targetKey) return;
       lastTargetRef.current = targetKey;
 
@@ -93,6 +99,7 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
 
   useEffect(() => {
     if (!map) return;
+
     if (!clusterer.current) {
       clusterer.current = new MarkerClusterer({ map });
     }
@@ -138,7 +145,7 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
   );
 }
 
-// 3. Custom Component to render the 360 Panorama natively and safely
+// 3. Custom Component to render the 360 Panorama
 function CustomStreetView({ lat, lng }) {
   const containerRef = useRef(null);
 
@@ -159,7 +166,11 @@ function CustomStreetView({ lat, lng }) {
 }
 
 // 4. MAIN WRAPPER
-export default function LanaoMap({ selectedSpot, onSpotClick }) {
+export default function LanaoMap({
+  selectedSpot,
+  onSpotClick,
+  heightClass = "h-[420px] sm:h-[560px] lg:h-[680px]",
+}) {
   const [spots, setSpots] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
   const [showStreetView, setShowStreetView] = useState(false);
@@ -167,6 +178,8 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(0);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const previousPopup = useRef(null);
   const navigate = useNavigate();
@@ -192,10 +205,14 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     return () => unsubscribe();
   }, []);
 
-  // Sync external prop selection (Includes deselecting)
+  // Sync external prop selection
   useEffect(() => {
     if (selectedSpot !== undefined) {
       setActivePopup(selectedSpot);
+
+      if (selectedSpot) {
+        setUserLocation(null);
+      }
     }
   }, [selectedSpot]);
 
@@ -207,14 +224,40 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     previousPopup.current = activePopup;
   }, [activePopup]);
 
+  // Close fullscreen using ESC
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFullscreen]);
+
   const handleMarkerClick = (spot) => {
+    setUserLocation(null);
+
     if (activePopup && activePopup.id === spot.id) {
       if (onSpotClick) onSpotClick(null);
       else setActivePopup(null);
-    } else {
-      if (onSpotClick) onSpotClick(spot);
-      else setActivePopup(spot);
+
+      return;
     }
+
+    setActivePopup(spot);
+
+    if (onSpotClick) onSpotClick(spot);
   };
 
   const handleCloseClick = () => {
@@ -263,6 +306,10 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
     return spot.location?.municipality || "Lanao del Sur";
   };
 
+  const mapWrapperClass = isFullscreen
+    ? "fixed inset-0 z-[99999] h-screen w-screen rounded-none bg-white"
+    : `relative w-full overflow-hidden rounded-[20px] shadow-sm sm:rounded-[28px] ${heightClass}`;
+
   return (
     <>
       <style>{`
@@ -291,9 +338,20 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
         }
 
         @keyframes pulse-ring {
-          0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
-          70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
-          100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+          0% {
+            transform: scale(0.8);
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+          }
+
+          70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 15px rgba(37, 99, 235, 0);
+          }
+
+          100% {
+            transform: scale(0.8);
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+          }
         }
 
         .user-location-dot {
@@ -307,7 +365,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
         }
       `}</style>
 
-      <div className="relative h-[420px] w-full overflow-hidden rounded-[20px] shadow-sm sm:h-[560px] sm:rounded-[28px] lg:h-[680px]">
+      <div className={mapWrapperClass}>
         <APIProvider apiKey={GOOGLE_MAPS_KEY}>
           <Map
             defaultCenter={defaultCenter}
@@ -433,6 +491,7 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
             )}
           </Map>
 
+          {/* FIND LOCATION */}
           <button
             onClick={handleFindMyLocation}
             disabled={isLocating}
@@ -452,6 +511,31 @@ export default function LanaoMap({ selectedSpot, onSpotClick }) {
               {isLocating ? "Locating..." : "Locate"}
             </span>
           </button>
+
+          {/* FULLSCREEN BUTTON */}
+          <button
+            type="button"
+            onClick={() => setIsFullscreen((prev) => !prev)}
+            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-blue-100 bg-white/95 text-[#2563eb] shadow-[0_8px_20px_rgba(37,99,235,0.12)] backdrop-blur-md transition hover:border-[#2563eb] hover:bg-blue-50 active:scale-95 sm:right-6 sm:h-11 sm:w-11"
+            aria-label={isFullscreen ? "Exit fullscreen map" : "Open fullscreen map"}
+          >
+            {isFullscreen ? (
+              <FiMinimize2 className="text-base sm:text-lg" />
+            ) : (
+              <FiMaximize2 className="text-base sm:text-lg" />
+            )}
+          </button>
+
+          {/* FULLSCREEN EXIT LABEL */}
+          {isFullscreen && (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(false)}
+              className="absolute left-1/2 top-4 z-10 hidden -translate-x-1/2 rounded-full border border-blue-100 bg-white/95 px-4 py-2 text-xs font-bold text-gray-700 shadow-[0_8px_20px_rgba(37,99,235,0.12)] backdrop-blur-md transition hover:border-[#2563eb] hover:text-[#2563eb] sm:block"
+            >
+              Press Esc or click icon to exit
+            </button>
+          )}
         </APIProvider>
       </div>
     </>

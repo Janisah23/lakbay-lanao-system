@@ -123,6 +123,30 @@ function Gallery() {
     setCurrentIndex(prev);
   };
 
+  useEffect(() => {
+    if (!selected) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowRight") {
+        nextMedia();
+      }
+
+      if (event.key === "ArrowLeft") {
+        prevMedia();
+      }
+
+      if (event.key === "Escape") {
+        setSelected(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selected, currentIndex, filteredMedia]);
+
   return (
     <>
       <Navbar />
@@ -131,8 +155,6 @@ function Gallery() {
         <div className="mx-auto max-w-7xl">
           {/* HEADER */}
           <div className="text-center">
-            
-
             <h1 className="text-2xl font-bold leading-snug tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
               Multimedia Gallery
             </h1>
@@ -287,6 +309,8 @@ function Gallery() {
             <p className="mt-4 line-clamp-2 px-10 text-sm font-medium text-white sm:text-lg">
               {selected.title}
             </p>
+
+            
           </div>
         </div>
       )}
