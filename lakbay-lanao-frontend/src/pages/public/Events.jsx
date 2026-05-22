@@ -4,7 +4,7 @@ import Footer from "../../components/common/Footer";
 
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FiSearch,
   FiCalendar,
@@ -53,18 +53,26 @@ const getShortDescription = (text) => {
   const cleanText = String(text).replace(/\s+/g, " ").trim();
   const firstSentence = cleanText.match(/[^.!?]+[.!?]/)?.[0] || cleanText;
 
-  if (firstSentence.length <= 92) return firstSentence;
+  if (firstSentence.length <= 120) return firstSentence;
 
-  return `${firstSentence.slice(0, 92).trim()}...`;
+  return `${firstSentence.slice(0, 120).trim()}...`;
 };
 
 function Events() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [visibleCount, setVisibleCount] = useState(10);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    setSearchTerm("");
+    setActiveCategory("all");
+    setVisibleCount(10);
+  }, [location.key]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -100,7 +108,7 @@ function Events() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [location.key]);
 
   const categories = useMemo(() => {
     const unique = events
@@ -138,7 +146,7 @@ function Events() {
   const visibleEvents = filteredEvents.slice(0, visibleCount);
 
   return (
-    <div className="font-sans min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] font-sans text-gray-900">
       <Navbar />
 
       {/* HEADER */}
@@ -223,11 +231,11 @@ function Events() {
                 <article
                   key={event.id}
                   onClick={() => navigate(`/event/${event.id}`)}
-                  className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[310px] sm:rounded-[24px] lg:min-h-[438px] lg:rounded-[30px]"
+                  className="group flex min-h-[320px] cursor-pointer flex-col overflow-hidden rounded-[22px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[370px] sm:rounded-[26px] lg:min-h-[455px] lg:rounded-[30px]"
                 >
                   {/* IMAGE */}
                   <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
-                    <div className="relative h-[120px] shrink-0 overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[248px] lg:rounded-[24px]">
+                    <div className="relative h-[120px] shrink-0 overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[238px] lg:rounded-[24px]">
                       <img
                         src={event.imageURL || "/default.jpg"}
                         alt={event.title}
@@ -240,13 +248,13 @@ function Events() {
                   </div>
 
                   {/* CONTENT */}
-                  <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 lg:px-5 lg:pb-5">
-                    <h2 className="line-clamp-2 min-h-[34px] text-xs font-bold leading-tight text-[#2563eb] sm:min-h-[40px] sm:text-sm lg:min-h-0 lg:text-lg lg:leading-[1.25]">
+                  <div className="flex flex-1 flex-col px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4 sm:pt-3.5 lg:px-5 lg:pb-5 lg:pt-4">
+                    <h2 className="line-clamp-2 min-h-[34px] text-xs font-bold leading-tight text-[#2563eb] sm:min-h-[40px] sm:text-sm lg:min-h-[46px] lg:text-lg lg:leading-[1.25]">
                       {event.title}
                     </h2>
 
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-medium text-gray-400 sm:text-xs lg:gap-x-4">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-medium text-gray-400 sm:text-xs lg:gap-x-4">
+                      <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                         <FiCalendar className="shrink-0 text-[#2563eb]" />
                         <span className="line-clamp-1">
                           {formatDate(event.eventDate)}
@@ -254,7 +262,7 @@ function Events() {
                       </div>
 
                       {event.eventTime && (
-                        <div className="flex items-center gap-1.5 sm:gap-2">
+                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                           <FiClock className="shrink-0 text-[#2563eb]" />
                           <span className="line-clamp-1">
                             {event.eventTime}
@@ -263,21 +271,23 @@ function Events() {
                       )}
                     </div>
 
-                    <p className="mt-1.5 line-clamp-2 flex-1 text-[11px] leading-relaxed text-gray-500 sm:text-xs lg:line-clamp-1 lg:text-sm lg:leading-6">
+                    <p className="mt-2 line-clamp-4 min-h-[76px] text-[11px] leading-relaxed text-gray-500 sm:line-clamp-4 sm:min-h-[80px] sm:text-xs lg:mt-3 lg:line-clamp-3 lg:min-h-[72px] lg:text-sm lg:leading-6">
                       {getShortDescription(event.summary)}
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/event/${event.id}`);
-                      }}
-                      className="mt-3 w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:mt-4 sm:w-fit sm:px-4 sm:py-2 sm:text-[11px] lg:mt-auto lg:flex lg:items-center lg:gap-2 lg:self-start lg:px-5 lg:py-2.5 lg:text-xs"
-                    >
-                      <span>View event</span>
-                      <FiChevronRight className="hidden lg:block" />
-                    </button>
+                    <div className="mt-auto pt-3 sm:pt-4">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/event/${event.id}`);
+                        }}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-full bg-[#2563eb] px-3 py-2 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:w-fit sm:px-4 sm:text-[11px] lg:gap-2 lg:self-start lg:px-5 lg:py-2.5 lg:text-xs"
+                      >
+                        <span>View event</span>
+                        <FiChevronRight className="hidden lg:block" />
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}

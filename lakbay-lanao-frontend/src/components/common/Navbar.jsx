@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
@@ -31,7 +31,6 @@ import { logAction } from "../../utils/logAction";
 
 function Navbar() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -51,7 +50,7 @@ function Navbar() {
     text.toString().toLowerCase().replaceAll(" ", "").replaceAll("&", "");
 
   const navLinkClass =
-    "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
+    "relative cursor-pointer py-1 text-gray-700 font-semibold transition-all duration-300 hover:text-blue-600 hover:drop-shadow-[0_0_10px_rgba(37,99,235,0.4)] after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all hover:after:w-full";
 
   const filteredResults = searchItems.filter((item) => {
     const term = searchTerm.toLowerCase();
@@ -75,7 +74,10 @@ function Navbar() {
     "Tourist";
 
   const displayFullName =
-    userProfile?.fullName || user?.displayName || userProfile?.username || "Tourist";
+    userProfile?.fullName ||
+    user?.displayName ||
+    userProfile?.username ||
+    "Tourist";
 
   const displayEmail = user?.email || userProfile?.email || "";
 
@@ -110,12 +112,30 @@ function Navbar() {
     setOpenMenu(false);
     closeSearch();
 
-    if (location.pathname === path) {
-      navigate(0);
+    if (window.location.pathname === path) {
+      window.location.reload();
       return;
     }
 
     navigate(path);
+  };
+
+  const handleOpenChatbot = () => {
+    if (!user) {
+      refreshNavigate("/login");
+      return;
+    }
+
+    closePanels();
+    setOpenMenu(false);
+
+    sessionStorage.setItem("openLakbayChatbot", "true");
+
+    navigate("/", {
+      state: {
+        openChatbot: true,
+      },
+    });
   };
 
   const handleLogout = async () => {
@@ -141,36 +161,16 @@ function Navbar() {
     navigate("/login");
   };
 
-  const handleOpenChatbot = () => {
-    if (!user) {
-      refreshNavigate("/login");
-      return;
-    }
-
-    navigate("/", { state: { openChatbot: true } });
-    closePanels();
-    setOpenMenu(false);
-  };
-
   const handleResultClick = (item) => {
-    let path = "/";
-
     if (item.routeType === "place") {
-      path = `/destination/${item.id}`;
+      navigate(`/destination/${item.id}`);
     } else if (item.routeType === "article") {
-      path = `/article/${item.id}`;
+      navigate(`/article/${item.id}`);
     } else if (item.routeType === "event") {
-      path = `/event/${item.id}`;
+      navigate(`/event/${item.id}`);
     }
 
     closeSearch();
-
-    if (location.pathname === path) {
-      navigate(0);
-      return;
-    }
-
-    navigate(path);
   };
 
   useEffect(() => {
@@ -235,7 +235,9 @@ function Navbar() {
           title: item.name || item.title,
           summary:
             item.description ||
-            `${item.location?.municipality || ""} ${item.location?.province || ""}`,
+            `${item.location?.municipality || ""} ${
+              item.location?.province || ""
+            }`,
           imageURL: item.imageURL,
           searchType: item.category || "Destination",
           routeType: "place",
@@ -291,20 +293,16 @@ function Navbar() {
   return (
     <>
       <nav
-        onMouseLeave={() => {
-          setShowExplore(false);
-          setShowFeatures(false);
-        }}
         className={`fixed left-0 top-0 z-[1000] flex w-full justify-center transition-all duration-300 ${
           isScrolled ? "pt-2 md:pt-4" : "pt-4 md:pt-6"
         }`}
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`relative flex w-[92%] max-w-7xl items-center justify-between rounded-full border border-blue-100 bg-white transition-all duration-300 ${
+          className={`flex w-[92%] max-w-7xl items-center justify-between rounded-full border border-gray-200 bg-white/95 backdrop-blur-md transition-all duration-300 ${
             isScrolled
-              ? "px-4 py-2 shadow-[0_10px_30px_rgba(37,99,235,0.10)] md:px-8 md:py-2.5"
-              : "px-4 py-2.5 shadow-[0_8px_24px_rgba(37,99,235,0.08)] md:px-10 md:py-3"
+              ? "px-4 py-2 shadow-lg md:px-8 md:py-2.5"
+              : "px-4 py-2.5 shadow-md md:px-10 md:py-3"
           }`}
         >
           <div
@@ -386,10 +384,12 @@ function Navbar() {
                 setShowMobileMenu(false);
                 setMobileDropdown(null);
               }}
-              className="flex items-center gap-2 rounded-full px-2 py-2 text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 md:px-3"
+              className="flex items-center gap-2 rounded-full px-2 py-2 text-gray-700 transition hover:bg-gray-50 hover:text-blue-600 md:px-3"
             >
               <FiSearch size={20} className="stroke-[2.5]" />
-              <span className="hidden text-sm font-semibold md:block">Search</span>
+              <span className="hidden text-sm font-semibold md:block">
+                Search
+              </span>
             </button>
 
             {!user ? (
@@ -546,184 +546,9 @@ function Navbar() {
               </div>
             )}
           </div>
-
-          {showExplore && (
-            <div className="absolute left-1/2 top-[calc(100%+18px)] z-[1100] hidden w-[720px] -translate-x-1/2 rounded-[32px] border border-blue-100 bg-white/95 p-4 shadow-[0_24px_70px_rgba(37,99,235,0.16)] backdrop-blur-xl animate-dropdown lg:block">
-              <div className="grid grid-cols-[1fr_250px] gap-4">
-                <div className="grid gap-2">
-                  <button
-                    onClick={() => refreshNavigate("/destinations")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiMapPin size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Destinations
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Explore tourist spots around Lanao del Sur.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => refreshNavigate("/landmarks")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiLayers size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Landmarks
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Discover iconic places and scenic attractions.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => refreshNavigate("/cultural-heritage")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiHome size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Cultural Heritage
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Learn about culture, tradition, and local identity.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => refreshNavigate("/establishments")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiBriefcase size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Establishments
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Find hotels, restaurants, and local businesses.
-                      </p>
-                    </div>
-                  </button>
-                </div>
-
-                <div className="overflow-hidden rounded-[26px] border border-blue-50 bg-blue-50">
-                  <img
-                    src={explorePreview}
-                    alt="Explore Preview"
-                    className="h-full min-h-[300px] w-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showFeatures && (
-            <div className="absolute left-1/2 top-[calc(100%+18px)] z-[1100] hidden w-[720px] -translate-x-1/2 rounded-[32px] border border-blue-100 bg-white/95 p-4 shadow-[0_24px_70px_rgba(37,99,235,0.16)] backdrop-blur-xl animate-dropdown lg:block">
-              <div className="grid grid-cols-[1fr_250px] gap-4">
-                <div className="grid gap-2">
-                  <button
-                    onClick={() => refreshNavigate("/map")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiMap size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Interactive Map
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        View destinations through a smart tourism map.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={handleOpenChatbot}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiMessageCircle size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        AI Chatbot
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Ask for destination suggestions and travel help.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => refreshNavigate("/itinerary")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiCompass size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Itinerary Builder
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Plan your trip and organize preferred places.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => refreshNavigate("/favorites")}
-                    className="group flex items-center gap-4 rounded-[22px] p-4 text-left transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <FiHeart size={20} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-700">
-                        Top Picks
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Save and revisit your favorite places.
-                      </p>
-                    </div>
-                  </button>
-                </div>
-
-                <div className="overflow-hidden rounded-[26px] border border-blue-50 bg-blue-50">
-                  <img
-                    src={featurePreview}
-                    alt="Feature Preview"
-                    className="h-full min-h-[300px] w-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </nav>
 
-      {/* COMPACT MOBILE MENU */}
       {showMobileMenu && (
         <div
           onClick={(e) => e.stopPropagation()}
@@ -805,16 +630,16 @@ function Navbar() {
                       onClick={() => refreshNavigate("/landmarks")}
                       className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiLayers className="text-blue-500" size={14} />
+                      <FiHome className="text-blue-500" size={14} />
                       Landmarks
                     </button>
 
                     <button
-                      onClick={() => refreshNavigate("/cultural-heritage")}
+                      onClick={() => refreshNavigate("/cultural")}
                       className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiHome className="text-blue-500" size={14} />
-                      Cultural Heritage
+                      <FiLayers className="text-blue-500" size={14} />
+                      Cultural & Heritage
                     </button>
 
                     <button
@@ -875,6 +700,14 @@ function Navbar() {
                     </button>
 
                     <button
+                      onClick={() => refreshNavigate("/events-calendar")}
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                    >
+                      <FiCalendar className="text-blue-500" size={14} />
+                      Events Calendar
+                    </button>
+
+                    <button
                       onClick={() => refreshNavigate("/itinerary")}
                       className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
@@ -929,112 +762,298 @@ function Navbar() {
       )}
 
       {showSearch && (
-        <div className="search-overlay fixed inset-0 z-[2000] flex items-start justify-center px-4 pt-24 backdrop-blur-sm sm:pt-28">
-          <div className="search-glass-card w-full max-w-3xl p-3 sm:p-5">
-            <div className="search-inner-card p-4 sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-gray-800 sm:text-xl">
-                    Search Lakbay Lanao
-                  </h2>
-                  <p className="text-xs text-gray-500 sm:text-sm">
-                    Find destinations, events, articles, and travel spots.
-                  </p>
-                </div>
-
-                <button
-                  onClick={closeSearch}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-gray-600 transition hover:bg-blue-100 hover:text-blue-700"
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
-
-              <div className="search-input-box mb-4 flex items-center gap-3 px-4 py-3">
-                <FiSearch className="text-blue-600" size={20} />
+        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-black/35 px-4 pt-28 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-3xl rounded-[32px] border border-gray-200 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] p-4 shadow-xl md:p-6">
+            <div className="rounded-[28px] border border-gray-200 bg-white p-5 shadow-sm md:p-6">
+              <div className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-5 py-3.5 transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
+                <FiSearch className="text-xl text-[#2563eb]" />
 
                 <input
                   type="text"
+                  placeholder="Search destinations, events, establishments..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search places, events, articles..."
-                  className="w-full bg-transparent text-sm font-medium text-gray-700 outline-none placeholder:text-gray-400"
+                  className="flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none placeholder:text-gray-400"
                   autoFocus
                 />
+
+                <button
+                  onClick={closeSearch}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                >
+                  ✕
+                </button>
               </div>
 
-              <div className="mb-4 flex flex-wrap gap-2">
-                {["all", "destination", "article", "event", "culture"].map(
-                  (filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setActiveFilter(filter)}
-                      className={`search-filter-btn px-4 py-2 text-xs font-bold capitalize ${
-                        activeFilter === filter ? "active" : ""
-                      }`}
-                    >
-                      {filter}
-                    </button>
-                  )
-                )}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {[
+                  { label: "All", value: "all" },
+                  { label: "Destination", value: "destination" },
+                  { label: "Event", value: "event" },
+                  { label: "Establishment", value: "establishment" },
+                  {
+                    label: "Cultural & Heritage",
+                    value: "culturalheritagesite",
+                  },
+                  { label: "Landmark", value: "landmark" },
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setActiveFilter(filter.value)}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                      activeFilter === filter.value
+                        ? "bg-[#2563eb] text-white shadow-sm"
+                        : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
               </div>
 
-              <div className="max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
-                {filteredResults.length === 0 ? (
-                  <div className="search-empty-state flex flex-col items-center justify-center px-6 py-12 text-center">
-                    <FiSearch className="mb-3 text-blue-300" size={34} />
-                    <h3 className="text-sm font-bold text-gray-700">
-                      No results found
-                    </h3>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Try another keyword or filter.
+              <div className="mt-6 max-h-[420px] space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+                {searchTerm === "" && (
+                  <div className="rounded-[24px] bg-blue-50/60 py-14 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      Start typing to search Lanao del Sur
                     </p>
                   </div>
-                ) : (
-                  <div className="grid gap-3">
-                    {filteredResults.map((item) => (
-                      <button
-                        key={`${item.routeType}-${item.id}`}
-                        onClick={() => handleResultClick(item)}
-                        className="search-result-card flex w-full items-center gap-3 p-3 text-left"
-                      >
-                        {item.imageURL ? (
-                          <img
-                            src={item.imageURL}
-                            alt={item.title}
-                            className="search-result-img h-16 w-16 flex-shrink-0"
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <div className="search-result-img flex h-16 w-16 flex-shrink-0 items-center justify-center text-blue-500">
-                            <FiImage size={22} />
-                          </div>
-                        )}
+                )}
 
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1 flex items-center gap-2">
-                            <h4 className="truncate text-sm font-bold text-gray-800">
-                              {item.title}
-                            </h4>
-
-                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-600">
-                              {item.searchType}
-                            </span>
-                          </div>
-
-                          <p className="line-clamp-2 text-xs text-gray-500">
-                            {item.summary || "No description available."}
-                          </p>
-                        </div>
-
-                        <FiChevronRight className="text-gray-400" />
-                      </button>
-                    ))}
+                {searchTerm !== "" && filteredResults.length === 0 && (
+                  <div className="rounded-[24px] bg-blue-50/60 py-14 text-center">
+                    <p className="text-sm font-medium text-gray-400">
+                      No results found for "{searchTerm}"
+                    </p>
                   </div>
                 )}
+
+                {searchTerm !== "" &&
+                  filteredResults.map((item) => (
+                    <div
+                      key={`${item.routeType}-${item.id}`}
+                      onClick={() => handleResultClick(item)}
+                      className="flex cursor-pointer items-center gap-4 rounded-[24px] border border-gray-100 bg-white p-3 transition hover:border-blue-100 hover:bg-blue-50/50"
+                    >
+                      <img
+                        src={item.imageURL || "/default-image.png"}
+                        alt={item.title}
+                        className="h-20 w-20 rounded-[20px] bg-blue-50 object-cover"
+                      />
+
+                      <div className="min-w-0">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
+                          {item.searchType || "General"}
+                        </span>
+
+                        <h3 className="mt-2 line-clamp-1 font-bold text-[#1e3a8a]">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-1 line-clamp-1 text-sm text-gray-500">
+                          {item.summary || "No description available."}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExplore && (
+        <div
+          className="fixed left-0 top-[90px] z-[990] hidden w-full justify-center animate-fadeIn lg:flex"
+          onMouseLeave={() => setShowExplore(false)}
+        >
+          <div className="grid w-[95%] max-w-7xl grid-cols-2 gap-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-xl">
+            <div className="grid grid-cols-2 gap-5">
+              <div
+                onClick={() => {
+                  navigate("/destinations");
+                  setShowExplore(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiMapPin className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">Destinations</h4>
+                  <p className="mt-1 text-sm text-gray-500">Tourist spots</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  navigate("/cultural");
+                  setShowExplore(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiLayers className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Cultural & Heritage
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Traditions & culture
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  navigate("/establishments");
+                  setShowExplore(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiBriefcase className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">Establishments</h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Hotels & restaurants
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  navigate("/landmarks");
+                  setShowExplore(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiHome className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">Landmarks</h4>
+                  <p className="mt-1 text-sm text-gray-500">Famous places</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center text-center">
+              <img
+                src={explorePreview}
+                className="h-38 w-80 rounded-xl object-cover shadow"
+                alt="Explore Preview"
+              />
+              <span className="mt-2 text-sm text-gray-500">Explore Lanao</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFeatures && (
+        <div
+          className="fixed left-0 top-[90px] z-[990] hidden w-full justify-center animate-fadeIn lg:flex"
+          onMouseLeave={() => setShowFeatures(false)}
+        >
+          <div className="grid w-[95%] max-w-7xl grid-cols-2 gap-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-xl">
+            <div className="grid grid-cols-2 gap-5">
+              <div
+                onClick={() => {
+                  navigate("/map");
+                  setShowFeatures(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiMap className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Interactive Map
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Explore destinations visually
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={handleOpenChatbot}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiMessageCircle className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">AI Chatbot</h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Instant travel assistance
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  navigate("/events-calendar");
+                  setShowFeatures(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiCalendar className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Events Calendar
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    View events in calendar format
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  if (!user) navigate("/login");
+                  else navigate("/itinerary");
+
+                  setShowFeatures(false);
+                }}
+                className="group flex cursor-pointer items-start gap-4 rounded-2xl p-4 transition hover:bg-blue-50"
+              >
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563eb] transition group-hover:bg-[#2563eb] group-hover:text-white">
+                  <FiCompass className="text-lg" />
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-600">
+                    Itinerary Builder
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Plan your trip smartly
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center text-center">
+              <img
+                src={featurePreview}
+                className="h-38 w-80 rounded-2xl object-cover shadow-md"
+                alt="Features Preview"
+              />
+              <span className="mt-4 text-sm text-gray-500">
+                Explore smarter with Lakbay Lanao
+              </span>
             </div>
           </div>
         </div>
