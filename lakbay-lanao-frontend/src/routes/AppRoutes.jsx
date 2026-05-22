@@ -45,7 +45,7 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Tourist Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
 
@@ -65,7 +65,6 @@ function AppRoutes() {
         <Route path="/events-calendar" element={<EventsCalendar />} />
 
         <Route path="/destination/:id" element={<PlacesDetails />} />
-
         <Route path="/chatbot" element={<TourismChatbot />} />
 
         {/* Auth Routes */}
