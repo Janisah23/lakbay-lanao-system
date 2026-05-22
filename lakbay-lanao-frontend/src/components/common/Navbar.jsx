@@ -723,41 +723,42 @@ function Navbar() {
         </div>
       </nav>
 
+      {/* COMPACT MOBILE MENU */}
       {showMobileMenu && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="fixed left-0 top-[72px] z-[999] flex w-full justify-center px-4 sm:top-[88px] lg:hidden"
+          className="fixed left-0 top-[70px] z-[999] flex w-full justify-center px-4 sm:top-[82px] lg:hidden"
         >
-          <div className="w-full max-w-[390px] max-h-[calc(100vh-110px)] overflow-y-auto custom-scrollbar rounded-[30px] border border-blue-100/80 bg-white/90 p-3 shadow-[0_24px_70px_rgba(37,99,235,0.16)] backdrop-blur-2xl animate-dropdown">
-            <div className="mb-3 overflow-hidden rounded-[24px] border border-blue-50 bg-gradient-to-br from-blue-50 via-white to-white p-4">
-              <div className="flex items-center gap-3">
+          <div className="w-full max-w-[340px] max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar rounded-[24px] border border-blue-100/80 bg-white/90 p-2.5 shadow-[0_18px_45px_rgba(37,99,235,0.14)] backdrop-blur-2xl animate-dropdown">
+            <div className="mb-2 overflow-hidden rounded-[18px] border border-blue-50 bg-gradient-to-br from-blue-50 via-white to-white p-3">
+              <div className="flex items-center gap-2.5">
                 <img
                   src={ptoLogo}
                   alt="PTO Logo"
-                  className="h-10 w-10 rounded-full object-contain"
+                  className="h-8 w-8 rounded-full object-contain"
                   onError={(e) => {
                     e.target.style.display = "none";
                   }}
                 />
 
                 <div className="min-w-0">
-                  <h3 className="truncate text-sm font-bold text-blue-700">
+                  <h3 className="truncate text-xs font-bold text-blue-700">
                     LAKBAY LANAO
                   </h3>
-                  <p className="truncate text-[11px] font-medium text-gray-500">
+                  <p className="truncate text-[10px] font-medium text-gray-500">
                     Explore Lanao del Sur with ease
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid gap-1.5">
               <button
                 onClick={() => refreshNavigate("/")}
-                className="group flex w-full items-center gap-3 rounded-[22px] border border-transparent px-4 py-3.5 text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
+                className="group flex w-full items-center gap-2.5 rounded-[18px] border border-transparent px-3 py-2.5 text-xs font-semibold text-gray-700 transition-all duration-200 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
-                  <FiHome size={18} />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
+                  <FiHome size={16} />
                 </span>
                 <span>Home</span>
               </button>
@@ -768,20 +769,21 @@ function Navbar() {
                     prev === "discover" ? null : "discover"
                   )
                 }
-                className={`group flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
+                className={`group flex w-full items-center justify-between rounded-[18px] border px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
                   mobileDropdown === "discover"
-                    ? "border-blue-100 bg-blue-50/90 text-blue-700 shadow-[0_8px_22px_rgba(37,99,235,0.08)]"
+                    ? "border-blue-100 bg-blue-50/90 text-blue-700 shadow-[0_6px_16px_rgba(37,99,235,0.08)]"
                     : "border-transparent text-gray-700 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
                 }`}
               >
-                <span className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
-                    <FiCompass size={18} />
+                <span className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
+                    <FiCompass size={16} />
                   </span>
                   Discover
                 </span>
 
                 <FiChevronRight
+                  size={16}
                   className={`text-gray-400 transition-transform duration-200 ${
                     mobileDropdown === "discover" ? "rotate-90 text-blue-600" : ""
                   }`}
@@ -789,37 +791,37 @@ function Navbar() {
               </button>
 
               {mobileDropdown === "discover" && (
-                <div className="animate-dropdown rounded-[24px] border border-blue-50 bg-gradient-to-br from-white via-[#f8fbff] to-blue-50/70 p-2">
+                <div className="animate-dropdown rounded-[18px] border border-blue-50 bg-gradient-to-br from-white via-[#f8fbff] to-blue-50/70 p-1.5">
                   <div className="grid gap-1">
                     <button
                       onClick={() => refreshNavigate("/destinations")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiMapPin className="text-blue-500" size={16} />
+                      <FiMapPin className="text-blue-500" size={14} />
                       Destinations
                     </button>
 
                     <button
                       onClick={() => refreshNavigate("/landmarks")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiLayers className="text-blue-500" size={16} />
+                      <FiLayers className="text-blue-500" size={14} />
                       Landmarks
                     </button>
 
                     <button
                       onClick={() => refreshNavigate("/cultural-heritage")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiHome className="text-blue-500" size={16} />
+                      <FiHome className="text-blue-500" size={14} />
                       Cultural Heritage
                     </button>
 
                     <button
                       onClick={() => refreshNavigate("/establishments")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiBriefcase className="text-blue-500" size={16} />
+                      <FiBriefcase className="text-blue-500" size={14} />
                       Establishments
                     </button>
                   </div>
@@ -832,20 +834,21 @@ function Navbar() {
                     prev === "features" ? null : "features"
                   )
                 }
-                className={`group flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
+                className={`group flex w-full items-center justify-between rounded-[18px] border px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
                   mobileDropdown === "features"
-                    ? "border-blue-100 bg-blue-50/90 text-blue-700 shadow-[0_8px_22px_rgba(37,99,235,0.08)]"
+                    ? "border-blue-100 bg-blue-50/90 text-blue-700 shadow-[0_6px_16px_rgba(37,99,235,0.08)]"
                     : "border-transparent text-gray-700 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
                 }`}
               >
-                <span className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
-                    <FiLayers size={18} />
+                <span className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
+                    <FiLayers size={16} />
                   </span>
                   Features
                 </span>
 
                 <FiChevronRight
+                  size={16}
                   className={`text-gray-400 transition-transform duration-200 ${
                     mobileDropdown === "features" ? "rotate-90 text-blue-600" : ""
                   }`}
@@ -853,61 +856,61 @@ function Navbar() {
               </button>
 
               {mobileDropdown === "features" && (
-                <div className="animate-dropdown rounded-[24px] border border-blue-50 bg-gradient-to-br from-white via-[#f8fbff] to-blue-50/70 p-2">
+                <div className="animate-dropdown rounded-[18px] border border-blue-50 bg-gradient-to-br from-white via-[#f8fbff] to-blue-50/70 p-1.5">
                   <div className="grid gap-1">
                     <button
                       onClick={() => refreshNavigate("/map")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiMap className="text-blue-500" size={16} />
+                      <FiMap className="text-blue-500" size={14} />
                       Interactive Map
                     </button>
 
                     <button
                       onClick={handleOpenChatbot}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiMessageCircle className="text-blue-500" size={16} />
+                      <FiMessageCircle className="text-blue-500" size={14} />
                       AI Chatbot
                     </button>
 
                     <button
                       onClick={() => refreshNavigate("/itinerary")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiCompass className="text-blue-500" size={16} />
+                      <FiCompass className="text-blue-500" size={14} />
                       Itinerary Builder
                     </button>
 
                     <button
                       onClick={() => refreshNavigate("/favorites")}
-                      className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left text-xs font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
+                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
                     >
-                      <FiHeart className="text-blue-500" size={16} />
+                      <FiHeart className="text-blue-500" size={14} />
                       Top Picks
                     </button>
                   </div>
                 </div>
               )}
 
-              <div className="my-1 border-t border-blue-50" />
+              <div className="my-0.5 border-t border-blue-50" />
 
               <button
                 onClick={() => refreshNavigate("/gallery")}
-                className="group flex w-full items-center gap-3 rounded-[22px] border border-transparent px-4 py-3.5 text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
+                className="group flex w-full items-center gap-2.5 rounded-[18px] border border-transparent px-3 py-2.5 text-xs font-semibold text-gray-700 transition-all duration-200 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
-                  <FiImage size={18} />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
+                  <FiImage size={16} />
                 </span>
                 Gallery
               </button>
 
               <button
                 onClick={() => refreshNavigate("/events")}
-                className="group flex w-full items-center gap-3 rounded-[22px] border border-transparent px-4 py-3.5 text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
+                className="group flex w-full items-center gap-2.5 rounded-[18px] border border-transparent px-3 py-2.5 text-xs font-semibold text-gray-700 transition-all duration-200 hover:border-blue-100 hover:bg-blue-50/80 hover:text-blue-700"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
-                  <FiCalendar size={18} />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-white">
+                  <FiCalendar size={16} />
                 </span>
                 Events
               </button>
@@ -915,7 +918,7 @@ function Navbar() {
               {!user && (
                 <button
                   onClick={() => refreshNavigate("/login")}
-                  className="mt-3 w-full rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3.5 text-sm font-bold text-white shadow-[0_12px_26px_rgba(37,99,235,0.22)] transition hover:scale-[1.01] hover:shadow-[0_16px_32px_rgba(37,99,235,0.26)]"
+                  className="mt-2 w-full rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-[0_10px_22px_rgba(37,99,235,0.20)] transition hover:scale-[1.01]"
                 >
                   Sign In
                 </button>

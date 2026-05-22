@@ -28,15 +28,14 @@ const defaultZoom = 10;
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1506744626753-1fa44f22908f?w=800&q=80";
 
-// 1. MAP CHILD: Safely controls camera movements
-function MapCameraController({ activePopup, userLocation, resetTrigger }) {
+function MapCameraController({ activePopup, userLocation }) {
   const map = useMap();
   const lastTargetRef = useRef("");
+  const previousPopupRef = useRef(null);
 
   useEffect(() => {
     if (!map) return;
 
-    // Priority 1: selected pin / active popup
     if (activePopup?.coordinates?.lat && activePopup?.coordinates?.lng) {
       const target = {
         lat: Number(activePopup.coordinates.lat),
@@ -46,7 +45,9 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
       const targetKey = `spot-${activePopup.id}-${target.lat}-${target.lng}`;
 
       if (lastTargetRef.current === targetKey) return;
+
       lastTargetRef.current = targetKey;
+      previousPopupRef.current = activePopup;
 
       map.setZoom(15);
       map.panTo(target);
@@ -58,7 +59,6 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
       return () => clearTimeout(timer);
     }
 
-    // Priority 2: user location
     if (userLocation?.lat && userLocation?.lng) {
       const target = {
         lat: Number(userLocation.lat),
@@ -68,6 +68,7 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
       const targetKey = `user-${target.lat}-${target.lng}`;
 
       if (lastTargetRef.current === targetKey) return;
+
       lastTargetRef.current = targetKey;
 
       map.setZoom(14);
@@ -76,22 +77,22 @@ function MapCameraController({ activePopup, userLocation, resetTrigger }) {
       return;
     }
 
-    // Priority 3: reset when popup closes
-    if (resetTrigger > 0) {
-      const targetKey = `reset-${resetTrigger}`;
+    if (previousPopupRef.current && !activePopup) {
+      const targetKey = "reset-default-view";
 
-      if (lastTargetRef.current === targetKey) return;
-      lastTargetRef.current = targetKey;
+      if (lastTargetRef.current !== targetKey) {
+        lastTargetRef.current = targetKey;
+        map.setZoom(defaultZoom);
+        map.panTo(defaultCenter);
+      }
 
-      map.setZoom(defaultZoom);
-      map.panTo(defaultCenter);
+      previousPopupRef.current = null;
     }
-  }, [map, activePopup, userLocation, resetTrigger]);
+  }, [map, activePopup, userLocation]);
 
   return null;
 }
 
-// 2. MAP CHILD: Handles all markers and clustering safely
 function ClusteredMarkers({ spots, onMarkerClick }) {
   const map = useMap();
   const clusterer = useRef(null);
@@ -145,48 +146,22 @@ function ClusteredMarkers({ spots, onMarkerClick }) {
   );
 }
 
-// 3. Custom Component to render the 360 Panorama
-function CustomStreetView({ lat, lng }) {
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (containerRef.current && window.google) {
-      new window.google.maps.StreetViewPanorama(containerRef.current, {
-        position: {
-          lat: Number(lat),
-          lng: Number(lng),
-        },
-        disableDefaultUI: true,
-        visible: true,
-      });
-    }
-  }, [lat, lng]);
-
-  return <div ref={containerRef} className="h-full w-full" />;
-}
-
-// 4. MAIN WRAPPER
 export default function LanaoMap({
   selectedSpot,
   onSpotClick,
   heightClass = "h-[420px] sm:h-[560px] lg:h-[680px]",
 }) {
   const [spots, setSpots] = useState([]);
-  const [activePopup, setActivePopup] = useState(null);
-  const [showStreetView, setShowStreetView] = useState(false);
-
+  const [internalActivePopup, setInternalActivePopup] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [resetTrigger, setResetTrigger] = useState(0);
-
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const previousPopup = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (activePopup) setShowStreetView(false);
-  }, [activePopup]);
+  const isControlled = selectedSpot !== undefined;
+  const activePopup = isControlled ? selectedSpot : internalActivePopup;
+  const visibleUserLocation = activePopup ? null : userLocation;
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "tourismData"), (snapshot) => {
@@ -205,26 +180,6 @@ export default function LanaoMap({
     return () => unsubscribe();
   }, []);
 
-  // Sync external prop selection
-  useEffect(() => {
-    if (selectedSpot !== undefined) {
-      setActivePopup(selectedSpot);
-
-      if (selectedSpot) {
-        setUserLocation(null);
-      }
-    }
-  }, [selectedSpot]);
-
-  useEffect(() => {
-    if (previousPopup.current !== null && activePopup === null) {
-      setResetTrigger((prev) => prev + 1);
-    }
-
-    previousPopup.current = activePopup;
-  }, [activePopup]);
-
-  // Close fullscreen using ESC
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -245,24 +200,28 @@ export default function LanaoMap({
     };
   }, [isFullscreen]);
 
+  const updateActivePopup = (spot) => {
+    if (onSpotClick) {
+      onSpotClick(spot);
+      return;
+    }
+
+    setInternalActivePopup(spot);
+  };
+
   const handleMarkerClick = (spot) => {
     setUserLocation(null);
 
     if (activePopup && activePopup.id === spot.id) {
-      if (onSpotClick) onSpotClick(null);
-      else setActivePopup(null);
-
+      updateActivePopup(null);
       return;
     }
 
-    setActivePopup(spot);
-
-    if (onSpotClick) onSpotClick(spot);
+    updateActivePopup(spot);
   };
 
   const handleCloseClick = () => {
-    if (onSpotClick) onSpotClick(null);
-    else setActivePopup(null);
+    updateActivePopup(null);
   };
 
   const handleFindMyLocation = () => {
@@ -275,7 +234,7 @@ export default function LanaoMap({
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setActivePopup(null);
+        updateActivePopup(null);
 
         setUserLocation({
           lat: position.coords.latitude,
@@ -380,15 +339,14 @@ export default function LanaoMap({
           >
             <MapCameraController
               activePopup={activePopup}
-              userLocation={userLocation}
-              resetTrigger={resetTrigger}
+              userLocation={visibleUserLocation}
             />
 
             <ClusteredMarkers spots={spots} onMarkerClick={handleMarkerClick} />
 
-            {userLocation && (
+            {visibleUserLocation && (
               <InfoWindow
-                position={userLocation}
+                position={visibleUserLocation}
                 headerDisabled={true}
                 style={{ background: "transparent", boxShadow: "none" }}
               >
@@ -407,64 +365,29 @@ export default function LanaoMap({
                 headerDisabled={true}
               >
                 <div className="w-[260px] rounded-[28px] p-2.5 text-gray-900 sm:w-[280px]">
-                  {!showStreetView ? (
-                    <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)]">
-                      <img
-                        src={activePopup.imageURL || FALLBACK_IMAGE}
-                        alt={getTitle(activePopup)}
-                        className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]"
-                      />
+                  <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)]">
+                    <img
+                      src={activePopup.imageURL || FALLBACK_IMAGE}
+                      alt={getTitle(activePopup)}
+                      className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]"
+                    />
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
-                      <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-white/5 to-white/10" />
+                    <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/20 to-transparent" />
 
-                      <button
-                        type="button"
-                        onClick={handleCloseClick}
-                        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
-                        aria-label="Close popup"
-                      >
-                        <FiX className="text-base" />
-                      </button>
+                    <button
+                      type="button"
+                      onClick={handleCloseClick}
+                      className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
+                      aria-label="Close popup"
+                    >
+                      <FiX className="text-base" />
+                    </button>
 
-                      <span className="absolute left-3 top-3 max-w-[132px] truncate rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
-                        {activePopup.category || "Place"}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowStreetView(true)}
-                        className="absolute bottom-3 right-3 z-20 inline-flex max-w-[96px] items-center justify-center gap-1 rounded-full border border-white/80 bg-white/95 px-2.5 py-1.5 text-[10px] font-bold text-[#2563eb] shadow-md backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white sm:max-w-[112px] sm:px-3"
-                      >
-                        <FiNavigation className="shrink-0 text-xs" />
-                        <span className="whitespace-nowrap">360° View</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="relative h-[145px] overflow-hidden rounded-[22px] border border-blue-100 shadow-inner sm:h-[170px] lg:h-[180px]">
-                      <CustomStreetView
-                        lat={activePopup.coordinates.lat}
-                        lng={activePopup.coordinates.lng}
-                      />
-
-                      <button
-                        type="button"
-                        onClick={handleCloseClick}
-                        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
-                        aria-label="Close popup"
-                      >
-                        <FiX className="text-base" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowStreetView(false)}
-                        className="absolute left-3 top-3 z-20 rounded-full bg-white/90 p-1.5 text-gray-800 shadow-md backdrop-blur-md transition hover:bg-white"
-                      >
-                        <FiChevronRight className="rotate-180 text-sm" />
-                      </button>
-                    </div>
-                  )}
+                    <span className="absolute left-3 top-3 max-w-[132px] truncate rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
+                      {activePopup.category || "Place"}
+                    </span>
+                  </div>
 
                   <div className="px-2 pb-2 pt-4">
                     <h4 className="line-clamp-2 text-[14px] font-bold leading-snug text-[#2563eb] sm:text-[15px]">
@@ -491,7 +414,6 @@ export default function LanaoMap({
             )}
           </Map>
 
-          {/* FIND LOCATION */}
           <button
             onClick={handleFindMyLocation}
             disabled={isLocating}
@@ -512,7 +434,6 @@ export default function LanaoMap({
             </span>
           </button>
 
-          {/* FULLSCREEN BUTTON */}
           <button
             type="button"
             onClick={() => setIsFullscreen((prev) => !prev)}
@@ -526,7 +447,6 @@ export default function LanaoMap({
             )}
           </button>
 
-          {/* FULLSCREEN EXIT LABEL */}
           {isFullscreen && (
             <button
               type="button"
