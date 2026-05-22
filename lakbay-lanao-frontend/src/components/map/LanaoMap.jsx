@@ -265,6 +265,12 @@ export default function LanaoMap({
     return spot.location?.municipality || "Lanao del Sur";
   };
 
+  const handleExplorePlace = () => {
+    if (!activePopup?.id) return;
+
+    navigate(`/destination/${activePopup.id}`);
+  };
+
   const mapWrapperClass = isFullscreen
     ? "fixed inset-0 z-[99999] h-screen w-screen rounded-none bg-white"
     : `relative w-full overflow-hidden rounded-[20px] shadow-sm sm:rounded-[28px] ${heightClass}`;
@@ -274,26 +280,37 @@ export default function LanaoMap({
       <style>{`
         .gm-style-iw-c {
           padding: 0 !important;
-          border-radius: 28px !important;
-          background: rgba(255, 255, 255, 0.88) !important;
+          border-radius: 24px !important;
+          background: rgba(255, 255, 255, 0.92) !important;
           box-shadow: 0 18px 45px rgba(37, 99, 235, 0.16) !important;
           backdrop-filter: blur(18px) !important;
           -webkit-backdrop-filter: blur(18px) !important;
           border: 1px solid rgba(255, 255, 255, 0.85) !important;
-          max-width: calc(100vw - 32px) !important;
+          max-width: calc(100vw - 24px) !important;
         }
 
         .gm-style-iw-d {
           overflow: hidden !important;
-          max-width: calc(100vw - 32px) !important;
+          max-width: calc(100vw - 24px) !important;
         }
 
         .gm-style-iw-tc::after {
-          background: rgba(255, 255, 255, 0.88) !important;
+          background: rgba(255, 255, 255, 0.92) !important;
         }
 
         .gm-ui-hover-effect {
           display: none !important;
+        }
+
+        @media (min-width: 640px) {
+          .gm-style-iw-c {
+            border-radius: 28px !important;
+            max-width: calc(100vw - 32px) !important;
+          }
+
+          .gm-style-iw-d {
+            max-width: calc(100vw - 32px) !important;
+          }
         }
 
         @keyframes pulse-ring {
@@ -364,8 +381,8 @@ export default function LanaoMap({
                 pixelOffset={[0, -40]}
                 headerDisabled={true}
               >
-                <div className="w-[260px] rounded-[28px] p-2.5 text-gray-900 sm:w-[280px]">
-                  <div className="relative h-[150px] overflow-hidden rounded-[22px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)]">
+                <div className="w-[235px] rounded-[24px] p-2 text-gray-900 sm:w-[280px] sm:rounded-[28px] sm:p-2.5">
+                  <div className="relative h-[118px] overflow-hidden rounded-[20px] border border-white/70 bg-blue-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.06)] sm:h-[150px] sm:rounded-[22px]">
                     <img
                       src={activePopup.imageURL || FALLBACK_IMAGE}
                       alt={getTitle(activePopup)}
@@ -378,35 +395,37 @@ export default function LanaoMap({
                     <button
                       type="button"
                       onClick={handleCloseClick}
-                      className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white"
+                      className="absolute right-2.5 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-white/95 text-[#2563eb] shadow-sm backdrop-blur-md transition hover:bg-[#2563eb] hover:text-white sm:right-3 sm:top-3 sm:h-8 sm:w-8"
                       aria-label="Close popup"
                     >
-                      <FiX className="text-base" />
+                      <FiX className="text-sm sm:text-base" />
                     </button>
 
-                    <span className="absolute left-3 top-3 max-w-[132px] truncate rounded-full bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
+                    <span className="absolute left-2.5 top-2.5 max-w-[118px] truncate rounded-full bg-white/95 px-2.5 py-1 text-[8px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md sm:left-3 sm:top-3 sm:max-w-[132px] sm:px-3 sm:text-[9px]">
                       {activePopup.category || "Place"}
                     </span>
                   </div>
 
-                  <div className="px-2 pb-2 pt-4">
-                    <h4 className="line-clamp-2 text-[14px] font-bold leading-snug text-[#2563eb] sm:text-[15px]">
+                  <div className="px-1.5 pb-1.5 pt-3 sm:px-2 sm:pb-2 sm:pt-4">
+                    <h4 className="line-clamp-2 text-[13px] font-bold leading-snug text-[#2563eb] sm:text-[15px]">
                       {getTitle(activePopup)}
                     </h4>
 
-                    <div className="mt-2 flex items-start gap-2 text-xs font-medium leading-relaxed text-gray-500">
+                    <div className="mt-1.5 flex items-start gap-1.5 text-[11px] font-medium leading-relaxed text-gray-500 sm:mt-2 sm:gap-2 sm:text-xs">
                       <FiMapPin className="mt-0.5 shrink-0 text-[#2563eb]" />
                       <span className="line-clamp-2">
                         {getLocation(activePopup)}
                       </span>
                     </div>
 
+                    {/* Explore Place button - visible on mobile and desktop */}
                     <button
                       type="button"
-                      onClick={() => navigate(`/destination/${activePopup.id}`)}
-                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:text-xs"
+                      onClick={handleExplorePlace}
+                      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] font-semibold text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-md active:scale-[0.98] sm:mt-4 sm:gap-2 sm:text-xs"
                     >
-                      Explore place <FiChevronRight />
+                      Explore place
+                      <FiChevronRight className="text-sm" />
                     </button>
                   </div>
                 </div>
