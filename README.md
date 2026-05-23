@@ -348,67 +348,7 @@ AI Chatbot   Itinerary Builder
 
 ---
 
-## 🔐 Environment Variables
 
-Create `.env` files in both `client/` and `server/` directories.
-
-### `client/.env`
-
-```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-VITE_API_BASE_URL=http://localhost:5000
-```
-
-### `server/.env`
-
-```env
-PORT=5000
-NODE_ENV=development
-
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@your_project_id.iam.gserviceaccount.com
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-CHROMA_HOST=http://localhost:8000
-CHROMA_COLLECTION=lakbay_lanao_kb
-
-OPENAI_API_KEY=your_openai_or_llm_api_key
-```
-
-> ⚠️ Never commit `.env` files to version control. Both are listed in `.gitignore`.
-
----
-
-## ▶️ Running the Project
-
-```bash
-# Start the backend server
-cd server
-npm run dev
-
-# In a new terminal, start the frontend
-cd client
-npm run dev
-```
-
-| Service | URL |
-|---|---|
-| Frontend (React + Vite) | `http://localhost:5173` |
-| Backend (Express API) | `http://localhost:5000` |
-| ChromaDB | `http://localhost:8000` |
-
----
 
 ## 📁 Folder Structure
 
@@ -545,10 +485,10 @@ The following features are out of scope for this capstone iteration but are plan
 
 | Name | Role |
 |---|---|
-| **[Developer Name]** | Lead Developer — Frontend & AI Integration |
-| **[Developer Name]** | Backend Developer — API & Database |
-| **[Developer Name]** | UI/UX Design & Documentation |
-| **[Developer Name]** | System Analyst & QA |
+| **Jonaidah Caris** | Frontend Developer & UI/UX Design |
+| **Janisah Macarimbang** | Backend Developer — API & Database |
+| **Jonaidah Caris & Janisah Macarimabang** | System Analyst, Documentation, & QA |
+| **Omar Mohaymen** | AI Integration |
 
 </div>
 
