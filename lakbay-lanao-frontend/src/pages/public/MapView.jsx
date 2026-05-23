@@ -47,7 +47,6 @@ function Map() {
         const data = snapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((item) => {
-            // STRICT VALIDATION: Ensure coordinates exist and are valid numbers
             if (item.status === "archived") return false;
             if (!item.coordinates?.lat || !item.coordinates?.lng) return false;
             

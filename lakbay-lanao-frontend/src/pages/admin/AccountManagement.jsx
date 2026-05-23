@@ -30,16 +30,18 @@ function AccountManagement() {
   const [staffAccounts, setStaffAccounts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Create Modal States
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  // Edit Modal States (Email omitted)
   const [editModal, setEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
 
+  // Confirm Modal States
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [targetUser, setTargetUser] = useState(null);
@@ -90,13 +92,13 @@ function AccountManagement() {
       });
     } catch (error) {
       console.error("Error updating status:", error);
+      alert("Failed to update status. Check Firestore permissions.");
     }
   };
 
   const openEditModal = (user) => {
     setSelectedUser(user);
     setEditName(user.name || "");
-    setEditEmail(user.email || "");
     setEditModal(true);
   };
 
@@ -104,12 +106,12 @@ function AccountManagement() {
     try {
       await updateDoc(doc(db, "users", selectedUser.id), {
         name: editName,
-        email: editEmail,
       });
 
       setEditModal(false);
     } catch (error) {
       console.error("Error updating staff:", error);
+      alert("Failed to update staff. Check Firestore permissions.");
     }
   };
 
@@ -159,7 +161,8 @@ function AccountManagement() {
 
       setConfirmModal(false);
     } catch (error) {
-      alert(error.message);
+      console.error("Action error:", error);
+      alert(`Action failed: ${error.message}`);
     }
   };
 
@@ -216,9 +219,7 @@ function AccountManagement() {
             {label}
           </p>
 
-          <h3 className="mt-1 text-3xl font-bold text-[#2563eb]">
-            {value}
-          </h3>
+          <h3 className="mt-1 text-3xl font-bold text-[#2563eb]">{value}</h3>
         </div>
       </div>
     </div>
@@ -345,9 +346,7 @@ function AccountManagement() {
                     >
                       <div className="col-span-4 flex items-center gap-4">
                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-lg font-bold text-[#2563eb]">
-                          {user.name
-                            ? user.name.charAt(0).toUpperCase()
-                            : "U"}
+                          {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                         </div>
 
                         <div className="min-w-0">
@@ -532,7 +531,7 @@ function AccountManagement() {
           </div>
         )}
 
-        {/* Edit Staff Modal */}
+        {/* Edit Staff Modal (Email omitted) */}
         {editModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4">
             <div className="relative w-full max-w-md rounded-[28px] border border-blue-100 bg-white p-7 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
@@ -554,7 +553,7 @@ function AccountManagement() {
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Update staff display information used inside the system.
+                  Update staff display name used inside the system.
                 </p>
               </div>
 
@@ -568,19 +567,6 @@ function AccountManagement() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className={inputStyle}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Email Address
-                  </label>
-
-                  <input
-                    type="email"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
                     className={inputStyle}
                   />
                 </div>
@@ -598,7 +584,7 @@ function AccountManagement() {
                 <button
                   type="button"
                   onClick={handleUpdateStaff}
-                  disabled={!editName || !editEmail}
+                  disabled={!editName}
                   className={primaryBtnStyle}
                 >
                   Save Changes

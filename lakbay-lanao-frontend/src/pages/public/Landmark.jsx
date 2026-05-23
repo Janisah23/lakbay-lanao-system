@@ -84,6 +84,9 @@ function Landmarks() {
         const combined = [...tourismDataItems, ...tourismContentItems];
 
         const landmarksOnly = combined.filter((item) => {
+          // FIX: Exclude archived items immediately
+          if (item.status === "archived") return false;
+
           const contentType = normalize(item.contentType);
           const type = normalize(item.type);
           const category = normalize(item.category);

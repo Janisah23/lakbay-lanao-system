@@ -78,9 +78,13 @@ function HotelsAndRestaurants() {
 
         const combined = [...tourismDataItems, ...tourismContentItems];
 
-        const establishmentOnly = combined.filter((item) => {
-          const type = normalize(item.type);
+        // FIX: Filter out archived items BEFORE doing anything else
+        const activeItems = combined.filter(
+          (item) => item.status?.toLowerCase() !== "archived"
+        );
 
+        const establishmentOnly = activeItems.filter((item) => {
+          const type = normalize(item.type);
           return (
             type === "hotel" ||
             type === "restaurant" ||

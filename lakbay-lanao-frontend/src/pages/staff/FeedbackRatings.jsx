@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { db } from "../../firebase/config";
 import {
   collectionGroup,
-  getDocs,
   collection,
   onSnapshot,
 } from "firebase/firestore";
@@ -37,41 +36,50 @@ function FeedbackRatings() {
 
   const [filterOptions, setFilterOptions] = useState({ categories: [] });
 
+  // FIX: Switched from getDocs to onSnapshot for real-time updates and added archive filter
   useEffect(() => {
-    const fetchPlaces = async () => {
-      try {
-        const [dataSnap, contentSnap] = await Promise.all([
-          getDocs(collection(db, "tourismData")),
-          getDocs(collection(db, "tourismContent")),
-        ]);
+    let dataList = [];
+    let contentList = [];
 
-        const placesList = [];
-        const uniqueCats = new Set();
+    const updatePlaces = () => {
+      // Combine both lists and explicitly filter out archived items
+      const combined = [...dataList, ...contentList].filter(
+        (item) => item.status !== "archived"
+      );
 
-        dataSnap.forEach((d) => {
-          const data = d.data();
-          placesList.push({ id: d.id, collection: "tourismData", ...data });
+      const uniqueCats = new Set();
+      combined.forEach((data) => {
+        if (data.category || data.contentType) {
+          uniqueCats.add(data.category || data.contentType);
+        }
+      });
 
-          if (data.category) uniqueCats.add(data.category);
-        });
-
-        contentSnap.forEach((d) => {
-          const data = d.data();
-          placesList.push({ id: d.id, collection: "tourismContent", ...data });
-
-          if (data.category || data.contentType) {
-            uniqueCats.add(data.category || data.contentType);
-          }
-        });
-
-        setFilterOptions({ categories: Array.from(uniqueCats).sort() });
-        setPlaces(placesList);
-      } catch (error) {
-        console.error("Error fetching places:", error);
-      }
+      setFilterOptions({ categories: Array.from(uniqueCats).sort() });
+      setPlaces(combined);
     };
 
-    fetchPlaces();
+    const unsubData = onSnapshot(collection(db, "tourismData"), (snap) => {
+      dataList = snap.docs.map((d) => ({
+        id: d.id,
+        collection: "tourismData",
+        ...d.data(),
+      }));
+      updatePlaces();
+    });
+
+    const unsubContent = onSnapshot(collection(db, "tourismContent"), (snap) => {
+      contentList = snap.docs.map((d) => ({
+        id: d.id,
+        collection: "tourismContent",
+        ...d.data(),
+      }));
+      updatePlaces();
+    });
+
+    return () => {
+      unsubData();
+      unsubContent();
+    };
   }, []);
 
   useEffect(() => {
@@ -151,6 +159,7 @@ function FeedbackRatings() {
       })
       .sort((a, b) => b.totalReviews - a.totalReviews);
 
+    // Auto-select the first item if nothing is selected
     if (!selectedPlace && filteredList.length > 0) {
       setTimeout(() => setSelectedPlace(filteredList[0]), 0);
     }
@@ -166,6 +175,16 @@ function FeedbackRatings() {
       filteredList,
     };
   }, [places, reviews, searchTerm, categoryFilter, selectedPlace]);
+
+  // FIX: Auto-deselect the place if it gets archived while the user is viewing it
+  useEffect(() => {
+    if (selectedPlace) {
+      const isStillVisible = processedData.filteredList.some((p) => p.id === selectedPlace.id);
+      if (!isStillVisible) {
+        setSelectedPlace(null);
+      }
+    }
+  }, [processedData.filteredList, selectedPlace]);
 
   const totalPages = Math.max(
     1,

@@ -93,46 +93,14 @@ function ManageTourismData() {
   };
 
   const municipalities = [
-    "Amai Manabilang",
-    "Bacolod-Kalawi",
-    "Balabagan",
-    "Balindong",
-    "Bayang",
-    "Binidayan",
-    "Buadiposo-Buntong",
-    "Bubong",
-    "Butig",
-    "Calanogas",
-    "Ditsaan-Ramain",
-    "Ganassi",
-    "Kapai",
-    "Kapatagan",
-    "Lumba-Bayabao",
-    "Lumbaca-Unayan",
-    "Lumbatan",
-    "Lumbayanague",
-    "Madalum",
-    "Madamba",
-    "Maguing",
-    "Malabang",
-    "Marantao",
-    "Marawi",
-    "Marogong",
-    "Masiu",
-    "Mulondo",
-    "Pagayawan",
-    "Piagapo",
-    "Picong",
-    "Poona Bayabao",
-    "Pualas",
-    "Saguiaran",
-    "Sultan Dumalondong",
-    "Tagoloan II",
-    "Tamparan",
-    "Taraka",
-    "Tubaran",
-    "Tugaya",
-    "Wao",
+    "Amai Manabilang", "Bacolod-Kalawi", "Balabagan", "Balindong", "Bayang",
+    "Binidayan", "Buadiposo-Buntong", "Bubong", "Butig", "Calanogas",
+    "Ditsaan-Ramain", "Ganassi", "Kapai", "Kapatagan", "Lumba-Bayabao",
+    "Lumbaca-Unayan", "Lumbatan", "Lumbayanague", "Madalum", "Madamba",
+    "Maguing", "Malabang", "Marantao", "Marawi", "Marogong", "Masiu",
+    "Mulondo", "Pagayawan", "Piagapo", "Picong", "Poona Bayabao", "Pualas",
+    "Saguiaran", "Sultan Dumalondong", "Tagoloan II", "Tamparan", "Taraka",
+    "Tubaran", "Tugaya", "Wao",
   ];
 
   useEffect(() => {
@@ -141,7 +109,6 @@ function ManageTourismData() {
         id: docItem.id,
         ...docItem.data(),
       }));
-
       setTourismList(data);
     });
 
@@ -200,6 +167,7 @@ function ManageTourismData() {
     setTimeout(() => setToast(""), 3000);
   };
 
+  // Archiving logic is correct - it successfully flags the database document
   const handleArchive = async () => {
     if (!selectedId) return;
 
@@ -207,7 +175,6 @@ function ManageTourismData() {
       await updateDoc(doc(db, "tourismData", selectedId), {
         status: "archived",
       });
-
       showToastMessage("Entry archived successfully!");
     } catch (error) {
       console.error("Archive failed:", error);
@@ -222,7 +189,6 @@ function ManageTourismData() {
       await updateDoc(doc(db, "tourismData", id), {
         status: "active",
       });
-
       showToastMessage("Entry restored successfully!");
     } catch (error) {
       console.error("Restore failed:", error);
@@ -282,7 +248,6 @@ function ManageTourismData() {
 
       if (imageFile) {
         const formDataImage = new FormData();
-
         formDataImage.append("file", imageFile);
         formDataImage.append("upload_preset", "tourism_upload");
 

@@ -85,6 +85,11 @@ function CulturalHeritage() {
         const combined = [...tourismDataItems, ...tourismContentItems];
 
         const heritageOnly = combined.filter((item) => {
+          // FIX: Exclude any item that has been archived
+          if (item.status && item.status.toLowerCase() === "archived") {
+            return false;
+          }
+
           const type = normalize(item.type);
 
           return (

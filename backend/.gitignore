@@ -2,3 +2,4 @@ backend/serviceAccountKey.json
 backend/node_modules
 *.json
 .env
+config/firebase-service-account.json

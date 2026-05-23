@@ -81,6 +81,11 @@ function Destinations() {
         const combined = [...tourismDataItems, ...tourismContentItems];
 
         const destinationOnly = combined.filter((item) => {
+          // FIX: Strictly exclude archived items
+          if (String(item.status || "").toLowerCase() === "archived") {
+            return false;
+          }
+
           const type = normalize(item.type);
 
           return (
