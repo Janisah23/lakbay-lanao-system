@@ -20,6 +20,11 @@ import {
 } from "react-icons/fi";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
+// NEW: Import Swiper modules
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+
 const CATEGORIES = ["All", "Beach", "Mountain", "Waterfall", "Island"];
 
 const normalize = (value) => String(value || "").trim().toLowerCase();
@@ -81,7 +86,7 @@ function Destinations() {
         const combined = [...tourismDataItems, ...tourismContentItems];
 
         const destinationOnly = combined.filter((item) => {
-          // FIX: Strictly exclude archived items
+          // Strictly exclude archived items
           if (String(item.status || "").toLowerCase() === "archived") {
             return false;
           }
@@ -191,22 +196,43 @@ function Destinations() {
       >
         <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
           <div className="relative h-[120px] overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[190px] lg:rounded-[24px]">
-            <img
-              src={item.imageURL || "/default.jpg"}
-              alt={title}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
-            />
+            
+            {/* NEW: Multi-image Slider Logic for MiniCard */}
+            {item.imageURLs && item.imageURLs.length > 1 ? (
+              <Swiper
+                modules={[Autoplay]}
+                autoplay={{ delay: 3500, disableOnInteraction: false }}
+                loop={true}
+                className="h-full w-full"
+              >
+                {item.imageURLs.map((url, i) => (
+                  <SwiperSlide key={i}>
+                    <img
+                      src={url}
+                      alt={`${title} ${i}`}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <img
+                src={item.imageURL || "/default.jpg"}
+                alt={title}
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+              />
+            )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-white/5 to-white/10" />
-            <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/20 to-transparent" />
+            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/10 via-white/5 to-white/10 pointer-events-none" />
+            <div className="absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
 
-            <span className="absolute left-2 top-2 max-w-[100px] truncate rounded-full bg-white/95 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md sm:left-3 sm:top-3 sm:max-w-[140px] sm:px-2.5 sm:py-1 sm:text-[9px] lg:left-4 lg:top-4 lg:px-3 lg:text-[10px]">
+            <span className="absolute left-2 top-2 z-20 max-w-[100px] truncate rounded-full bg-white/95 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md sm:left-3 sm:top-3 sm:max-w-[140px] sm:px-2.5 sm:py-1 sm:text-[9px] lg:left-4 lg:top-4 lg:px-3 lg:text-[10px]">
               {item.type || item.category || "Destination"}
             </span>
 
             <button
               onClick={(e) => handleToggleFavorite(e, item)}
-              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
+              className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
             >
               {isFav ? (
                 <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
@@ -216,7 +242,7 @@ function Destinations() {
             </button>
 
             {showHeart === item.id && (
-              <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-3xl text-[#2563eb] sm:text-4xl lg:text-5xl" />
+              <FaHeart className="pointer-events-none absolute inset-0 z-30 m-auto animate-ping text-3xl text-[#2563eb] sm:text-4xl lg:text-5xl" />
             )}
           </div>
         </div>
@@ -378,11 +404,33 @@ function Destinations() {
                   className="group flex cursor-pointer items-center gap-3 overflow-hidden rounded-[20px] border border-white/80 bg-white/90 p-3 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md sm:gap-5 sm:rounded-[24px] sm:p-4"
                 >
                   <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] sm:h-24 sm:w-32 sm:rounded-[18px]">
-                    <img
-                      src={item.imageURL || "/default.jpg"}
-                      alt={title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
-                    />
+                    
+                    {/* NEW: Multi-image Slider Logic for List View */}
+                    {item.imageURLs && item.imageURLs.length > 1 ? (
+                      <Swiper
+                        modules={[Autoplay]}
+                        autoplay={{ delay: 3500, disableOnInteraction: false }}
+                        loop={true}
+                        className="h-full w-full"
+                      >
+                        {item.imageURLs.map((url, i) => (
+                          <SwiperSlide key={i}>
+                            <img
+                              src={url}
+                              alt={`${title} ${i}`}
+                              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                            />
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
+                    ) : (
+                      <img
+                        src={item.imageURL || "/default.jpg"}
+                        alt={title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                      />
+                    )}
+
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -411,7 +459,7 @@ function Destinations() {
 
                   <button
                     onClick={(e) => handleToggleFavorite(e, item)}
-                    className="mr-0 flex-shrink-0 rounded-full bg-blue-50 p-2 transition hover:bg-blue-100 sm:mr-1 sm:p-2.5"
+                    className="mr-0 flex-shrink-0 z-10 rounded-full bg-blue-50 p-2 transition hover:bg-blue-100 sm:mr-1 sm:p-2.5"
                   >
                     {isFav ? (
                       <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
@@ -426,7 +474,7 @@ function Destinations() {
                       e.stopPropagation();
                       navigate(`/destination/${item.id}`);
                     }}
-                    className="hidden items-center gap-2 rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 md:inline-flex"
+                    className="hidden items-center z-10 gap-2 rounded-full bg-[#2563eb] px-5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 md:inline-flex"
                   >
                     View place <FiChevronRight />
                   </button>
@@ -443,15 +491,36 @@ function Destinations() {
                   className="group relative min-h-[300px] cursor-pointer overflow-hidden rounded-[20px] border border-white/80 bg-white/90 p-1.5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[360px] sm:rounded-[24px] sm:p-2 lg:col-span-2 lg:min-h-[420px] lg:rounded-[30px] lg:p-2.5"
                 >
                   <div className="relative h-full min-h-[285px] overflow-hidden rounded-[16px] sm:min-h-[344px] sm:rounded-[20px] lg:min-h-[400px] lg:rounded-[24px]">
-                    <img
-                      src={featuredItem.imageURL || "/default.jpg"}
-                      alt={getPlaceTitle(featuredItem)}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
-                    />
+                    
+                    {/* NEW: Multi-image Slider Logic for Featured Item */}
+                    {featuredItem.imageURLs && featuredItem.imageURLs.length > 1 ? (
+                      <Swiper
+                        modules={[Autoplay]}
+                        autoplay={{ delay: 3500, disableOnInteraction: false }}
+                        loop={true}
+                        className="absolute inset-0 h-full w-full z-0"
+                      >
+                        {featuredItem.imageURLs.map((url, i) => (
+                          <SwiperSlide key={i}>
+                            <img
+                              src={url}
+                              alt={`${getPlaceTitle(featuredItem)} ${i}`}
+                              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                            />
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
+                    ) : (
+                      <img
+                        src={featuredItem.imageURL || "/default.jpg"}
+                        alt={getPlaceTitle(featuredItem)}
+                        className="absolute inset-0 h-full w-full z-0 object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                      />
+                    )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
-                    <div className="absolute left-4 top-4 sm:left-5 sm:top-5">
+                    <div className="absolute left-4 top-4 z-20 sm:left-5 sm:top-5">
                       <span className="rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm backdrop-blur-md">
                         {featuredItem.type ||
                           featuredItem.category ||
@@ -461,7 +530,7 @@ function Destinations() {
 
                     <button
                       onClick={(e) => handleToggleFavorite(e, featuredItem)}
-                      className="absolute right-4 top-4 z-10 rounded-full border border-white/70 bg-white/95 p-2.5 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-5 sm:top-5"
+                      className="absolute right-4 top-4 z-20 rounded-full border border-white/70 bg-white/95 p-2.5 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-5 sm:top-5"
                     >
                       {favorites.some(
                         (fav) => String(fav.id) === String(featuredItem.id)
@@ -473,10 +542,10 @@ function Destinations() {
                     </button>
 
                     {showHeart === featuredItem.id && (
-                      <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-5xl text-[#2563eb] sm:text-6xl" />
+                      <FaHeart className="pointer-events-none absolute inset-0 z-30 m-auto animate-ping text-5xl text-[#2563eb] sm:text-6xl" />
                     )}
 
-                    <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                    <div className="absolute bottom-0 left-0 right-0 z-20 p-5 sm:p-6 pointer-events-none">
                       {featuredItem.rating && (
                         <div className="mb-2 flex items-center gap-2">
                           <StarRating rating={featuredItem.rating} />
@@ -503,7 +572,7 @@ function Destinations() {
                           e.stopPropagation();
                           navigate(`/destination/${featuredItem.id}`);
                         }}
-                        className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-[#2563eb] shadow-sm transition hover:bg-blue-50"
+                        className="inline-flex items-center gap-2 pointer-events-auto rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-[#2563eb] shadow-sm transition hover:bg-blue-50"
                       >
                         View place <FiChevronRight />
                       </button>

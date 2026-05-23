@@ -25,6 +25,13 @@ import {
   FaDirections,
 } from "react-icons/fa";
 
+// Swiper imports
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../../firebase/config";
 import {
@@ -58,12 +65,16 @@ const PlacesDetails = () => {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  // State to hold the main Swiper instance so we can sync it with thumbnails/lightbox
+  const [mainSwiper, setMainSwiper] = useState(null);
+
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
 
+  // Reset states on ID change
   useEffect(() => {
     setShowLoginNotice(false);
     setShowPopup(false);
@@ -71,7 +82,15 @@ const PlacesDetails = () => {
     setLinkCopied(false);
     setActiveGalleryIndex(0);
     setLightboxOpen(false);
-  }, [id]);
+    if (mainSwiper) mainSwiper.slideTo(0);
+  }, [id, mainSwiper]);
+
+  // Sync main Swiper when the active index changes (e.g., from Lightbox arrows or thumbnails)
+  useEffect(() => {
+    if (mainSwiper && mainSwiper.activeIndex !== activeGalleryIndex) {
+      mainSwiper.slideTo(activeGalleryIndex);
+    }
+  }, [activeGalleryIndex, mainSwiper]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -307,7 +326,7 @@ const PlacesDetails = () => {
     ).toLowerCase();
 
     if (cat.includes("establishment")) {
-      return { label: "Establishments", path: "/establishment" };
+      return { label: "Establishments", path: "/establishments" };
     }
 
     if (cat.includes("landmark")) {
@@ -341,21 +360,72 @@ const PlacesDetails = () => {
     >
       <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
         <div className="relative h-[120px] overflow-hidden rounded-[16px] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_20px_rgba(37,99,235,0.05)] backdrop-blur-sm sm:h-[165px] sm:rounded-[20px] lg:h-[190px] lg:rounded-[24px]">
-          <img
-            src={place.imageURL || "/default.jpg"}
-            alt={place.title || place.name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
-          />
+          
+          {place.imageURLs && place.imageURLs.length > 1 ? (
+            <div className="group/cardSwiper relative h-full w-full">
+              <Swiper
+                modules={[Autoplay, Navigation, Pagination]}
+                autoplay={{ delay: 3000 }}
+                loop={true}
+                navigation={{
+                  prevEl: `.prev-${place.id}`,
+                  nextEl: `.next-${place.id}`,
+                }}
+                pagination={{
+                  clickable: true,
+                  el: `.pag-${place.id}`,
+                  renderBullet: function (index, className) {
+                    return `<span class="${className} inline-block h-1.5 w-1.5 rounded-full bg-white/60 transition-all hover:bg-white cursor-pointer [&.swiper-pagination-bullet-active]:w-3 [&.swiper-pagination-bullet-active]:bg-white"></span>`;
+                  },
+                }}
+                className="h-full w-full"
+              >
+                {place.imageURLs.map((url, i) => (
+                  <SwiperSlide key={i}>
+                    <img
+                      src={url}
+                      alt={`${place.name || place.title} ${i}`}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-white/5 to-white/10" />
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/20 to-transparent" />
+              {/* Inner Card Navigation & Pagination (Visible only on hover) */}
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className={`prev-${place.id} absolute left-2 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/20 text-white opacity-0 backdrop-blur-sm transition-all duration-300 hover:bg-black/40 group-hover/cardSwiper:opacity-100`}
+              >
+                <FiChevronLeft size={14} />
+              </button>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className={`next-${place.id} absolute right-2 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/20 text-white opacity-0 backdrop-blur-sm transition-all duration-300 hover:bg-black/40 group-hover/cardSwiper:opacity-100`}
+              >
+                <FiChevronRight size={14} />
+              </button>
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className={`pag-${place.id} absolute bottom-2 left-0 z-20 flex w-full justify-center gap-1 opacity-0 transition-opacity duration-300 group-hover/cardSwiper:opacity-100`}
+              ></div>
+            </div>
+          ) : (
+            <img
+              src={place.imageURL || "/default.jpg"}
+              alt={place.title || place.name}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
+            />
+          )}
+
+          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/10 via-white/5 to-white/10" />
+          <div className="absolute inset-x-0 top-0 z-10 pointer-events-none h-16 bg-gradient-to-b from-white/20 to-transparent" />
 
           <button
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(place);
             }}
-            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
+            className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
           >
             {favorites.some((fav) => String(fav.id) === String(place.id)) ? (
               <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
@@ -404,10 +474,14 @@ const PlacesDetails = () => {
 
   const breadcrumb = getBreadcrumbData();
 
-  const galleryImages = [
+  // Safely merge legacy imageURL, new imageURLs array, and legacy galleryImages
+  const rawGalleryImages = [
     destinationDetail.imageURL,
+    ...(destinationDetail.imageURLs || []),
     ...(destinationDetail.galleryImages || []),
   ].filter(Boolean);
+
+  const galleryImages = Array.from(new Set(rawGalleryImages));
 
   const mapQuery = destinationDetail?.location
     ? encodeURIComponent(
@@ -417,11 +491,10 @@ const PlacesDetails = () => {
       )
     : encodeURIComponent("Lanao del Sur, Philippines");
 
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&output=embed`;
-  const mapDirectionsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+  const mapDirectionsUrl = `https://maps.google.com/maps?q=${mapQuery}`;
 
   const locationStr = getLocationText(destinationDetail);
-
   const saveCount = destinationDetail.saveCount || 0;
 
   return (
@@ -577,105 +650,107 @@ const PlacesDetails = () => {
         </div>
       </section>
 
-      {/* GALLERY */}
+      {/* GALLERY (SWIPER MAIN PREVIEW) */}
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
-        <div
-          onClick={() => setLightboxOpen(true)}
-          className="group relative h-[240px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:h-[320px] sm:rounded-[24px] sm:p-2 md:h-[460px] lg:h-[540px] lg:rounded-[28px]"
-        >
+        <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
-            <img
-              src={galleryImages[activeGalleryIndex] || "/default.jpg"}
-              alt={destinationDetail.title || destinationDetail.name}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.005]"
-            />
+            
+            <Swiper
+              onSwiper={setMainSwiper}
+              onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
+              className="h-full w-full"
+            >
+              {galleryImages.length > 0 ? (
+                galleryImages.map((img, i) => (
+                  <SwiperSlide key={i} className="h-full w-full">
+                    <img
+                      src={img}
+                      alt={`${destinationDetail.title || destinationDetail.name} ${i + 1}`}
+                      onClick={() => setLightboxOpen(true)}
+                      className="h-full w-full cursor-zoom-in object-cover transition-transform duration-700 hover:scale-[1.005]"
+                    />
+                  </SwiperSlide>
+                ))
+              ) : (
+                <SwiperSlide className="h-full w-full">
+                  <img
+                    src="/default.jpg"
+                    alt={destinationDetail.title || destinationDetail.name}
+                    className="h-full w-full object-cover"
+                  />
+                </SwiperSlide>
+              )}
+            </Swiper>
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+            {/* Gradient Overlay for bottom elements (Thumbnails) */}
+            <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
+            {/* View fullscreen button */}
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxOpen(true);
-              }}
-              className="absolute bottom-3 right-3 rounded-full border border-white/70 bg-white px-3 py-1.5 text-[10px] font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb] sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-xs"
-            >
+              onClick={() => setLightboxOpen(true)}
+              className="absolute bottom-3 right-3 z-20 rounded-full border border-white/70 bg-white px-3 py-1.5 text-[10px] font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb] sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-xs"            >
               View fullscreen
             </button>
 
+            {/* Navigation Arrows (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <>
                 <button
-                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveGalleryIndex((i) => Math.max(i - 1, 0));
+                    mainSwiper?.slidePrev();
                   }}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50 sm:left-4"
+                  className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/40 opacity-0 group-hover:opacity-100 sm:left-4 sm:h-12 sm:w-12"
                 >
-                  <FiChevronLeft className="text-lg text-gray-700" />
+                  <FiChevronLeft className="text-xl sm:text-2xl" />
                 </button>
-
                 <button
-                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveGalleryIndex((i) =>
-                      Math.min(i + 1, galleryImages.length - 1)
-                    );
+                    mainSwiper?.slideNext();
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/95 p-2 shadow-sm transition hover:bg-blue-50 sm:right-4"
+                  className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/40 opacity-0 group-hover:opacity-100 sm:right-4 sm:h-12 sm:w-12"
                 >
-                  <FiChevronRight className="text-lg text-gray-700" />
+                  <FiChevronRight className="text-xl sm:text-2xl" />
                 </button>
+              </>
+            )}
 
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2"
-                >
-                  {galleryImages.map((_, i) => (
+            {/* THUMBNAILS embedded at the bottom of the image (Visible only on hover) */}
+            {galleryImages.length > 1 && (
+              <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
+                <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 justify-center">
+                  {galleryImages.map((img, i) => (
                     <button
                       key={i}
                       type="button"
-                      onClick={() => setActiveGalleryIndex(i)}
-                      className={`rounded-full transition-all ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveGalleryIndex(i);
+                        if (mainSwiper) mainSwiper.slideTo(i);
+                      }}
+                      className={`h-12 w-16 flex-shrink-0 overflow-hidden rounded-[10px] border-2 bg-blue-50 transition-all sm:h-14 sm:w-20 sm:rounded-[12px] md:h-16 md:w-24 ${
                         i === activeGalleryIndex
-                          ? "h-2 w-6 bg-white"
-                          : "h-2 w-2 bg-white/50 hover:bg-white/80"
+                          ? "border-white shadow-[0_0_0_2px_rgba(255,255,255,0.4)]"
+                          : "border-transparent opacity-60 hover:opacity-100"
                       }`}
-                    />
+                    >
+                      <img
+                        src={img}
+                        alt={`Gallery ${i + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
-
-        {galleryImages.length > 1 && (
-          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-            {galleryImages.map((img, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveGalleryIndex(i)}
-                className={`h-14 w-20 flex-shrink-0 overflow-hidden rounded-[14px] border-2 bg-blue-50 transition ${
-                  i === activeGalleryIndex
-                    ? "border-[#2563eb] shadow-md"
-                    : "border-transparent opacity-60 hover:opacity-90"
-                }`}
-              >
-                <img
-                  src={img}
-                  alt={`Gallery ${i + 1}`}
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
       </section>
 
-      {/* LIGHTBOX */}
+      {/* LIGHTBOX (FULLSCREEN VIEW) */}
       {lightboxOpen && (
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"

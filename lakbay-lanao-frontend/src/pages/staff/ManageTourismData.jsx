@@ -27,6 +27,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/config";
+import imageCompression from 'browser-image-compression';
 
 const getCoordinates = async (place, province) => {
   try {
@@ -52,7 +53,10 @@ const getCoordinates = async (place, province) => {
 function ManageTourismData() {
   const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
+  
+  // NEW: Changed from single file to an array of files
+  const [imageFiles, setImageFiles] = useState([]); 
+  
   const [tourismList, setTourismList] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,7 +86,7 @@ function ManageTourismData() {
   const typeOptions = {
     Destination: ["Beach", "Mountain", "Waterfall", "Island"],
     Establishment: ["Hotel", "Restaurant", "Resort", "Cafe"],
-    Landmark: ["Historical", "Natural", "Architectural"],
+    Landmark: ["Landmark","Historical", "Natural", "Architectural", "Religious", "Monument", "Public Sites"],
     "Cultural Heritage Site": [
       "Museum",
       "Crafts",
@@ -149,7 +153,7 @@ function ManageTourismData() {
 
   const resetForm = () => {
     setEditingId(null);
-    setImageFile(null);
+    setImageFiles([]); // Reset files array
     setFormData({
       name: "",
       category: "",
@@ -167,7 +171,6 @@ function ManageTourismData() {
     setTimeout(() => setToast(""), 3000);
   };
 
-  // Archiving logic is correct - it successfully flags the database document
   const handleArchive = async () => {
     if (!selectedId) return;
 
@@ -244,27 +247,51 @@ function ManageTourismData() {
     setLoading(true);
 
     try {
-      let imageURL = null;
+      let uploadedURLs = [];
 
-      if (imageFile) {
-        const formDataImage = new FormData();
-        formDataImage.append("file", imageFile);
-        formDataImage.append("upload_preset", "tourism_upload");
+      // NEW: Loop through all selected images and upload them
+      if (imageFiles.length > 0) {
+        const options = {
+          maxSizeMB: 2, 
+          maxWidthOrHeight: 1920, 
+          useWebWorker: true,
+        };
 
-        const response = await fetch(
-          "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
-          {
-            method: "POST",
-            body: formDataImage,
+        for (let i = 0; i < imageFiles.length; i++) {
+          let compressedFile = imageFiles[i];
+          try {
+            compressedFile = await imageCompression(imageFiles[i], options);
+          } catch (compressionError) {
+            console.error("Compression failed:", compressionError);
+            alert("Failed to compress an image. Please try again.");
+            setLoading(false);
+            return;
           }
-        );
 
-        const data = await response.json();
-        imageURL = data.secure_url;
+          const formDataImage = new FormData();
+          formDataImage.append("file", compressedFile); 
+          formDataImage.append("upload_preset", "tourism_upload");
+
+          const response = await fetch(
+            "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
+            {
+              method: "POST",
+              body: formDataImage,
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Upload failed with status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          uploadedURLs.push(data.secure_url);
+        }
       }
 
       if (editingId) {
-        await updateDoc(doc(db, "tourismData", editingId), {
+        // If editing, only update images if new ones were uploaded
+        const updatePayload = {
           name: formData.name,
           category: formData.category,
           type: formData.type,
@@ -276,14 +303,20 @@ function ManageTourismData() {
           coordinates: {
             lat: Number(formData.latitude),
             lng: Number(formData.longitude),
-          },
-          ...(imageURL && { imageURL }),
-        });
+          }
+        };
 
+        // If new files were uploaded, replace the old ones
+        if (uploadedURLs.length > 0) {
+          updatePayload.imageURL = uploadedURLs[0]; // Keep primary for map
+          updatePayload.imageURLs = uploadedURLs;   // Save the array for the slider
+        }
+
+        await updateDoc(doc(db, "tourismData", editingId), updatePayload);
         showToastMessage("Entry updated successfully!");
       } else {
-        if (!imageURL) {
-          alert("Please upload an image");
+        if (uploadedURLs.length === 0) {
+          alert("Please upload at least one image");
           setLoading(false);
           return;
         }
@@ -301,7 +334,8 @@ function ManageTourismData() {
             lat: Number(formData.latitude),
             lng: Number(formData.longitude),
           },
-          imageURL,
+          imageURL: uploadedURLs[0], // Primary cover image
+          imageURLs: uploadedURLs,   // Array of all images
           status: "active",
           createdAt: serverTimestamp(),
         });
@@ -313,6 +347,7 @@ function ManageTourismData() {
       resetForm();
     } catch (error) {
       console.error("FINAL ERROR:", error);
+      alert("Something went wrong during upload. Please try again.");
     }
 
     setLoading(false);
@@ -985,14 +1020,22 @@ function ManageTourismData() {
               </div>
 
               <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] p-4">
-                <label className="mb-3 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  {editingId ? "Replace Image Optional" : "Upload Cover Image"}
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  {editingId ? "Replace Images (Optional)" : "Upload Cover Images"}
                 </label>
+                
+                {/* NEW: Display count of selected files */}
+                {imageFiles.length > 0 && (
+                  <p className="mb-3 text-xs font-semibold text-[#2563eb]">
+                    {imageFiles.length} file(s) selected
+                  </p>
+                )}
 
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files[0])}
+                  multiple // NEW: Allow multiple selection
+                  onChange={(e) => setImageFiles(Array.from(e.target.files))}
                   {...(!editingId && { required: true })}
                   className="w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#2563eb] hover:file:bg-blue-100"
                 />
