@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
+import favoritesHero from "../../assets/favorites-hero.png";
 
 const BASE_TABS = ["All", "Events", "Destinations", "Articles", "Highlights"];
 
@@ -221,7 +222,7 @@ function Favorites() {
       {/* HERO */}
       <section className="relative mx-4 mt-0 h-[300px] overflow-hidden rounded-b-[32px] sm:h-[340px] sm:rounded-b-[48px] md:mx-8">
         <img
-          src="/src/assets/favorites-hero.png"
+          src={favoritesHero}
           alt="Favorites"
           className="absolute inset-0 h-full w-full object-cover"
         />

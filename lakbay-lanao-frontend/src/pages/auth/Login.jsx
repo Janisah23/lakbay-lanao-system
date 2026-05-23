@@ -41,6 +41,7 @@ function Login() {
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
+
     if (savedEmail) {
       setEmail(savedEmail);
       setRememberMe(true);
@@ -71,7 +72,6 @@ function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Role-based navigation
       if (role === "admin") {
         navigate("/admin/dashboard");
       } else if (role === "staff") {
@@ -99,15 +99,16 @@ function Login() {
 
       const user = userCredential.user;
 
-      // 1. Log the successful login with specific details
-      await logAction({
-        action: "Login",
-        module: "Authentication",
-        targetModule: "Dashboard",
-        details: "User successfully authenticated."
-      }, user);
+      await logAction(
+        {
+          action: "Login",
+          module: "Authentication",
+          targetModule: "Dashboard",
+          details: "User successfully authenticated.",
+        },
+        user
+      );
 
-      // 2. Update Firestore user record
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
 
@@ -124,7 +125,11 @@ function Login() {
       }, 600);
     } catch (error) {
       console.error("Login error:", error);
-      if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password") {
+
+      if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/wrong-password"
+      ) {
         setErrorMsg("Email is not registered or password is incorrect.");
       } else if (error.code === "auth/too-many-requests") {
         setErrorMsg("Too many attempts. Please try again later.");
@@ -162,12 +167,15 @@ function Login() {
         });
       }
 
-      await logAction({
-        action: "Login",
-        module: "Authentication",
-        targetModule: "Dashboard",
-        details: "Google Sign-In successful."
-      }, user);
+      await logAction(
+        {
+          action: "Login",
+          module: "Authentication",
+          targetModule: "Dashboard",
+          details: "Google Sign-In successful.",
+        },
+        user
+      );
 
       setSuccessMsg("Login successful.");
 
@@ -182,83 +190,174 @@ function Login() {
     }
   };
 
-  const inputStyle = "w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100";
-  const passwordInputStyle = "w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 pr-12 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100";
+  const inputStyle =
+    "w-full rounded-[20px] border border-blue-100 bg-white px-5 py-3.5 text-sm font-medium text-gray-700 outline-none shadow-[inset_0_2px_5px_rgba(15,23,42,0.035)] transition-all duration-200 placeholder:text-gray-400 hover:border-blue-200 focus:border-[#2563eb]/70 focus:ring-4 focus:ring-blue-100/70";
+
+  const passwordInputStyle =
+    "w-full rounded-[20px] border border-blue-100 bg-white px-5 py-3.5 pr-12 text-sm font-medium text-gray-700 outline-none shadow-[inset_0_2px_5px_rgba(15,23,42,0.035)] transition-all duration-200 placeholder:text-gray-400 hover:border-blue-200 focus:border-[#2563eb]/70 focus:ring-4 focus:ring-blue-100/70";
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f3f9ff] bg-cover bg-center bg-no-repeat px-5 py-10" style={{ backgroundImage: `url(${loginpage})` }}>
-      <div className="absolute inset-0 bg-[#f3f9ff]/70" />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/65 via-[#f3f9ff]/60 to-[#dbeafe]/70" />
+    <div
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f3f9ff] bg-cover bg-center bg-no-repeat px-5 py-10"
+      style={{ backgroundImage: `url(${loginpage})` }}
+    >
+      <div className="absolute inset-0 bg-[#f3f9ff]/82" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-[#f8fbff]/70 to-[#dbeafe]/72" />
 
-      <button type="button" onClick={() => navigate("/home")} className="absolute left-6 top-6 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-sm font-bold text-gray-500 shadow-sm backdrop-blur-[2px] transition hover:text-[#2563eb]">
-        <FiArrowLeft /> Back to Home
+      <button
+        type="button"
+        onClick={() => navigate("/home")}
+        className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-bold text-gray-500 shadow-sm transition hover:text-[#2563eb] sm:left-6 sm:top-6 sm:text-sm"
+      >
+        <FiArrowLeft />
+        Back to Home
       </button>
 
-      <div className="relative z-10 w-full max-w-[400px] rounded-[30px] border border-blue-100 bg-white/95 p-8 text-center shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-[4px] md:p-10">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-[#2563eb] shadow-sm">
-          <FiUser className="text-2xl" />
-        </div>
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-[410px] rounded-[38px] border border-blue-100 bg-white p-2 shadow-[0_22px_55px_rgba(37,99,235,0.12)]"
+      >
+        <div className="rounded-[32px] border border-blue-50 bg-white px-6 py-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-10px_24px_rgba(37,99,235,0.035)] sm:px-8 sm:py-9">
+          <div className="mx-auto mb-5 flex h-[58px] w-[58px] items-center justify-center rounded-[22px] border border-blue-100 bg-blue-50 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_18px_rgba(37,99,235,0.10)]">
+            <FiUser className="text-[25px]" />
+          </div>
 
-        <h2 className="mb-1 text-[30px] font-bold text-[#2563eb]">Sign In</h2>
-        <p className="mb-6 text-sm text-gray-500 font-medium">Welcome back to Lakbay Lanao</p>
+          <h2 className="mb-1 text-[31px] font-extrabold tracking-tight text-[#2563eb]">
+            Sign In
+          </h2>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
-          <input type="email" placeholder="Email" value={email} onChange={(e) => { setEmail(e.target.value); clearMessages(); }} required className={inputStyle} />
+          <p className="mb-7 text-sm font-medium text-gray-500">
+            Welcome back to Lakbay Lanao
+          </p>
 
-          <div className="relative">
-            <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => { setPassword(e.target.value); clearMessages(); }} required className={passwordInputStyle} />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-[#2563eb]">
-              {showPassword ? <FiEyeOff className="text-lg" /> : <FiEye className="text-lg" />}
+          <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearMessages();
+              }}
+              required
+              className={inputStyle}
+            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearMessages();
+                }}
+                required
+                className={passwordInputStyle}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-blue-50 hover:text-[#2563eb]"
+              >
+                {showPassword ? (
+                  <FiEyeOff className="text-lg" />
+                ) : (
+                  <FiEye className="text-lg" />
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <label className="flex cursor-pointer items-center gap-2 font-semibold text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-[#2563eb] focus:ring-[#2563eb]"
+                />
+                Remember me
+              </label>
+
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="font-bold text-[#2563eb] transition hover:text-blue-700 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {errorMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="flex items-start gap-3 rounded-[20px] border border-red-100 bg-red-50 px-4 py-3 text-xs font-bold text-red-700"
+                >
+                  <FiAlertCircle className="mt-0.5 shrink-0" />
+                  {errorMsg}
+                </motion.div>
+              )}
+
+              {successMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="flex items-start gap-3 rounded-[20px] border border-green-100 bg-green-50 px-4 py-3 text-xs font-bold text-green-700"
+                >
+                  <FiCheckCircle className="mt-0.5 shrink-0" />
+                  {successMsg}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-1 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-80"
+            >
+              {loading ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                "Log in"
+              )}
+            </button>
+          </form>
+
+          <div className="my-6 flex items-center gap-3 text-center text-[13px] font-medium text-gray-400">
+            <span className="h-px flex-1 bg-blue-50" />
+            or
+            <span className="h-px flex-1 bg-blue-50" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-3 rounded-[20px] border border-blue-100 bg-white px-4 py-3.5 text-sm font-extrabold text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50 disabled:opacity-70"
+          >
+            <img src={googleIcon} alt="Google" className="h-4 w-4" />
+            Continue with Google
+          </button>
+
+          <div className="mt-7 border-t border-blue-50 pt-6 text-[13px] font-semibold text-gray-500">
+            Don&apos;t have an account?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="font-extrabold text-[#2563eb] transition-all hover:text-blue-700 hover:underline"
+            >
+              Sign up now
             </button>
           </div>
-
-          <div className="flex items-center justify-between text-xs">
-            <label className="flex cursor-pointer items-center gap-2 text-gray-600 font-medium">
-              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[#2563eb] focus:ring-[#2563eb]" />
-              Remember me
-            </label>
-            <button type="button" onClick={() => navigate("/forgot-password")} className="font-bold text-[#2563eb] hover:underline">Forgot password?</button>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {errorMsg && (
-              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex items-start gap-3 rounded-[16px] border border-red-100 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
-                <FiAlertCircle className="mt-0.5 shrink-0" /> {errorMsg}
-              </motion.div>
-            )}
-            {successMsg && (
-              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex items-start gap-3 rounded-[16px] border border-green-100 bg-green-50 px-4 py-3 text-xs font-bold text-green-700">
-                <FiCheckCircle className="mt-0.5 shrink-0" /> {successMsg}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <button type="submit" disabled={loading} className="mt-1 flex w-full items-center justify-center rounded-[14px] bg-[#2563eb] py-3 text-[15px] font-bold text-white shadow-lg transition-all active:scale-[0.98] disabled:opacity-80">
-            {loading ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : "Log in"}
-          </button>
-        </form>
-
-        <div className="my-5 flex items-center gap-3 text-center text-[13px] text-gray-400">
-          <span className="h-px flex-1 bg-blue-50" /> or <span className="h-px flex-1 bg-blue-50" />
         </div>
-
-        <button type="button" onClick={handleGoogleLogin} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-[14px] border border-blue-100 bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-blue-50 disabled:opacity-70">
-          <img src={googleIcon} alt="Google" className="h-4 w-4" /> Continue with Google
-        </button>
-
-        {/* --- SIGN UP SECTION --- */}
-        <div className="mt-8 pt-6 border-t border-blue-50 text-[13px] font-medium text-gray-500">
-          Don't have an account?{" "}
-          <button 
-            type="button" 
-            onClick={() => navigate("/signup")} 
-            className="font-bold text-[#2563eb] transition-all hover:text-blue-700 hover:underline"
-          >
-            Sign up now
-          </button>
-        </div>
-
-      </div>
+      </motion.div>
     </div>
   );
 }

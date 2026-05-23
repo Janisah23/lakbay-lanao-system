@@ -5,7 +5,6 @@ import Footer from "../../components/common/Footer";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FiMapPin,
-  FiCalendar,
   FiInfo,
   FiHeart,
   FiShare2,
@@ -38,15 +37,13 @@ import {
   updateDoc,
   serverTimestamp,
   increment,
-  query,
-  where,
-  limit,
 } from "firebase/firestore";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
+const normalize = (value) => String(value || "").trim().toLowerCase();
+
 const PlacesDetails = () => {
   const [morePlaces, setMorePlaces] = useState([]);
-  const [nearbyHotels, setNearbyHotels] = useState([]);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -144,56 +141,66 @@ const PlacesDetails = () => {
 
     const fetchRelatedData = async () => {
       try {
-        const colRef = collection(db, destinationDetail._source);
+        const [tourismDataSnap, tourismContentSnap] = await Promise.all([
+          getDocs(collection(db, "tourismData")),
+          getDocs(collection(db, "tourismContent")),
+        ]);
 
-        const qMore = query(
-          colRef,
-          where("type", "==", destinationDetail.type),
-          limit(6)
-        );
-
-        const snapMore = await getDocs(qMore);
-        const itemsMore = snapMore.docs.map((d) => ({
+        const tourismDataItems = tourismDataSnap.docs.map((d) => ({
           id: d.id,
+          _source: "tourismData",
           ...d.data(),
         }));
 
-        setMorePlaces(itemsMore.filter((item) => item.id !== id));
+        const tourismContentItems = tourismContentSnap.docs.map((d) => ({
+          id: d.id,
+          _source: "tourismContent",
+          ...d.data(),
+        }));
 
-        if (destinationDetail.location?.municipality) {
-          const dataColRef = collection(db, "tourismData");
+        const allItems = [...tourismDataItems, ...tourismContentItems];
 
-          const qHotels = query(
-            dataColRef,
-            where(
-              "location.municipality",
-              "==",
-              destinationDetail.location.municipality
-            )
-          );
+        const currentType = normalize(destinationDetail.type);
+        const currentCategory = normalize(destinationDetail.category);
+        const currentContentType = normalize(destinationDetail.contentType);
 
-          const snapHotels = await getDocs(qHotels);
+        const related = allItems
+          .filter((item) => {
+            if (String(item.id) === String(id)) return false;
+            if (item.status === "archived") return false;
 
-          const hotelItems = snapHotels.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((item) => {
-              const type = String(item.type || "").toLowerCase();
-              const cat = String(item.category || "").toLowerCase();
+            const itemType = normalize(item.type);
+            const itemCategory = normalize(item.category);
+            const itemContentType = normalize(item.contentType);
 
-              const isHotel =
-                type === "hotel" ||
-                type === "resort" ||
-                type === "inn" ||
-                type === "accommodation" ||
-                cat === "hotel";
+            const isArticle =
+              itemContentType === "article" ||
+              itemContentType === "blog" ||
+              itemCategory === "article" ||
+              itemCategory === "news";
 
-              return isHotel && item.id !== id;
-            });
+            const isEvent =
+              itemContentType === "event" || itemCategory === "event";
 
-          setNearbyHotels(hotelItems.slice(0, 4));
-        }
+            if (isArticle || isEvent) return false;
+
+            const sameType = currentType && itemType === currentType;
+            const sameCategory =
+              currentCategory && itemCategory === currentCategory;
+            const sameContentType =
+              currentContentType && itemContentType === currentContentType;
+
+            return sameType || sameCategory || sameContentType;
+          })
+          .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+
+        const uniqueRelated = Array.from(
+          new Map(related.map((item) => [item.id, item])).values()
+        );
+
+        setMorePlaces(uniqueRelated.slice(0, 8));
       } catch (error) {
-        console.error("Error fetching related data:", error);
+        console.error("Error fetching similar places:", error);
       }
     };
 
@@ -286,6 +293,10 @@ const PlacesDetails = () => {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  const handleExplorePlaceClick = (placeId) => {
+    window.location.href = `/destination/${placeId}`;
+  };
+
   const getBreadcrumbData = () => {
     if (!destinationDetail) {
       return { label: "Destinations", path: "/destinations" };
@@ -310,10 +321,22 @@ const PlacesDetails = () => {
     return { label: "Destinations", path: "/destinations" };
   };
 
-  const renderPlaceCard = (place, buttonLabel = "View place") => (
+  const getLocationText = (place) => {
+    if (!place?.location) return "Lanao del Sur";
+
+    if (typeof place.location === "string") return place.location;
+
+    if (place.location?.municipality && place.location?.province) {
+      return `${place.location.municipality}, ${place.location.province}`;
+    }
+
+    return place.location?.municipality || "Lanao del Sur";
+  };
+
+  const renderPlaceCard = (place, buttonLabel = "Explore place") => (
     <article
       key={place.id}
-      onClick={() => navigate(`/destination/${place.id}`)}
+      onClick={() => handleExplorePlaceClick(place.id)}
       className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:min-h-[310px] sm:rounded-[24px] lg:min-h-[330px] lg:rounded-[30px]"
     >
       <div className="p-1.5 pb-0 sm:p-2 sm:pb-0 lg:p-2.5 lg:pb-0">
@@ -356,7 +379,7 @@ const PlacesDetails = () => {
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/destination/${place.id}`);
+            handleExplorePlaceClick(place.id);
           }}
           className="mt-auto w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md sm:w-fit sm:px-4 sm:py-2 sm:text-[11px] lg:inline-flex lg:items-center lg:gap-2 lg:self-start lg:px-5 lg:py-2.5 lg:text-xs"
         >
@@ -397,9 +420,7 @@ const PlacesDetails = () => {
   const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&output=embed`;
   const mapDirectionsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
-  const locationStr = destinationDetail.location
-    ? `${destinationDetail.location.municipality}, ${destinationDetail.location.province}`
-    : "Lanao del Sur";
+  const locationStr = getLocationText(destinationDetail);
 
   const saveCount = destinationDetail.saveCount || 0;
 
@@ -411,6 +432,15 @@ const PlacesDetails = () => {
       <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-start">
           <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => navigate(breadcrumb.path)}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-semibold text-[#2563eb] shadow-sm transition hover:bg-blue-50"
+            >
+              <FiChevronLeft />
+              Back to {breadcrumb.label}
+            </button>
+
             {destinationDetail.isTopDestination ||
             (destinationDetail.rating >= 4.5 &&
               destinationDetail.reviewsCount > 5) ? (
@@ -975,36 +1005,7 @@ const PlacesDetails = () => {
         </div>
       </section>
 
-      {/* NEARBY HOTELS */}
-      {nearbyHotels.length > 0 && (
-        <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-              <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-[#2563eb] shadow-sm">
-                  Recommended Stays
-                </span>
-
-                <h3 className="mt-4 text-2xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
-                  Hotels Near{" "}
-                  {destinationDetail.location?.municipality || "This Place"}
-                </h3>
-
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-500">
-                  Top-rated accommodations to rest and recharge during your
-                  visit.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-              {nearbyHotels.map((place) => renderPlaceCard(place, "View stay"))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* MORE TO EXPLORE */}
+      {/* SIMILAR PLACES TO EXPLORE */}
       {morePlaces.length > 0 && (
         <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
           <div className="mx-auto max-w-7xl">
@@ -1019,8 +1020,7 @@ const PlacesDetails = () => {
                 </h3>
 
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-500">
-                  Discover other stunning destinations with the same travel
-                  appeal.
+                  Discover other places with the same category and travel appeal.
                 </p>
               </div>
 

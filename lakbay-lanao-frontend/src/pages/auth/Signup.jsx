@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import {
   FiArrowLeft,
   FiAlertCircle,
-  FiCheckCircle,
   FiUserPlus,
   FiEye,
   FiEyeOff,
@@ -187,7 +189,6 @@ function Signup() {
     setLoading(true);
 
     try {
-      // 1. Create the Auth Account
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
@@ -196,7 +197,6 @@ function Signup() {
 
       const user = userCredential.user;
 
-      // 2. SEND VERIFICATION EMAIL (Prevents fake emails)
       await sendEmailVerification(user);
 
       const provinceName =
@@ -216,7 +216,6 @@ function Signup() {
             addressText: foreignLocation.trim(),
           };
 
-      // 3. Save Profile to Firestore
       await setDoc(doc(db, "users", user.uid), {
         fullName: fullName.trim(),
         username: username.trim(),
@@ -225,16 +224,14 @@ function Signup() {
         country: selectedCountry.name,
         countryCode: selectedCountry.code,
         role: "tourist",
-        emailVerified: false, // Set to false initially!
+        emailVerified: false,
         createdAt: serverTimestamp(),
       });
 
-      // 4. Update Success Message & Redirect
       setSuccessMsg(
         "Your account has been created successfully. We have sent you an email with a verification link. Please check your inbox and click the link to continue."
       );
 
-      // Give them 7 seconds to read the message before going to login
       setTimeout(() => {
         navigate("/login");
       }, 7000);
@@ -258,10 +255,10 @@ function Signup() {
   };
 
   const inputStyle =
-    "w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100";
+    "w-full rounded-[20px] border border-blue-100 bg-white px-5 py-3.5 text-sm font-medium text-gray-700 outline-none shadow-[inset_0_2px_5px_rgba(15,23,42,0.035)] transition-all duration-200 placeholder:text-gray-400 hover:border-blue-200 focus:border-[#2563eb]/70 focus:ring-4 focus:ring-blue-100/70";
 
   const passwordInputStyle =
-    "w-full rounded-[14px] border border-blue-100 bg-white px-4 py-3 pr-12 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-[#2563eb]/50 focus:border-[#2563eb] focus:ring-4 focus:ring-blue-100";
+    "w-full rounded-[20px] border border-blue-100 bg-white px-5 py-3.5 pr-12 text-sm font-medium text-gray-700 outline-none shadow-[inset_0_2px_5px_rgba(15,23,42,0.035)] transition-all duration-200 placeholder:text-gray-400 hover:border-blue-200 focus:border-[#2563eb]/70 focus:ring-4 focus:ring-blue-100/70";
 
   const errorTextStyle =
     "ml-1 mt-1 text-[10px] font-bold tracking-wide text-red-500";
@@ -271,310 +268,330 @@ function Signup() {
       className="relative flex min-h-screen items-center justify-center overflow-y-auto bg-[#f3f9ff] bg-cover bg-center px-5 py-10"
       style={{ backgroundImage: `url(${loginpage})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-[#f3f9ff]/60 to-[#dbeafe]/80" />
+      <div className="absolute inset-0 bg-[#f3f9ff]/82" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-[#f8fbff]/70 to-[#dbeafe]/72" />
 
       <button
         type="button"
         onClick={() => navigate("/login")}
-        className="absolute left-6 top-6 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-sm font-bold text-gray-500 shadow-sm transition hover:text-[#2563eb]"
+        className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-bold text-gray-500 shadow-sm transition hover:text-[#2563eb] sm:left-6 sm:top-6 sm:text-sm"
       >
         <FiArrowLeft />
         Back to Sign In
       </button>
 
-      <div className="relative z-10 my-8 w-full max-w-[750px] rounded-[30px] border border-blue-100 bg-white/95 p-8 shadow-[0_20px_50px_rgba(37,99,235,0.1)] backdrop-blur-[6px] md:p-12">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-[#2563eb] shadow-sm">
-          <FiUserPlus className="text-2xl" />
-        </div>
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="relative z-10 my-8 w-full max-w-[760px] rounded-[38px] border border-blue-100 bg-white p-2 shadow-[0_22px_55px_rgba(37,99,235,0.12)]"
+      >
+        <div className="rounded-[32px] border border-blue-50 bg-white px-6 py-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-10px_24px_rgba(37,99,235,0.035)] sm:px-8 sm:py-9 md:px-10">
+          <div className="mx-auto mb-5 flex h-[58px] w-[58px] items-center justify-center rounded-[22px] border border-blue-100 bg-blue-50 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_18px_rgba(37,99,235,0.10)]">
+            <FiUserPlus className="text-[25px]" />
+          </div>
 
-        <h2 className="text-center text-[32px] font-extrabold tracking-tight text-[#2563eb]">
-          Create Account
-        </h2>
+          <h2 className="text-center text-[32px] font-extrabold tracking-tight text-[#2563eb]">
+            Create Account
+          </h2>
 
-        <p className="mb-8 text-center text-sm font-medium text-gray-500">
-          Join Lakbay Lanao and explore the beauty of the south.
-        </p>
+          <p className="mb-8 mt-1 text-center text-sm font-medium text-gray-500">
+            Join Lakbay Lanao and explore the beauty of the south.
+          </p>
 
-        <form onSubmit={handleSignup} className="text-left">
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                Full Name
-              </label>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  clearMessages();
-                }}
-                required
-                className={inputStyle}
-              />
-            </div>
+          <form onSubmit={handleSignup} className="text-left">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-1">
+                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                  Full Name
+                </label>
 
-            <div className="space-y-1">
-              <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                Username
-              </label>
-              <input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  clearMessages();
-                }}
-                required
-                className={inputStyle}
-              />
-            </div>
-
-            <div className="space-y-1 md:col-span-2">
-              <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  clearMessages();
-                }}
-                required
-                className={`${inputStyle} ${
-                  emailError ? "border-red-300 bg-red-50/30" : ""
-                }`}
-              />
-              {emailError && <p className={errorTextStyle}>{emailError}</p>}
-            </div>
-
-            <div className="space-y-1 md:col-span-2">
-              <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                Country
-              </label>
-
-              <div className="relative">
-                <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2">
-                  {selectedCountry.code ? (
-                    <span
-                      className={`fi fi-${selectedCountry.code} rounded-[3px] shadow-sm`}
-                    />
-                  ) : (
-                    <span className="text-base">🌍</span>
-                  )}
-                </div>
-
-                <select
-                  value={selectedCountry.code}
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={fullName}
                   onChange={(e) => {
-                    const country = COUNTRIES.find(
-                      (item) => item.code === e.target.value
-                    );
-
-                    setSelectedCountry(country || COUNTRIES[0]);
-                    setSelectedProvince("");
-                    setSelectedCity("");
-                    setForeignLocation("");
+                    setFullName(e.target.value);
                     clearMessages();
                   }}
                   required
-                  className={`${inputStyle} cursor-pointer pl-12`}
-                >
-                  {COUNTRIES.map((country) => (
-                    <option key={country.name} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {isPhilippines ? (
-              <>
-                <div className="space-y-1">
-                  <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                    Province
-                  </label>
-                  <select
-                    value={selectedProvince}
-                    onChange={(e) => {
-                      setSelectedProvince(e.target.value);
-                      setSelectedCity("");
-                      clearMessages();
-                    }}
-                    required
-                    className={inputStyle}
-                  >
-                    <option value="">Select Province</option>
-                    {provincesList.map((prov) => (
-                      <option key={prov.code} value={prov.code}>
-                        {prov.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                    City / Municipality
-                  </label>
-                  <select
-                    value={selectedCity}
-                    onChange={(e) => {
-                      setSelectedCity(e.target.value);
-                      clearMessages();
-                    }}
-                    required
-                    disabled={!selectedProvince}
-                    className={`${inputStyle} disabled:cursor-not-allowed disabled:bg-gray-100`}
-                  >
-                    <option value="">Select City/Municipality</option>
-                    {citiesList.map((city) => (
-                      <option key={city.name} value={city.name}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-1 md:col-span-2">
-                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                  City / State / Address{" "}
-                  <span className="normal-case text-gray-300">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Example: Seoul, South Korea"
-                  value={foreignLocation}
-                  onChange={(e) => {
-                    setForeignLocation(e.target.value);
-                    clearMessages();
-                  }}
                   className={inputStyle}
                 />
               </div>
-            )}
 
-            <div className="space-y-1">
-              <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                Password
-              </label>
-              <div className="relative">
+              <div className="space-y-1">
+                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                  Username
+                </label>
+
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  value={password}
+                  type="text"
+                  placeholder="Username"
+                  value={username}
                   onChange={(e) => {
-                    setPassword(e.target.value);
+                    setUsername(e.target.value);
                     clearMessages();
                   }}
                   required
-                  className={`${passwordInputStyle} ${
-                    passwordError ? "border-red-300 bg-red-50/30" : ""
-                  }`}
+                  className={inputStyle}
                 />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2563eb]"
-                >
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
-                </button>
               </div>
-              {passwordError && (
-                <p className={errorTextStyle}>{passwordError}</p>
-              )}
-            </div>
 
-            <div className="relative space-y-1">
-              <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
-                Confirm Password
-              </label>
-              <div className="relative">
+              <div className="space-y-1 md:col-span-2">
+                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                  Email Address
+                </label>
+
                 <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
                   onChange={(e) => {
-                    setConfirmPassword(e.target.value);
+                    setEmail(e.target.value);
                     clearMessages();
                   }}
                   required
-                  className={`${passwordInputStyle} ${
-                    confirmPassword && password !== confirmPassword
-                      ? "border-red-300 bg-red-50/30"
-                      : ""
+                  className={`${inputStyle} ${
+                    emailError ? "border-red-300 bg-red-50/30" : ""
                   }`}
                 />
 
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2563eb]"
-                >
-                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-                </button>
+                {emailError && <p className={errorTextStyle}>{emailError}</p>}
               </div>
 
-              {confirmPassword && password !== confirmPassword && (
-                <p className={errorTextStyle}>Passwords do not match.</p>
+              <div className="space-y-1 md:col-span-2">
+                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                  Country
+                </label>
+
+                <div className="relative">
+                  <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2">
+                    {selectedCountry.code ? (
+                      <span
+                        className={`fi fi-${selectedCountry.code} rounded-[3px] shadow-sm`}
+                      />
+                    ) : (
+                      <span className="text-base">🌍</span>
+                    )}
+                  </div>
+
+                  <select
+                    value={selectedCountry.code}
+                    onChange={(e) => {
+                      const country = COUNTRIES.find(
+                        (item) => item.code === e.target.value
+                      );
+
+                      setSelectedCountry(country || COUNTRIES[0]);
+                      setSelectedProvince("");
+                      setSelectedCity("");
+                      setForeignLocation("");
+                      clearMessages();
+                    }}
+                    required
+                    className={`${inputStyle} cursor-pointer pl-12`}
+                  >
+                    {COUNTRIES.map((country) => (
+                      <option key={country.name} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {isPhilippines ? (
+                <>
+                  <div className="space-y-1">
+                    <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                      Province
+                    </label>
+
+                    <select
+                      value={selectedProvince}
+                      onChange={(e) => {
+                        setSelectedProvince(e.target.value);
+                        setSelectedCity("");
+                        clearMessages();
+                      }}
+                      required
+                      className={inputStyle}
+                    >
+                      <option value="">Select Province</option>
+
+                      {provincesList.map((prov) => (
+                        <option key={prov.code} value={prov.code}>
+                          {prov.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                      City / Municipality
+                    </label>
+
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => {
+                        setSelectedCity(e.target.value);
+                        clearMessages();
+                      }}
+                      required
+                      disabled={!selectedProvince}
+                      className={`${inputStyle} disabled:cursor-not-allowed disabled:bg-gray-100`}
+                    >
+                      <option value="">Select City/Municipality</option>
+
+                      {citiesList.map((city) => (
+                        <option key={city.name} value={city.name}>
+                          {city.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-1 md:col-span-2">
+                  <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                    City / State / Address{" "}
+                    <span className="normal-case text-gray-300">(optional)</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Example: Seoul, South Korea"
+                    value={foreignLocation}
+                    onChange={(e) => {
+                      setForeignLocation(e.target.value);
+                      clearMessages();
+                    }}
+                    className={inputStyle}
+                  />
+                </div>
               )}
+
+              <div className="space-y-1">
+                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                  Password
+                </label>
+
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      clearMessages();
+                    }}
+                    required
+                    className={`${passwordInputStyle} ${
+                      passwordError ? "border-red-300 bg-red-50/30" : ""
+                    }`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                  >
+                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+
+                {passwordError && (
+                  <p className={errorTextStyle}>{passwordError}</p>
+                )}
+              </div>
+
+              <div className="relative space-y-1">
+                <label className="ml-1 text-[11px] font-bold uppercase text-gray-400">
+                  Confirm Password
+                </label>
+
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      clearMessages();
+                    }}
+                    required
+                    className={`${passwordInputStyle} ${
+                      confirmPassword && password !== confirmPassword
+                        ? "border-red-300 bg-red-50/30"
+                        : ""
+                    }`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                  >
+                    {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+
+                {confirmPassword && password !== confirmPassword && (
+                  <p className={errorTextStyle}>Passwords do not match.</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <AnimatePresence>
-            {submitError && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4 flex items-start gap-3 rounded-[16px] border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700 shadow-sm"
-              >
-                <FiAlertCircle className="mt-1 shrink-0 text-lg" />
-                {submitError}
-              </motion.div>
-            )}
+            <AnimatePresence>
+              {submitError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 flex items-start gap-3 rounded-[20px] border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700"
+                >
+                  <FiAlertCircle className="mt-1 shrink-0 text-lg" />
+                  {submitError}
+                </motion.div>
+              )}
 
-            {successMsg && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-4 flex items-start gap-3 rounded-[16px] border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-[#2563eb] shadow-sm"
-              >
-                <FiMail className="mt-1 shrink-0 text-lg" />
-                {successMsg}
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {successMsg && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-4 flex items-start gap-3 rounded-[20px] border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-[#2563eb]"
+                >
+                  <FiMail className="mt-1 shrink-0 text-lg" />
+                  {successMsg}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-8 flex w-full items-center justify-center rounded-[16px] bg-[#2563eb] py-4 text-[15px] font-bold text-white shadow-lg transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-70"
-          >
-            {loading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              "Create Account"
-            )}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-8 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-70"
+            >
+              {loading ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
 
-        <p className="mt-6 text-center text-sm font-medium text-gray-500">
-          Already have an account?{" "}
-          <span
-            className="cursor-pointer font-bold text-[#2563eb] hover:underline"
-            onClick={() => navigate("/login")}
-          >
-            Sign in
-          </span>
-        </p>
-      </div>
+          <p className="mt-6 text-center text-sm font-medium text-gray-500">
+            Already have an account?{" "}
+            <span
+              className="cursor-pointer font-bold text-[#2563eb] hover:underline"
+              onClick={() => navigate("/login")}
+            >
+              Sign in
+            </span>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }

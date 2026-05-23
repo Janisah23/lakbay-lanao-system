@@ -118,32 +118,81 @@ function Gallery() {
   const prevMedia = () => {
     if (filteredMedia.length === 0) return;
 
-    const prev = (currentIndex - 1 + filteredMedia.length) % filteredMedia.length;
+    const prev =
+      (currentIndex - 1 + filteredMedia.length) % filteredMedia.length;
+
     setSelected(filteredMedia[prev]);
     setCurrentIndex(prev);
   };
+
+  useEffect(() => {
+    if (!selected) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowRight") {
+        nextMedia();
+      }
+
+      if (event.key === "ArrowLeft") {
+        prevMedia();
+      }
+
+      if (event.key === "Escape") {
+        setSelected(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selected, currentIndex, filteredMedia]);
+
+  const chunkArray = (array, size) => {
+    const chunks = [];
+
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+
+    return chunks;
+  };
+
+  const mediaChunks = chunkArray(filteredMedia, 9);
+
+  const bentoPattern = [
+    "md:col-start-1 md:col-end-3 md:row-start-1 md:row-end-2",
+    "md:col-start-2 md:col-end-4 md:row-start-2 md:row-end-4",
+    "md:col-start-3 md:col-end-4 md:row-start-1 md:row-end-2",
+    "md:col-start-4 md:col-end-5 md:row-start-1 md:row-end-3",
+    "md:col-start-1 md:col-end-2 md:row-start-3 md:row-end-5",
+    "md:col-start-4 md:col-end-5 md:row-start-3 md:row-end-4",
+    "md:col-start-3 md:col-end-5 md:row-start-4 md:row-end-5",
+    "md:col-start-2 md:col-end-3 md:row-start-4 md:row-end-5",
+    "md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3",
+  ];
 
   return (
     <>
       <Navbar />
 
-      <section className="min-h-screen bg-[#f3f9ff] px-4 pb-20 pt-28 sm:px-6 md:pt-32 lg:px-10">
+      <section className="min-h-screen bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] px-4 pb-24 pt-28 sm:px-6 md:pt-32 lg:px-10">
         <div className="mx-auto max-w-7xl">
           {/* HEADER */}
           <div className="text-center">
             
-
             <h1 className="text-2xl font-bold leading-snug tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
               Multimedia Gallery
             </h1>
 
-            <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-gray-500 sm:text-base">
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-500 sm:text-base">
               Explore the beauty of Lanao del Sur through photos and videos
             </p>
           </div>
 
           {/* FILTER */}
-          <div className="mt-8 rounded-[24px] border border-blue-100 bg-white p-4 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:mt-10 sm:rounded-[28px] sm:p-5">
+          <div className="mx-auto mt-8 max-w-5xl rounded-[24px] border border-blue-100/80 bg-white/80 p-4 shadow-[0_14px_40px_rgba(37,99,235,0.08)] backdrop-blur-xl sm:mt-10 sm:rounded-[28px] sm:p-5">
             {/* MEDIA TYPE FILTER */}
             <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
               {mediaTypes.map((type) => (
@@ -152,8 +201,8 @@ function Gallery() {
                   onClick={() => setTypeFilter(type.value)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium transition sm:px-4 sm:py-2 sm:text-sm ${
                     typeFilter === type.value
-                      ? "border-[#2563eb] bg-[#2563eb] text-white shadow-sm"
-                      : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+                      ? "border-[#2563eb] bg-[#2563eb] text-white shadow-[0_8px_18px_rgba(37,99,235,0.2)]"
+                      : "border-blue-100 bg-white/80 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                   }`}
                 >
                   {type.label}
@@ -171,8 +220,8 @@ function Gallery() {
                   onClick={() => setFilter(cat)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition sm:px-4 sm:py-2 sm:text-sm ${
                     filter === cat
-                      ? "border-[#2563eb] bg-[#2563eb] text-white shadow-sm"
-                      : "border-blue-100 bg-white text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
+                      ? "border-[#2563eb] bg-[#2563eb] text-white shadow-[0_8px_18px_rgba(37,99,235,0.2)]"
+                      : "border-blue-100 bg-white/80 text-gray-600 hover:bg-blue-50 hover:text-[#2563eb]"
                   }`}
                 >
                   {cat}
@@ -181,58 +230,75 @@ function Gallery() {
             </div>
           </div>
 
-          {/* GALLERY GRID */}
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:mt-12 lg:gap-6">
+          {/* BENTO GALLERY GRID */}
+          <div className="mt-12 lg:mt-14">
             {filteredMedia.length === 0 ? (
-              <div className="col-span-2 rounded-[24px] border border-dashed border-blue-100 bg-white py-16 text-center text-sm text-gray-400 shadow-sm md:col-span-3 md:rounded-[28px] md:py-20">
+              <div className="rounded-[24px] border border-dashed border-blue-100 bg-white/80 py-16 text-center text-sm text-gray-400 shadow-sm backdrop-blur-md md:rounded-[28px] md:py-20">
                 No media available for this filter.
               </div>
             ) : (
-              filteredMedia.map((item, index) => (
-                <div
-                  key={`${item.source}-${item.id}`}
-                  onClick={() => openMedia(item, index)}
-                  className="group relative h-[170px] cursor-pointer overflow-hidden rounded-[20px] border border-white/80 bg-blue-50 shadow-[0_10px_28px_rgba(37,99,235,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_14px_34px_rgba(37,99,235,0.12)] sm:h-[220px] sm:rounded-[24px] md:h-[260px] lg:h-[280px] lg:rounded-[28px]"
-                >
-                  {item.type === "image" ? (
-                    <img
-                      src={item.src || "/default.jpg"}
-                      alt={item.title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.015]"
-                    />
-                  ) : (
-                    <>
-                      <video
-                        src={item.src || "/default-video.mp4"}
-                        className="h-full w-full bg-black object-cover transition-transform duration-700 group-hover:scale-[1.015]"
-                        muted
-                        playsInline
-                        preload="metadata"
-                      />
+              <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+                {mediaChunks.map((chunk, chunkIndex) => (
+                  <div
+                    key={chunkIndex}
+                    className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:auto-rows-[145px] lg:auto-rows-[170px] xl:auto-rows-[190px]"
+                  >
+                    {chunk.map((item, index) => {
+                      const realIndex = chunkIndex * 9 + index;
 
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-black/45 shadow-lg backdrop-blur-[2px] sm:h-12 sm:w-12 lg:h-14 lg:w-14">
-                          <span className="ml-0.5 text-base text-white sm:ml-1 sm:text-lg lg:text-xl">
-                            ▶
-                          </span>
+                      return (
+                        <div
+                          key={`${item.source}-${item.id}`}
+                          onClick={() => openMedia(item, realIndex)}
+                          className={`group relative h-[210px] cursor-pointer overflow-hidden rounded-[24px] border border-white/80 bg-blue-50 shadow-[0_12px_30px_rgba(37,99,235,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)] sm:h-[250px] sm:rounded-[26px] md:h-auto md:rounded-[30px] ${bentoPattern[index]}`}
+                        >
+                          {item.type === "image" ? (
+                            <img
+                              src={item.src || "/default.jpg"}
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]"
+                            />
+                          ) : (
+                            <>
+                              <video
+                                src={item.src || "/default-video.mp4"}
+                                className="h-full w-full bg-black object-cover transition-transform duration-700 group-hover:scale-[1.035]"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/45 shadow-lg backdrop-blur-[3px] sm:h-12 sm:w-12 lg:h-14 lg:w-14">
+                                  <span className="ml-0.5 text-base text-white sm:ml-1 sm:text-lg lg:text-xl">
+                                    ▶
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent opacity-85 transition duration-300 group-hover:opacity-95" />
+
+                          <div className="absolute left-3 top-3 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-widest text-white/90 backdrop-blur-md sm:left-4 sm:top-4 sm:text-[10px]">
+                            {item.type}
+                          </div>
+
+                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white sm:p-4 lg:p-5">
+                            <p className="line-clamp-1 text-[8px] font-semibold uppercase tracking-widest text-white/75 sm:text-[10px] lg:text-[11px]">
+                              {item.category}
+                            </p>
+
+                            <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-white sm:text-base lg:text-lg lg:leading-snug">
+                              {item.title}
+                            </h3>
+                          </div>
                         </div>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-80 transition group-hover:opacity-95" />
-
-                  <div className="absolute bottom-0 left-0 right-0 p-3 text-white sm:p-4 lg:p-5">
-                    <p className="line-clamp-1 text-[8px] font-semibold uppercase tracking-widest text-white/75 sm:text-[10px] lg:text-[11px]">
-                      {item.category}
-                    </p>
-
-                    <h3 className="mt-1 line-clamp-2 text-xs font-bold leading-tight text-white sm:text-sm lg:text-base lg:leading-snug">
-                      {item.title}
-                    </h3>
+                      );
+                    })}
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>

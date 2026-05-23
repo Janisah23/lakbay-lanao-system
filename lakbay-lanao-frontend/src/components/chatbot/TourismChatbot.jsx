@@ -6,7 +6,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { FiTrash2 } from "react-icons/fi";
 
-// FIX 1: Import images directly so they work after hosting
 import chatbotIcon from "../../assets/chatbot-icon.png";
 import chatbotAvatar from "../../assets/chatbot-icons.png";
 import lakbayLogo from "../../assets/lakbay-logos.png";
@@ -33,6 +32,8 @@ function TourismChatbot() {
   const [user, setUser] = useState(null);
   const [suggestionsVisible, setSuggestionsVisible] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showPromptBubble, setShowPromptBubble] = useState(true);
+  const [messages, setMessages] = useState(DEFAULT_MESSAGES);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,9 +44,7 @@ function TourismChatbot() {
 
   const [manuallyOpen, setManuallyOpen] = useState(false);
   const [lastPath, setLastPath] = useState(location.pathname);
-  const [messages, setMessages] = useState(DEFAULT_MESSAGES);
 
-  // Sync to Firestore whenever messages change
   useEffect(() => {
     if (!user) return;
 
@@ -59,7 +58,6 @@ function TourismChatbot() {
     setDoc(doc(db, "userChats", user.uid), { messages }).catch(console.error);
   }, [messages, user]);
 
-  // Open chatbot from Navbar / external trigger
   useEffect(() => {
     const openChatbot = () => {
       if (!auth.currentUser) {
@@ -69,6 +67,7 @@ function TourismChatbot() {
 
       setOpen(true);
       setManuallyOpen(true);
+      setShowPromptBubble(false);
     };
 
     window.addEventListener("open-tourism-chatbot", openChatbot);
@@ -78,7 +77,6 @@ function TourismChatbot() {
     };
   }, [navigate]);
 
-  // Recover chat history
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -88,15 +86,23 @@ function TourismChatbot() {
           const docRef = doc(db, "userChats", currentUser.uid);
           const docSnap = await getDoc(docRef);
 
-          if (docSnap.exists() && docSnap.data().messages) {
+          if (docSnap.exists() && docSnap.data().messages?.length) {
             setMessages(docSnap.data().messages);
-            setSuggestionsVisible(false);
+
+            const hasOnlyDefaultMessages =
+              docSnap.data().messages.length === 2 &&
+              docSnap.data().messages[0]?.sender === "welcome" &&
+              docSnap.data().messages[1]?.sender === "suggestions";
+
+            setSuggestionsVisible(hasOnlyDefaultMessages);
           } else {
             setMessages(DEFAULT_MESSAGES);
             setSuggestionsVisible(true);
           }
         } catch (err) {
           console.error("Failed to recover chat:", err);
+          setMessages(DEFAULT_MESSAGES);
+          setSuggestionsVisible(true);
         }
       } else {
         setMessages(DEFAULT_MESSAGES);
@@ -107,16 +113,16 @@ function TourismChatbot() {
     return () => unsubscribe();
   }, []);
 
-  // Reset manual state after route change
-  if (lastPath !== location.pathname) {
-    setLastPath(location.pathname);
+  useEffect(() => {
+    if (location.pathname !== lastPath) {
+      setLastPath(location.pathname);
 
-    if (manuallyOpen) {
-      setManuallyOpen(false);
+      if (manuallyOpen) {
+        setManuallyOpen(false);
+      }
     }
-  }
+  }, [location.pathname, lastPath, manuallyOpen]);
 
-  // Close chatbot when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!open) return;
@@ -139,7 +145,6 @@ function TourismChatbot() {
     };
   }, [open]);
 
-  // Auto-scroll to latest message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
@@ -148,6 +153,21 @@ function TourismChatbot() {
       });
     }
   }, [messages, typing]);
+
+  useEffect(() => {
+    if (open) {
+      setShowPromptBubble(false);
+      return;
+    }
+
+    setShowPromptBubble(true);
+
+    const timer = setTimeout(() => {
+      setShowPromptBubble(false);
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  }, [open]);
 
   const clearChatHistory = async () => {
     setMessages(DEFAULT_MESSAGES);
@@ -205,49 +225,84 @@ function TourismChatbot() {
 
   return (
     <>
-      {/* FIX 2: MOBILE OPTIMIZED FLOATING BUTTON */}
-      <div className="fixed bottom-6 right-6 z-[999] md:bottom-10 md:right-10">
+      <style>{`
+        @keyframes chatbotPop {
+          0% {
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+          }
+          12% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          82% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(4px) scale(0.98);
+          }
+        }
+
+        .animate-chatbot-pop {
+          animation: chatbotPop 6s ease-in-out;
+        }
+      `}</style>
+
+      {/* FLOATING CHATBOT BUTTON */}
+      <div
+        ref={buttonRef}
+        className="fixed bottom-6 right-5 z-[999] md:bottom-10 md:right-10"
+      >
+        {!open && showPromptBubble && (
+          <div className="pointer-events-none absolute bottom-[72px] right-0 w-[215px] animate-chatbot-pop rounded-[18px] border border-blue-100 bg-white px-4 py-3 text-left shadow-[0_12px_28px_rgba(37,99,235,0.14)] md:bottom-3 md:right-[78px]">
+            <p className="text-[12px] font-bold text-[#2563eb]">
+              Hello, need help?
+            </p>
+
+            <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-gray-500">
+              Ask me about places, events, food spots, and travel tips.
+            </p>
+
+            <span className="absolute -bottom-1.5 right-7 h-3 w-3 rotate-45 border-b border-r border-blue-100 bg-white md:-right-1.5 md:bottom-5 md:border-b-0 md:border-l-0 md:border-r md:border-t" />
+          </div>
+        )}
+
         <button
-          ref={buttonRef}
-          className="group relative flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+          className="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-95 md:h-[66px] md:w-[66px]"
           onClick={() => {
             if (!user) {
               navigate("/login");
               return;
             }
+
             setOpen((prev) => !prev);
             setManuallyOpen(true);
+            setShowPromptBubble(false);
           }}
+          aria-label="Open tourism chatbot"
         >
-          {/* Dynamically sizing the button: smaller on mobile, normal on desktop */}
           <img
             src={chatbotIcon}
             alt="Chatbot"
-            className="h-14 w-14 rounded-full object-cover shadow-[0_8px_24px_rgba(37,99,235,0.25)] md:h-[68px] md:w-[68px]"
+            className="h-full w-full rounded-full object-contain drop-shadow-[0_10px_24px_rgba(37,99,235,0.22)]"
           />
         </button>
-
-        {!user && (
-          <div className="pointer-events-none absolute bottom-full left-1/2 mb-3 -translate-x-1/2 whitespace-nowrap rounded-xl bg-gray-900/90 px-3 py-1.5 text-xs text-white opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100">
-            Login to access
-          </div>
-        )}
       </div>
 
-      {/* FIX 3: MOBILE RESPONSIVE CHAT WINDOW */}
+      {/* CHAT WINDOW */}
       <div
         ref={chatRef}
         className={`
           fixed z-[9999] flex flex-col overflow-hidden
-          rounded-[26px] border border-gray-200/80 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.14)]
+          rounded-[26px] border border-blue-100 bg-white
+          shadow-[0_18px_42px_rgba(37,99,235,0.14)]
           transition-all duration-300 ease-out
-          
-          /* MOBILE LAYOUT: Full width minus padding, dynamic height based on screen */
-          bottom-[90px] right-4 left-4 w-auto h-[75vh] max-h-[550px]
-          
-          /* TABLET/DESKTOP LAYOUT: Fixed width, positioned bottom right */
-          md:bottom-[100px] md:right-10 md:left-auto md:w-[360px] md:h-[550px]
-          
+
+          bottom-[88px] right-3 left-3 h-[72vh] max-h-[520px] w-auto
+          md:bottom-[112px] md:right-10 md:left-auto md:h-[540px] md:w-[360px]
+
           ${
             open
               ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
@@ -256,41 +311,37 @@ function TourismChatbot() {
         `}
       >
         {/* HEADER */}
-        <div className="bg-transparent px-3 pb-2 pt-3">
-          <div className="relative flex items-center justify-between rounded-[22px] bg-gradient-to-r from-[#2563eb] to-[#3b82f6] px-4 py-3 text-white shadow-[0_6px_18px_rgba(37,99,235,0.14)]">
-            <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-white/5" />
-
-            <div className="relative flex items-center gap-3">
-              <div className="rounded-2xl ring-white/20">
-                <img
-                  src={chatbotAvatar}
-                  alt="Assistant Logo"
-                  className="h-10 w-10 rounded-full object-cover"
-                />
-              </div>
+        <div className="border-b border-blue-50 bg-white px-3 pb-3 pt-3">
+          <div className="relative flex items-center justify-between rounded-[20px] bg-[#2563eb] px-4 py-3 text-white shadow-[0_8px_18px_rgba(37,99,235,0.16)]">
+            <div className="flex items-center gap-3">
+              <img
+                src={chatbotAvatar}
+                alt="Assistant Logo"
+                className="h-10 w-10 object-contain"
+              />
 
               <div>
-                <p className="text-[13.5px] font-semibold leading-tight tracking-[0.2px] ">
+                <p className="text-[13.5px] font-bold leading-tight">
                   iRanao Guide
                 </p>
-                <p className="text-[11.5px] leading-tight text-blue-100/90">
-                  Smart Tourism Guide
+                <p className="text-[11px] font-medium leading-tight text-blue-100">
+                  Smart Tourism Assistant
                 </p>
               </div>
             </div>
 
-            <div className="relative flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setShowClearConfirm(true)}
                 title="Clear Chat History"
-                className="relative rounded-lg p-1.5 text-[17px] text-white/80 transition hover:bg-white/10 hover:text-white"
+                className="rounded-full p-1.5 text-[17px] text-white/80 transition hover:bg-white/15 hover:text-white"
               >
                 <FiTrash2 />
               </button>
 
               <button
                 onClick={() => setOpen(false)}
-                className="relative rounded-lg p-1.5 text-xl leading-none text-white/90 transition hover:bg-white/10 hover:text-white"
+                className="rounded-full px-2 py-1 text-lg leading-none text-white/90 transition hover:bg-white/15 hover:text-white"
               >
                 ✕
               </button>
@@ -298,22 +349,38 @@ function TourismChatbot() {
           </div>
         </div>
 
-        {/* CLEAR CONFIRMATION MODAL */}
+        {/* CLEAR MODAL */}
         {showClearConfirm && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 p-6 backdrop-blur-sm animate-fadeIn">
-            <div className="w-full max-w-[280px] rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/75 p-6 backdrop-blur-[2px]">
+            <div className="w-full max-w-[280px] rounded-[24px] border border-blue-100 bg-white p-6 text-center shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
                 <FiTrash2 className="text-2xl" />
               </div>
-              <h3 className="mb-1.5 text-[17px] font-bold text-gray-900">Clear Chat?</h3>
+
+              <h3 className="mb-1.5 text-[17px] font-bold text-gray-900">
+                Clear Chat?
+              </h3>
+
               <p className="mb-6 text-[13px] leading-relaxed text-gray-500">
-                Are you sure you want to delete this conversation? This cannot be undone.
+                Are you sure you want to delete this conversation? This cannot be
+                undone.
               </p>
+
               <div className="flex gap-3">
-                <button onClick={() => setShowClearConfirm(false)} className="flex-1 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:bg-gray-200">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 rounded-[16px] bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
+                >
                   Cancel
                 </button>
-                <button onClick={() => { setShowClearConfirm(false); clearChatHistory(); }} className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(239,68,68,0.2)] transition-all duration-200 hover:bg-red-600">
+
+                <button
+                  onClick={() => {
+                    setShowClearConfirm(false);
+                    clearChatHistory();
+                  }}
+                  className="flex-1 rounded-[16px] bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(239,68,68,0.20)] transition hover:bg-red-600"
+                >
                   Delete
                 </button>
               </div>
@@ -322,21 +389,24 @@ function TourismChatbot() {
         )}
 
         {/* CHAT BODY */}
-        <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-[#f8fbff] to-[#f8fafc] px-3.5 py-4">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-[#f8fbff] px-3.5 py-4">
           {messages.map((msg, index) => {
             if (msg.sender === "welcome") {
               return (
-                <div key={index} className="flex flex-col items-center px-4 pb-3 pt-5 text-center">
-                  <div className="mb-4 flex items-center justify-center">
-                    <img
-                      src={lakbayLogo}
-                      alt="Lakbay Lanao Assistant"
-                      className="h-16 w-auto object-contain md:h-20"
-                    />
-                  </div>
-                  <p className="mt-1 text-[13px] font-semibold text-[#2563eb]">
+                <div
+                  key={index}
+                  className="flex flex-col items-center px-4 pb-3 pt-5 text-center"
+                >
+                  <img
+                    src={lakbayLogo}
+                    alt="Lakbay Lanao Assistant"
+                    className="mb-4 h-16 w-auto object-contain md:h-[72px]"
+                  />
+
+                  <p className="mt-1 text-[13px] font-bold text-[#2563eb]">
                     Sallam, how can we help you?
                   </p>
+
                   <p className="mt-3 max-w-[285px] text-[12.5px] leading-[1.6] text-gray-500">
                     Ask about destinations, events, hotels, food spots, cultural
                     heritage, travel tips, and the rich Maranao history of Lanao
@@ -350,12 +420,15 @@ function TourismChatbot() {
               if (!suggestionsVisible) return null;
 
               return (
-                <div key={index} className="flex flex-col items-center gap-2.5 pb-2">
+                <div
+                  key={index}
+                  className="flex flex-col items-center gap-2.5 pb-2"
+                >
                   {msg.options.map((q, i) => (
                     <button
                       key={i}
                       onClick={() => sendMessage(q)}
-                      className="block w-full max-w-[88%] rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb]"
+                      className="block w-full max-w-[88%] rounded-[18px] border border-blue-100 bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb]"
                     >
                       {q}
                     </button>
@@ -367,12 +440,15 @@ function TourismChatbot() {
             const isUser = msg.sender === "user";
 
             return (
-              <div key={index} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+              <div
+                key={index}
+                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-[85%] px-4 py-3 text-sm shadow-sm ${
                     isUser
-                      ? "rounded-[18px] rounded-br-md bg-[#2563eb] leading-6 text-white"
-                      : "rounded-[18px] rounded-bl-md border border-gray-200 bg-white text-gray-800"
+                      ? "rounded-[20px] rounded-br-md bg-[#2563eb] leading-6 text-white"
+                      : "rounded-[20px] rounded-bl-md border border-blue-100 bg-white text-gray-800"
                   }`}
                 >
                   {isUser ? (
@@ -380,18 +456,52 @@ function TourismChatbot() {
                   ) : (
                     <ReactMarkdown
                       components={{
-                        p: ({ children }) => <p className="mb-1 text-[13px] leading-[1.5] last:mb-0">{children}</p>,
-                        strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                        em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
-                        ul: ({ children }) => <ul className="mb-1 ml-4 list-disc space-y-0.5 text-[13px] leading-[1.5]">{children}</ul>,
-                        ol: ({ children }) => <ol className="mb-1 ml-4 list-decimal space-y-0.5 text-[13px] leading-[1.5]">{children}</ol>,
-                        li: ({ children }) => <li className="leading-[1.5]">{children}</li>,
-                        h1: ({ children }) => <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-900">{children}</h1>,
-                        h2: ({ children }) => <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-900">{children}</h2>,
-                        h3: ({ children }) => <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-800">{children}</h3>,
+                        p: ({ children }) => (
+                          <p className="mb-1 text-[13px] leading-[1.5] last:mb-0">
+                            {children}
+                          </p>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-gray-900">
+                            {children}
+                          </strong>
+                        ),
+                        em: ({ children }) => (
+                          <em className="italic text-gray-700">{children}</em>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="mb-1 ml-4 list-disc space-y-0.5 text-[13px] leading-[1.5]">
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="mb-1 ml-4 list-decimal space-y-0.5 text-[13px] leading-[1.5]">
+                            {children}
+                          </ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="leading-[1.5]">{children}</li>
+                        ),
+                        h1: ({ children }) => (
+                          <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-900">
+                            {children}
+                          </h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-900">
+                            {children}
+                          </h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-800">
+                            {children}
+                          </h3>
+                        ),
                         code: ({ inline, children }) =>
                           inline ? (
-                            <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] text-blue-700">{children}</code>
+                            <code className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] text-blue-700">
+                              {children}
+                            </code>
                           ) : (
                             <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[11px] text-gray-800">
                               <code>{children}</code>
@@ -399,10 +509,18 @@ function TourismChatbot() {
                           ),
                         blockquote: ({ children }) => (
                           <blockquote className="mb-2 border-l-4 border-blue-300 pl-3 text-[13px] italic leading-[1.5] text-gray-600">
-                            {children}</blockquote>
+                            {children}
+                          </blockquote>
                         ),
                         a: ({ href, children }) => (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">{children}</a>
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            {children}
+                          </a>
                         ),
                         hr: () => <hr className="my-2 border-gray-200" />,
                       }}
@@ -417,7 +535,7 @@ function TourismChatbot() {
 
           {typing && (
             <div className="flex justify-start">
-              <div className="rounded-[20px] rounded-bl-md border border-gray-200 bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[20px] rounded-bl-md border border-blue-100 bg-white px-4 py-3 shadow-sm">
                 <div className="flex items-center gap-1.5">
                   <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.3s]" />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.15s]" />
@@ -431,8 +549,8 @@ function TourismChatbot() {
         </div>
 
         {/* INPUT AREA */}
-        <div className="border-t border-gray-100 bg-white px-3 py-2.5">
-          <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
+        <div className="border-t border-blue-50 bg-white px-3 py-2.5">
+          <div className="flex items-center gap-2 rounded-full border border-blue-100 bg-white px-2 py-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.03),0_6px_16px_rgba(37,99,235,0.08)]">
             <input
               type="text"
               value={input}
@@ -441,11 +559,12 @@ function TourismChatbot() {
                 if (e.key === "Enter") sendMessage(input);
               }}
               placeholder="Ask about destinations..."
-              className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-500"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400"
             />
+
             <button
               onClick={() => sendMessage(input)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white transition-all duration-200 hover:scale-105 hover:bg-blue-700"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-[0_6px_14px_rgba(37,99,235,0.20)] transition-all duration-200 hover:scale-105 hover:bg-blue-700"
             >
               ➤
             </button>
