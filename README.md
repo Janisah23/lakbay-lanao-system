@@ -38,24 +38,6 @@ This is a capstone research project submitted to the **College of Information an
 
 > 🚀 **Deployment Status:** LAKBAY LANAO is deployed using Firebase Hosting for cloud-based accessibility and scalable web delivery. This project remains an academic capstone prototype intended for research and demonstration purposes.
 ---
-
-## 📸 Project Preview
-
-<div align="center">
-
-| | |
-|:---:|:---:|
-| ![Landing Page](https://via.placeholder.com/480x270/1a6b3c/ffffff?text=Landing+Page) | ![Interactive Map](https://via.placeholder.com/480x270/1a4080/ffffff?text=Interactive+Map) |
-| *Landing Page* | *Interactive Tourism Map* |
-| ![AI Chatbot](https://via.placeholder.com/480x270/6B46C1/ffffff?text=AI+Chatbot+%E2%80%94+RAG+Engine) | ![Itinerary Builder](https://via.placeholder.com/480x270/f5a623/1a1a1a?text=Itinerary+Builder) |
-| *AI-Powered Chatbot (RAG)* | *Itinerary Builder* |
-| ![Gallery](https://via.placeholder.com/480x270/2d2d2d/ffffff?text=Multimedia+Gallery) | ![Dashboard](https://via.placeholder.com/480x270/0f4c75/ffffff?text=Admin+Dashboard) |
-| *Multimedia Gallery* | *Analytics Dashboard* |
-
-> 🎬 **Demo GIF:** `[to be added upon project completion]`
-
-</div>
-
 ---
 
 ## ✈️ Why LAKBAY LANAO?
