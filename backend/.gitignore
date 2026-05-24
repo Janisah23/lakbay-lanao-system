@@ -1,5 +1,5 @@
-backend/serviceAccountKey.json
-backend/node_modules
-*.json
+node_modules/
+*.local
 .env
-config/firebase-service-account.json
+.env.*
+firebase-service-account.json

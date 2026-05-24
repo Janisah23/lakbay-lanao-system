@@ -1,25 +1,18 @@
 require("dotenv").config();
 
+// Removed "firebase-functions" because we are on a standard server now!
+const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { CloudClient } = require("chromadb");
+const {GoogleGenerativeAI} = require("@google/generative-ai");
+const {CloudClient} = require("chromadb");
 const knowledgeRouter = require("./routes/knowledge");
-const admin = require("firebase-admin");
-
-// OPTIONAL: uncomment if Node < 18
-// const fetch = require("node-fetch");
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-app.use("/api/knowledge", knowledgeRouter);
 
 /* =========================
    FIREBASE ADMIN INIT
 ========================= */
-const serviceAccount = require("./config/firebase-service-account.json");
+// Render requires us to manually pass the Firebase credentials via environment variables
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -27,39 +20,37 @@ if (!admin.apps.length) {
   });
 }
 
+const app = express();
+
+// Enable CORS for all origins
+app.use(cors({origin: true}));
+app.use(express.json());
+
+// External routers
+app.use("/api/knowledge", knowledgeRouter);
+
 /* =========================
    GEMINI SETUP
 ========================= */
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const SYSTEM_PROMPT = `
-You are the Lakbay Lanao Assistant — a friendly, knowledgeable, and enthusiastic Smart Tourism Guide for Lanao del Sur, Philippines.
-
-Your role is to help users explore and discover everything Lanao del Sur has to offer, including:
-- Tourist destinations (landmarks, natural attractions, heritage sites)
-- Upcoming or notable local events and festivals
-- Hotels, inns, and accommodations
-- Local cuisine, culture, and traditions of the Maranao people
-- Travel tips and safety reminders
-
-Guidelines:
-- Be warm, respectful, and culturally sensitive.
-- Use bullet points when needed.
-- If unsure, admit it honestly.
-- Keep answers tourism-focused.
-`;
+const SYSTEM_PROMPT = "You are the Lakbay Lanao Assistant — a friendly, " +
+  "knowledgeable, and enthusiastic Smart Tourism Guide for Lanao del Sur, " +
+  "Philippines.\n\nYour role is to help users explore and discover " +
+  "everything Lanao del Sur has to offer, including:\n" +
+  "- Tourist destinations (landmarks, natural attractions, heritage sites)\n" +
+  "- Upcoming or notable local events and festivals\n" +
+  "- Hotels, inns, and accommodations\n" +
+  "- Local cuisine, culture, and traditions of the Maranao people\n" +
+  "- Travel tips and safety reminders\n\nGuidelines:\n" +
+  "- Be warm, respectful, and culturally sensitive.\n" +
+  "- Use bullet points when needed.\n" +
+  "- If unsure, admit it honestly.\n" +
+  "- Keep answers tourism-focused.";
 
 const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
   systemInstruction: SYSTEM_PROMPT,
-});
-
-/* =========================
-   ROUTES
-========================= */
-
-app.get("/", (req, res) => {
-  res.send("Node.js backend is running");
 });
 
 /* =========================
@@ -74,28 +65,33 @@ function getChromaClient() {
 }
 
 /* =========================
-   GEOCODE API
+   ROUTES
 ========================= */
+
+app.get("/", (req, res) => {
+  res.send("Render Express backend is running!");
+});
+
 app.get("/api/geocode", async (req, res) => {
-  const { place, province } = req.query;
+  const {place, province} = req.query;
 
   if (!place || !province) {
-    return res.status(400).json({ error: "Missing parameters" });
+    return res.status(400).json({error: "Missing parameters"});
   }
 
   try {
     const fullAddress = `${place}, ${province}, Philippines`;
+    const encoded = encodeURIComponent(fullAddress);
+    const key = process.env.GOOGLE_MAPS_API_KEY;
 
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        fullAddress
-      )}&key=${process.env.GOOGLE_MAPS_API_KEY}`
-    );
+    const url = "https://maps.googleapis.com/maps/api/geocode/json?" +
+      `address=${encoded}&key=${key}`;
 
+    const response = await fetch(url);
     const data = await response.json();
 
     if (data.status !== "OK") {
-      return res.status(400).json({ error: data.status });
+      return res.status(400).json({error: data.status});
     }
 
     const location = data.results[0].geometry.location;
@@ -106,18 +102,15 @@ app.get("/api/geocode", async (req, res) => {
     });
   } catch (error) {
     console.error("Geocoding error:", error);
-    res.status(500).json({ error: "Geocoding failed" });
+    res.status(500).json({error: "Geocoding failed"});
   }
 });
 
-/* =========================
-   CHAT (RAG + GEMINI)
-========================= */
 app.post("/api/chat", async (req, res) => {
-  const { message } = req.body;
+  const {message} = req.body;
 
   if (!message || !message.trim()) {
-    return res.status(400).json({ error: "Message is required" });
+    return res.status(400).json({error: "Message is required"});
   }
 
   try {
@@ -136,7 +129,7 @@ app.post("/api/chat", async (req, res) => {
       const collection = await client.getOrCreateCollection({
         name: "lakbay_lanao_knowledge",
         embeddingFunction: null,
-        metadata: { "hnsw:space": "cosine" },
+        metadata: {"hnsw:space": "cosine"},
       });
 
       const results = await collection.query({
@@ -150,38 +143,29 @@ app.post("/api/chat", async (req, res) => {
         results.documents[0].length > 0
       ) {
         contextStr = results.documents[0]
-          .map((chunk, i) => `--- CHUNK ${i + 1} ---\n${chunk}`)
-          .join("\n\n");
+            .map((chunk, i) => `--- CHUNK ${i + 1} ---\n${chunk}`)
+            .join("\n\n");
       }
     }
 
-    const augmentedPrompt = contextStr
-      ? `
-Use the following knowledge base context:
-
-${contextStr}
-
-User question:
-${message}
-`
-      : message;
+    const augmentedPrompt = contextStr ?
+      `Use the following knowledge base context:\n\n${contextStr}\n\n` +
+      `User question:\n${message}` :
+      message;
 
     const chat = model.startChat();
     const result = await chat.sendMessage(augmentedPrompt);
     const text = result.response.text();
 
-    res.json({ reply: text });
+    res.json({reply: text});
   } catch (err) {
     console.error("Gemini/RAG error:", err);
-    res.status(500).json({ error: "Failed to get a response from AI." });
+    res.status(500).json({error: "Failed to get a response from AI."});
   }
 });
 
-/* =========================
-   CREATE STAFF (FIREBASE AUTH)
-========================= */
 app.post("/create-staff", async (req, res) => {
-  const { name, email, password } = req.body;
+  const {name, email, password} = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({
@@ -210,14 +194,15 @@ app.post("/create-staff", async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating staff:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({error: error.message});
   }
 });
 
 /* =========================
-   START SERVER
+   START SERVER FOR RENDER
 ========================= */
-const PORT = process.env.PORT || 5000;
+// Replaces the old Firebase exports.server = functions.https.onRequest(app)
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

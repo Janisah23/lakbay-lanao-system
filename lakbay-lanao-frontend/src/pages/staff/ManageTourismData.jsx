@@ -249,48 +249,47 @@ function ManageTourismData() {
     try {
       let uploadedURLs = [];
 
-      // NEW: Loop through all selected images and upload them
       if (imageFiles.length > 0) {
         const options = {
           maxSizeMB: 2, 
           maxWidthOrHeight: 1920, 
-          useWebWorker: true,
+          useWebWorker: false, 
         };
 
-        for (let i = 0; i < imageFiles.length; i++) {
-          let compressedFile = imageFiles[i];
-          try {
-            compressedFile = await imageCompression(imageFiles[i], options);
-          } catch (compressionError) {
-            console.error("Compression failed:", compressionError);
-            alert("Failed to compress an image. Please try again.");
-            setLoading(false);
-            return;
-          }
+        try {
+          const uploadPromises = imageFiles.map(async (file) => {
+            const compressedFile = await imageCompression(file, options);
+            
+            const formDataImage = new FormData();
+            formDataImage.append("file", compressedFile); 
+            formDataImage.append("upload_preset", "tourism_upload");
 
-          const formDataImage = new FormData();
-          formDataImage.append("file", compressedFile); 
-          formDataImage.append("upload_preset", "tourism_upload");
+            const response = await fetch(
+              "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
+              {
+                method: "POST",
+                body: formDataImage,
+              }
+            );
 
-          const response = await fetch(
-            "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
-            {
-              method: "POST",
-              body: formDataImage,
+            if (!response.ok) {
+              throw new Error(`Upload failed with status: ${response.status}`);
             }
-          );
 
-          if (!response.ok) {
-            throw new Error(`Upload failed with status: ${response.status}`);
-          }
+            const data = await response.json();
+            return data.secure_url;
+          });
 
-          const data = await response.json();
-          uploadedURLs.push(data.secure_url);
+          uploadedURLs = await Promise.all(uploadPromises);
+
+        } catch (compressionError) {
+          console.error("Upload process failed:", compressionError);
+          alert("Failed to compress or upload images. Please try again.");
+          setLoading(false);
+          return;
         }
       }
-
-      if (editingId) {
-        // If editing, only update images if new ones were uploaded
+        if (editingId) {
         const updatePayload = {
           name: formData.name,
           category: formData.category,
@@ -306,7 +305,6 @@ function ManageTourismData() {
           }
         };
 
-        // If new files were uploaded, replace the old ones
         if (uploadedURLs.length > 0) {
           updatePayload.imageURL = uploadedURLs[0]; // Keep primary for map
           updatePayload.imageURLs = uploadedURLs;   // Save the array for the slider

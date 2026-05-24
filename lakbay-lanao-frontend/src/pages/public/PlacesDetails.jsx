@@ -658,6 +658,8 @@ const PlacesDetails = () => {
             <Swiper
               onSwiper={setMainSwiper}
               onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
+              observer={true} /* <-- FIX: Watches for dynamic images loading in production */
+              observeParents={true} /* <-- FIX: Recalculates layout when parent containers change */
               className="h-full w-full"
             >
               {galleryImages.length > 0 ? (
@@ -689,7 +691,8 @@ const PlacesDetails = () => {
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
-              className="absolute bottom-3 right-3 z-20 rounded-full border border-white/70 bg-white px-3 py-1.5 text-[10px] font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb] sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-xs"            >
+              className="absolute bottom-3 right-3 z-20 rounded-full border border-white/70 bg-white px-3 py-1.5 text-[10px] font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb] sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-xs"
+            >
               View fullscreen
             </button>
 
@@ -716,7 +719,6 @@ const PlacesDetails = () => {
                 </button>
               </>
             )}
-
             {/* THUMBNAILS embedded at the bottom of the image (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
