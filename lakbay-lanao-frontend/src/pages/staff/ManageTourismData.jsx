@@ -32,7 +32,7 @@ import imageCompression from 'browser-image-compression';
 const getCoordinates = async (place, province) => {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/geocode?place=${encodeURIComponent(
+      `https://lakbay-lanao-backend.onrender.com/api/geocode?place=${encodeURIComponent(
         place
       )}&province=${encodeURIComponent(province)}`
     );

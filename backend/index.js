@@ -1,18 +1,29 @@
 require("dotenv").config();
 
-// Removed "firebase-functions" because we are on a standard server now!
 const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 const {GoogleGenerativeAI} = require("@google/generative-ai");
 const {CloudClient} = require("chromadb");
 const knowledgeRouter = require("./routes/knowledge");
 
 /* =========================
-   FIREBASE ADMIN INIT
+   FIREBASE ADMIN INIT (Smart Hybrid Setup)
 ========================= */
-// Render requires us to manually pass the Firebase credentials via environment variables
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const localKeyPath = path.join(__dirname, "config", "firebase-service-account.json");
+let serviceAccount;
+
+if (fs.existsSync(localKeyPath)) {
+  // 1. Locally: Use your physical config file directly
+  serviceAccount = require(localKeyPath);
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // 2. On Render: Fall back to your environment variable
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  throw new Error("Firebase credentials missing entirely! Provide a local file or Render env variable.");
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -143,8 +154,8 @@ app.post("/api/chat", async (req, res) => {
         results.documents[0].length > 0
       ) {
         contextStr = results.documents[0]
-            .map((chunk, i) => `--- CHUNK ${i + 1} ---\n${chunk}`)
-            .join("\n\n");
+          .map((chunk, i) => `--- CHUNK ${i + 1} ---\n${chunk}`)
+          .join("\n\n");
       }
     }
 
@@ -201,7 +212,6 @@ app.post("/create-staff", async (req, res) => {
 /* =========================
    START SERVER FOR RENDER
 ========================= */
-// Replaces the old Firebase exports.server = functions.https.onRequest(app)
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {

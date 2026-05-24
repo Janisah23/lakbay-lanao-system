@@ -196,7 +196,9 @@ function TourismChatbot() {
     setTyping(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/chat", {
+      const API_URL = import.meta.env.VITE_API_URL || "https://lakbay-lanao-backend.onrender.com";
+
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
@@ -210,7 +212,9 @@ function TourismChatbot() {
       };
 
       setMessages((prev) => [...prev, botReply]);
-    } catch {
+    } catch (error) {
+      console.error("Fetch error details:", error); 
+      
       setMessages((prev) => [
         ...prev,
         {
