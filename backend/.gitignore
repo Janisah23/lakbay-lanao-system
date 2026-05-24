@@ -2,4 +2,5 @@ node_modules/
 *.local
 .env
 .env.*
-firebase-service-account.json
+config/firebase-service-account.json
+
