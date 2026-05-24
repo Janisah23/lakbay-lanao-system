@@ -207,7 +207,7 @@ function Login() {
       <button
         type="button"
         onClick={() => navigate("/home")}
-        className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-bold text-gray-500 shadow-sm transition hover:text-[#2563eb] sm:left-6 sm:top-6 sm:text-sm"
+        className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-medium text-gray-500 shadow-sm transition hover:text-[#2563eb] sm:left-6 sm:top-6 sm:text-sm"
       >
         <FiArrowLeft />
         Back to Home
@@ -224,12 +224,12 @@ function Login() {
             <FiUser className="text-[25px]" />
           </div>
 
-          <h2 className="mb-1 text-[31px] font-extrabold tracking-tight text-[#2563eb]">
+          <h2 className="mb-1 text-[31px] font-semibold tracking-tight text-[#2563eb]">
             Sign In
           </h2>
 
           <p className="mb-7 text-sm font-medium text-gray-500">
-            Welcome back to Lakbay Lanao
+            Welcome to Lakbay Lanao
           </p>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
@@ -272,7 +272,7 @@ function Login() {
             </div>
 
             <div className="flex items-center justify-between gap-3 text-xs">
-              <label className="flex cursor-pointer items-center gap-2 font-semibold text-gray-600">
+              <label className="flex cursor-pointer items-center gap-2 font-medium text-gray-600">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -285,7 +285,7 @@ function Login() {
               <button
                 type="button"
                 onClick={() => navigate("/forgot-password")}
-                className="font-bold text-[#2563eb] transition hover:text-blue-700 hover:underline"
+                className="font-medium text-[#2563eb] transition hover:text-blue-700 hover:underline"
               >
                 Forgot password?
               </button>
@@ -297,7 +297,7 @@ function Login() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  className="flex items-start gap-3 rounded-[20px] border border-red-100 bg-red-50 px-4 py-3 text-xs font-bold text-red-700"
+                  className="flex items-start gap-3 rounded-[20px] border border-red-100 bg-red-50 px-4 py-3 text-xs font-medium text-red-700"
                 >
                   <FiAlertCircle className="mt-0.5 shrink-0" />
                   {errorMsg}
@@ -309,7 +309,7 @@ function Login() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  className="flex items-start gap-3 rounded-[20px] border border-green-100 bg-green-50 px-4 py-3 text-xs font-bold text-green-700"
+                  className="flex items-start gap-3 rounded-[20px] border border-green-100 bg-green-50 px-4 py-3 text-xs font-medium text-green-700"
                 >
                   <FiCheckCircle className="mt-0.5 shrink-0" />
                   {successMsg}
@@ -320,7 +320,7 @@ function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-80"
+              className="mt-1 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-80"
             >
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -340,18 +340,18 @@ function Login() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-3 rounded-[20px] border border-blue-100 bg-white px-4 py-3.5 text-sm font-extrabold text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50 disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-3 rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-medium text-[#2563eb] shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-100 disabled:opacity-70"
           >
             <img src={googleIcon} alt="Google" className="h-4 w-4" />
             Continue with Google
           </button>
 
-          <div className="mt-7 border-t border-blue-50 pt-6 text-[13px] font-semibold text-gray-500">
+          <div className="mt-7 border-t border-blue-50 pt-6 text-[13px] font-medium text-gray-500">
             Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="font-extrabold text-[#2563eb] transition-all hover:text-blue-700 hover:underline"
+              className="font-semibold text-[#2563eb] transition-all hover:text-blue-700 hover:underline"
             >
               Sign up now
             </button>

@@ -291,7 +291,7 @@ function Signup() {
             <FiUserPlus className="text-[25px]" />
           </div>
 
-          <h2 className="text-center text-[32px] font-extrabold tracking-tight text-[#2563eb]">
+          <h2 className="mb-1 text-[31px] font-semibold tracking-tight text-[#2563eb]">
             Create Account
           </h2>
 
@@ -571,7 +571,7 @@ function Signup() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-8 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-70"
+              className="mt-8 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-70"
             >
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -28,9 +28,9 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "./Home.css";
 
-import hero1 from "../../assets/hero1.png";
-import hero2 from "../../assets/hero2.png";
-import hero3 from "../../assets/hero3.png";
+import hero1 from "../../assets/hero1.JPG";
+import hero2 from "../../assets/hero2.jpg";
+import hero3 from "../../assets/hero3.jpg";
 import lakbayLogo from "../../assets/lakbay-logo.png";
 
 function Home() {
@@ -333,9 +333,11 @@ function Home() {
           {heroImages.map((img, index) => (
             <SwiperSlide key={index}>
               <div
-                className="hero-slide"
+                className="hero-slide relative"
                 style={{ backgroundImage: `url(${img})` }}
-              />
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent" />
+              </div>
             </SwiperSlide>
           ))}
         </Swiper>
@@ -703,7 +705,7 @@ function Home() {
 
           <div className="rounded-[20px] border border-blue-100 bg-white p-3 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[28px] sm:p-5 md:p-7">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {events.slice(0, 8).map((evt, index) => (
+              {events.slice(0, 4).map((evt, index) => (
                 <motion.div
                   key={evt.id}
                   variants={cardReveal}
@@ -789,7 +791,7 @@ function Home() {
 
             <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-5 sm:mt-8 sm:flex-row sm:gap-4 sm:pt-6">
               <span className="text-center text-xs text-gray-400 sm:text-left sm:text-sm">
-                Showing {Math.min(events.length, 8)} of {events.length} events
+                Showing {Math.min(events.length, 4)} of {events.length} events
               </span>
 
               <button
