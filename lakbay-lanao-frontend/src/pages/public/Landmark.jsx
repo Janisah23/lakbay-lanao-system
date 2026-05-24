@@ -106,17 +106,16 @@ function Landmarks() {
             contentType === "landmark" ||
             contentType === "place" ||
             type === "landmark" ||
-            type === "historic" ||
+            type === "historical" ||
             type === "monument" ||
             type === "religious" ||
             type === "viewpoint" ||
             type === "public site" ||
             category === "landmark" ||
-            category === "historic" ||
+            category === "historical" ||
             category === "monument" ||
             category === "religious" ||
-            category === "viewpoint" ||
-            category === "public site" ||
+            category === "public sites" ||
             title.includes("landmark") ||
             title.includes("monument") ||
             title.includes("plaza") ||
