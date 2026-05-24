@@ -168,7 +168,7 @@ function AccountManagement() {
 
   const handleCreateStaff = async () => {
     try {
-      const response = await fetch("http://localhost:5000/create-staff", {
+      const response = await fetch("https://lakbay-lanao-backend.onrender.com/create-staff", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
