@@ -555,27 +555,7 @@ function Navbar() {
           className="fixed left-0 top-[70px] z-[999] flex w-full justify-center px-4 sm:top-[82px] lg:hidden"
         >
           <div className="w-full max-w-[340px] max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar rounded-[24px] border border-blue-100/80 bg-white/90 p-2.5 shadow-[0_18px_45px_rgba(37,99,235,0.14)] backdrop-blur-2xl animate-dropdown">
-            <div className="mb-2 overflow-hidden rounded-[18px] border border-blue-50 bg-gradient-to-br from-blue-50 via-white to-white p-3">
-              <div className="flex items-center gap-2.5">
-                <img
-                  src={ptoLogo}
-                  alt="PTO Logo"
-                  className="h-8 w-8 rounded-full object-contain"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
-
-                <div className="min-w-0">
-                  <h3 className="truncate text-xs font-bold text-blue-700">
-                    LAKBAY LANAO
-                  </h3>
-                  <p className="truncate text-[10px] font-medium text-gray-500">
-                    Explore Lanao del Sur with ease
-                  </p>
-                </div>
-              </div>
-            </div>
+            
 
             <div className="grid gap-1.5">
               <button
