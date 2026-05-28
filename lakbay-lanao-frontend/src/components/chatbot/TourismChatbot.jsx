@@ -262,7 +262,7 @@ function TourismChatbot() {
         {!open && showPromptBubble && (
           <div className="pointer-events-none absolute bottom-[72px] right-0 w-[215px] animate-chatbot-pop rounded-[18px] border border-blue-100 bg-white px-4 py-3 text-left shadow-[0_12px_28px_rgba(37,99,235,0.14)] md:bottom-3 md:right-[78px]">
             <p className="text-[12px] font-bold text-[#2563eb]">
-              Hello, need help?
+              Gari, need help?
             </p>
 
             <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-gray-500">
@@ -325,11 +325,11 @@ function TourismChatbot() {
               />
 
               <div>
-                <p className="text-[13.5px] font-bold leading-tight">
-                  iRanao Guide
+                <p className="text-[14px] font-bold tracking-wide text-white">
+                  GARI
                 </p>
-                <p className="text-[11px] font-medium leading-tight text-blue-100">
-                  Smart Tourism Assistant
+                <p className="text-[11px] font-medium leading-tight tracking-wide text-blue-100">
+                  Your Lanao Travel Guide
                 </p>
               </div>
             </div>
@@ -411,7 +411,7 @@ function TourismChatbot() {
                     Sallam, how can we help you?
                   </p>
 
-                  <p className="mt-3 max-w-[285px] text-[12.5px] leading-[1.6] text-gray-500">
+                  <p className="mt-3 max-w-[285px] text-[11px] leading-[1.1] text-gray-400">
                     Ask about destinations, events, hotels, food spots, cultural
                     heritage, travel tips, and the rich Maranao history of Lanao
                     del Sur.
