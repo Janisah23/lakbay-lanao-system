@@ -892,61 +892,18 @@ function ManageTourismData() {
                 </div>
               </div>
 
-              <div>
+               <div>
                 <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Description
                 </label>
-
-                <div className="overflow-hidden rounded-[18px] border border-blue-100 bg-white shadow-sm transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
-                  <div className="flex items-center gap-1.5 border-b border-blue-50 bg-[#f8fbff] px-3 py-2.5 text-gray-400">
-                    <button
-                      type="button"
-                      className="rounded-md p-1.5 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                      title="Bold"
-                    >
-                      <FiBold />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="rounded-md p-1.5 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                      title="Italic"
-                    >
-                      <FiItalic />
-                    </button>
-
-                    <div className="mx-2 h-4 w-px bg-blue-100" />
-
-                    <button
-                      type="button"
-                      className="rounded-md p-1.5 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                      title="Align"
-                    >
-                      <FiAlignLeft />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="rounded-md p-1.5 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                      title="List"
-                    >
-                      <FiList />
-                    </button>
-
-                    <div className="ml-auto pr-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                      Text Editor
-                    </div>
-                  </div>
-
-                  <textarea
-                    name="description"
-                    placeholder="Write an engaging and detailed description about this location..."
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                    className="min-h-[160px] w-full resize-y px-4 py-4 text-sm leading-relaxed text-gray-600 outline-none"
-                  />
-                </div>
+                <textarea
+                  name="description"
+                  placeholder="Write an engaging and detailed description about this location..."
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  className={`${inputStyle} min-h-[200px] resize-y`}
+                />
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">

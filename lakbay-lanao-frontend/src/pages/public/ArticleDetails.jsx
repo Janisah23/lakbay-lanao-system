@@ -179,14 +179,6 @@ const ArticleDetails = () => {
                 <FiBookmark className="text-sm" />
                 <span>{saveCount.toLocaleString()} saves</span>
               </div>
-
-              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
-
-              <div className="flex items-center gap-1.5 text-gray-500">
-                <FiClock className="text-sm" />
-                <span>{articleDetail.readTime || "5 Min"} read</span>
-              </div>
-
               <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
@@ -384,11 +376,6 @@ const ArticleDetails = () => {
                     value: formattedDate,
                   },
                   {
-                    icon: <FiClock />,
-                    label: "Read Time",
-                    value: articleDetail.readTime || "5 Minutes",
-                  },
-                  {
                     icon: <FiTag />,
                     label: "Category",
                     value:
@@ -399,7 +386,7 @@ const ArticleDetails = () => {
                   {
                     icon: <FiUser />,
                     label: "Written By",
-                    value: articleDetail.author || "Lakbay Lanao Staff",
+                    value: articleDetail.writtenBy || "Unknown Author",
                   },
                 ].map(({ icon, label, value }) => (
                   <div key={label} className="flex items-start gap-4">

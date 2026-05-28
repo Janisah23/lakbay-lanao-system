@@ -21,6 +21,7 @@ import {
   FiEdit3,
   FiChevronRight,
   FiImage,
+  FiArrowLeft,
 } from "react-icons/fi";
 import "./Navbar.css";
 
@@ -93,6 +94,8 @@ function Navbar() {
     userProfile?.location?.province ||
     userProfile?.country ||
     "";
+
+  const isDashboardUser = userProfile?.role === "admin" || userProfile?.role === "staff";
 
   const closeSearch = () => {
     setShowSearch(false);
@@ -533,13 +536,25 @@ function Navbar() {
                         My Itinerary
                       </button>
 
-                      <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2 text-xs font-semibold text-red-500 transition hover:bg-red-50 sm:rounded-[16px] sm:px-4 sm:py-2.5 sm:text-sm"
-                      >
-                        <FiLogOut className="text-base text-red-500 sm:text-lg" />
-                        Logout
-                      </button>
+                      <div className="my-1 border-t border-blue-50" />
+
+                      {isDashboardUser ? (
+                        <button
+                          onClick={() => refreshNavigate(`/${userProfile.role}/dashboard`)}
+                          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 sm:rounded-[16px] sm:px-4 sm:py-2.5 sm:text-sm"
+                        >
+                          <FiArrowLeft className="text-base text-blue-600 sm:text-lg" />
+                          Return to Dashboard
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2 text-xs font-semibold text-red-500 transition hover:bg-red-50 sm:rounded-[16px] sm:px-4 sm:py-2.5 sm:text-sm"
+                        >
+                          <FiLogOut className="text-base text-red-500 sm:text-lg" />
+                          Logout
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -555,8 +570,6 @@ function Navbar() {
           className="fixed left-0 top-[70px] z-[999] flex w-full justify-center px-4 sm:top-[82px] lg:hidden"
         >
           <div className="w-full max-w-[340px] max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar rounded-[24px] border border-blue-100/80 bg-white/90 p-2.5 shadow-[0_18px_45px_rgba(37,99,235,0.14)] backdrop-blur-2xl animate-dropdown">
-            
-
             <div className="grid gap-1.5">
               <button
                 onClick={() => refreshNavigate("/")}
@@ -728,13 +741,33 @@ function Navbar() {
                 Events
               </button>
 
-              {!user && (
+              {!user ? (
                 <button
                   onClick={() => refreshNavigate("/login")}
                   className="mt-2 w-full rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-[0_10px_22px_rgba(37,99,235,0.20)] transition hover:scale-[1.01]"
                 >
                   Sign In
                 </button>
+              ) : (
+                <>
+                  {isDashboardUser ? (
+                    <button
+                      onClick={() => refreshNavigate(`/${userProfile.role}/dashboard`)}
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700"
+                    >
+                      <FiArrowLeft className="text-sm" />
+                      Return to Dashboard
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleLogout}
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-red-50 px-4 py-2.5 text-xs font-bold text-red-500 shadow-sm transition hover:bg-red-100"
+                    >
+                      <FiLogOut className="text-sm" />
+                      Logout
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
