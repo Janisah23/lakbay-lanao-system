@@ -273,8 +273,8 @@ function TourismChatbot() {
           </div>
         )}
 
-        <button
-          className="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-95 md:h-[66px] md:w-[66px]"
+       <button
+          className="relative flex h-14 w-14 items-center justify-center transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-95 md:h-[66px] md:w-[66px]"
           onClick={() => {
             if (!user) {
               navigate("/login");
@@ -290,7 +290,7 @@ function TourismChatbot() {
           <img
             src={chatbotIcon}
             alt="Chatbot"
-            className="h-full w-full rounded-full object-contain drop-shadow-[0_10px_24px_rgba(37,99,235,0.22)]"
+            className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] transition-all hover:drop-shadow-[0_0_18px_rgba(255,255,255,0.85)]"
           />
         </button>
       </div>
@@ -452,7 +452,7 @@ function TourismChatbot() {
                   className={`max-w-[85%] px-4 py-3 text-sm shadow-sm ${
                     isUser
                       ? "rounded-[20px] rounded-br-md bg-[#2563eb] leading-6 text-white"
-                      : "rounded-[20px] rounded-bl-md border border-blue-100 bg-white text-gray-800"
+                      : "rounded-[20px] rounded-bl-md border border-blue-100 bg-white text-gray-700"
                   }`}
                 >
                   {isUser ? (
@@ -466,7 +466,7 @@ function TourismChatbot() {
                           </p>
                         ),
                         strong: ({ children }) => (
-                          <strong className="font-semibold text-gray-900">
+                          <strong className="font-semibold text-gray-700">
                             {children}
                           </strong>
                         ),
@@ -487,17 +487,17 @@ function TourismChatbot() {
                           <li className="leading-[1.5]">{children}</li>
                         ),
                         h1: ({ children }) => (
-                          <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-900">
+                          <h1 className="mb-1 text-[14px] font-bold leading-[1.4] text-gray-700">
                             {children}
                           </h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-900">
+                          <h2 className="mb-1 text-[13px] font-bold leading-[1.4] text-gray-700 ">
                             {children}
                           </h2>
                         ),
                         h3: ({ children }) => (
-                          <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-800">
+                          <h3 className="mb-1 text-[13px] font-semibold leading-[1.4] text-gray-700">
                             {children}
                           </h3>
                         ),
@@ -507,7 +507,7 @@ function TourismChatbot() {
                               {children}
                             </code>
                           ) : (
-                            <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[11px] text-gray-800">
+                            <pre className="mb-2 overflow-x-auto rounded-xl bg-gray-100 p-3 font-mono text-[11px] text-gray-700">
                               <code>{children}</code>
                             </pre>
                           ),

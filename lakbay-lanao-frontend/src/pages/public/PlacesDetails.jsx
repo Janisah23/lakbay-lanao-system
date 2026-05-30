@@ -363,9 +363,10 @@ const PlacesDetails = () => {
           
           {place.imageURLs && place.imageURLs.length > 1 ? (
             <div className="group/cardSwiper relative h-full w-full">
-              <Swiper
+            <Swiper
                 modules={[Autoplay, Navigation, Pagination]}
-                autoplay={{ delay: 3000 }}
+                autoplay={{ delay: 30000, disableOnInteraction: false }} // Binagalan ang delay
+                speed={1000} // IDINAGDAG: Pampabagal ng slide transition
                 loop={true}
                 navigation={{
                   prevEl: `.prev-${place.id}`,
@@ -498,7 +499,7 @@ const PlacesDetails = () => {
   const saveCount = destinationDetail.saveCount || 0;
 
   return (
-    <div className="font-sans min-h-screen bg-[#f3f9ff] text-gray-900">
+    <div className="font-sans min-h-screen bg-[#f3f9ff] text-gray-700">
       <Navbar />
 
       {/* HEADER */}
@@ -549,7 +550,7 @@ const PlacesDetails = () => {
                   </span>
                 </span>
 
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-gray-700">
                   {destinationDetail.rating
                     ? destinationDetail.rating.toFixed(1)
                     : "—"}
@@ -604,7 +605,7 @@ const PlacesDetails = () => {
                       className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                     >
                       <FaTwitter className="text-[#1da1f2]" />
-                      Twitter / X
+                       X
                     </a>
 
                     <a
@@ -655,11 +656,14 @@ const PlacesDetails = () => {
         <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
             
-            <Swiper
+           <Swiper
               onSwiper={setMainSwiper}
               onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
-              observer={true} /* <-- FIX: Watches for dynamic images loading in production */
-              observeParents={true} /* <-- FIX: Recalculates layout when parent containers change */
+              observer={true} 
+              observeParents={true} 
+              modules={[Autoplay, Navigation]}
+              autoplay={{ delay: 30000, disableOnInteraction: false }} // Ginawang 30 seconds
+              speed={1200} 
               className="h-full w-full"
             >
               {galleryImages.length > 0 ? (
@@ -837,21 +841,7 @@ const PlacesDetails = () => {
                 )}
               </div>
 
-              <div className="mt-8 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5 sm:mt-10">
-                <FiInfo className="mt-0.5 flex-shrink-0 text-xl text-[#2563eb]" />
-
-                <div>
-                  <p className="mb-1 text-sm font-bold text-[#2563eb]">
-                    Entrance / Admission Details
-                  </p>
-
-                  <p className="text-sm leading-relaxed text-blue-800">
-                    {destinationDetail.price ||
-                      destinationDetail.admissionFee ||
-                      "This destination is open to the public free of charge. Local environmental fees may apply."}
-                  </p>
-                </div>
-              </div>
+              
             </div>
 
             {/* MAP MOBILE */}
@@ -870,7 +860,7 @@ const PlacesDetails = () => {
 
               <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-700">
                     {locationStr}
                   </p>
                   <p className="mt-0.5 text-xs text-gray-400">
@@ -894,7 +884,7 @@ const PlacesDetails = () => {
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
-              <h3 className="mb-5 font-bold text-gray-900">Key Details</h3>
+              <h3 className="mb-5 font-bold text-gray-700">Key Details</h3>
 
               <div className="space-y-4">
                 {[
@@ -911,13 +901,7 @@ const PlacesDetails = () => {
                       destinationDetail.category ||
                       "Tourist Attraction",
                   },
-                  {
-                    icon: <FiSun />,
-                    label: "Best Time to Visit",
-                    value:
-                      destinationDetail.bestTime ||
-                      "Early morning or late afternoon",
-                  },
+                 
                 ].map(({ icon, label, value }) => (
                   <div key={label} className="flex items-start gap-4">
                     <span className="mt-0.5 flex-shrink-0 text-lg text-[#2563eb]">
@@ -925,7 +909,7 @@ const PlacesDetails = () => {
                     </span>
 
                     <div>
-                      <p className="text-xs font-semibold text-gray-900">
+                      <p className="text-xs font-semibold text-gray-700">
                         {label}
                       </p>
                       <p className="mt-0.5 text-sm leading-snug text-gray-500">
@@ -940,7 +924,7 @@ const PlacesDetails = () => {
             {/* RATING */}
             <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
               {showPopup && (
-                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
                   <span className="text-lg leading-none text-green-400">
                     ✔
                   </span>
@@ -949,9 +933,9 @@ const PlacesDetails = () => {
               )}
 
               <div className="mb-5">
-                <h3 className="font-bold text-gray-900">Rate this place</h3>
+                <h3 className="font-bold text-gray-700">Rate this place</h3>
 
-                <p className="mt-1 text-sm leading-relaxed text-gray-400">
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">
                   Share your thoughts with other travelers.
                 </p>
               </div>
@@ -1061,7 +1045,7 @@ const PlacesDetails = () => {
 
               <div className="flex items-center justify-between border-t border-gray-100 p-4">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-700">
                     {locationStr}
                   </p>
                   <p className="mt-0.5 text-xs text-gray-400">Philippines</p>
