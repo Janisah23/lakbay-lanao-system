@@ -9,6 +9,7 @@ function Gallery() {
   const [filter, setFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [media, setMedia] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(16);
 
   useEffect(() => {
     const unsubscribeTourism = onSnapshot(
@@ -81,6 +82,11 @@ function Gallery() {
     };
   }, []);
 
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(18);
+  }, [filter, typeFilter]);
+
   const categories = [
     "all",
     "destination",
@@ -101,6 +107,10 @@ function Gallery() {
 
     return matchesCategory && matchesType;
   });
+
+  // Only show up to visibleCount items
+  const visibleMedia = filteredMedia.slice(0, visibleCount);
+  const hasMore = filteredMedia.length > visibleCount;
 
   const openMedia = (item, index) => {
     setSelected(item);
@@ -159,7 +169,7 @@ function Gallery() {
     return chunks;
   };
 
-  const mediaChunks = chunkArray(filteredMedia, 9);
+  const mediaChunks = chunkArray(visibleMedia, 9);
 
   const bentoPattern = [
     "md:col-start-1 md:col-end-3 md:row-start-1 md:row-end-2",
@@ -298,6 +308,21 @@ function Gallery() {
                     })}
                   </div>
                 ))}
+
+                {/* SHOW MORE */}
+                {hasMore && (
+                  <div className="flex flex-col items-center gap-2 pt-4">
+                    <p className="text-xs text-gray-400">
+                      Showing {visibleCount} of {filteredMedia.length} items
+                    </p>
+                    <button
+                      onClick={() => setVisibleCount((prev) => prev + 16)}
+                      className="rounded-full border border-[#2563eb]/20 bg-white px-8 py-3 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:bg-blue-50 hover:border-[#2563eb]/40"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

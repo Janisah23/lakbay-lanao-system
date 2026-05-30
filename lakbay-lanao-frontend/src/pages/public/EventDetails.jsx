@@ -531,25 +531,13 @@ const EventDetails = () => {
                 </div>
               )}
 
-              <div className="mt-8 flex items-start gap-4 rounded-[16px] border border-blue-100 bg-blue-50 p-5 sm:mt-10">
-                <FiInfo className="mt-0.5 flex-shrink-0 text-xl text-[#2563eb]" />
-
-                <div>
-                  <p className="mb-1 text-sm font-bold text-[#2563eb]">
-                    Admission Details
-                  </p>
-
-                  <p className="text-sm leading-relaxed text-blue-800">
-                    {eventDetail.price || "Free Admission"}
-                  </p>
-                </div>
-              </div>
+            
             </div>
           </div>
 
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
-              <h3 className="mb-5 font-bold text-gray-900">Key Details</h3>
+              <h3 className="mb-5 font-bold text-[#2563eb]">Key Details</h3>
 
               <div className="space-y-4">
                 {[
@@ -591,7 +579,7 @@ const EventDetails = () => {
               )}
 
               <div className="mb-5">
-                <h3 className="font-bold text-gray-900">
+                <h3 className="font-bold text-[#2563eb]">
                   Rate your experience
                 </h3>
 

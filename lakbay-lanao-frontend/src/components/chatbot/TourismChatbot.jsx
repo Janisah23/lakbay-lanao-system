@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { FiTrash2 } from "react-icons/fi";
 
 import chatbotIcon from "../../assets/chatbot-icon.png";
-import chatbotAvatar from "../../assets/chatbot-icons.png";
+
 import lakbayLogo from "../../assets/lakbay-logos.png";
 
 const DEFAULT_MESSAGES = [
@@ -257,7 +257,7 @@ function TourismChatbot() {
       {/* FLOATING CHATBOT BUTTON */}
       <div
         ref={buttonRef}
-        className="fixed bottom-6 right-5 z-[999] md:bottom-10 md:right-10"
+        className="fixed bottom-6 right-5 z-[999] md:bottom-12 md:right-12"
       >
         {!open && showPromptBubble && (
           <div className="pointer-events-none absolute bottom-[72px] right-0 w-[215px] animate-chatbot-pop rounded-[18px] border border-blue-100 bg-white px-4 py-3 text-left shadow-[0_12px_28px_rgba(37,99,235,0.14)] md:bottom-3 md:right-[78px]">
@@ -319,7 +319,7 @@ function TourismChatbot() {
           <div className="relative flex items-center justify-between rounded-[20px] bg-[#2563eb] px-4 py-3 text-white shadow-[0_8px_18px_rgba(37,99,235,0.16)]">
             <div className="flex items-center gap-3">
               <img
-                src={chatbotAvatar}
+                src={chatbotIcon}
                 alt="Assistant Logo"
                 className="h-10 w-10 object-contain"
               />
