@@ -53,6 +53,11 @@ const ArticleDetails = () => {
       )
     : [];
 
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [id]);
+
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -344,27 +349,14 @@ const ArticleDetails = () => {
                 </div>
               )}
 
-              <div className="mt-8 flex items-start gap-4 rounded-[20px] border border-gray-100 bg-gray-50 p-5 sm:mt-12 sm:p-6">
-                <FiInfo className="mt-0.5 flex-shrink-0 text-xl text-gray-400" />
-
-                <div>
-                  <p className="mb-1 text-sm font-bold text-gray-900">
-                    Traveler Information
-                  </p>
-
-                  <p className="text-sm leading-relaxed text-gray-500">
-                    Verified at the time of writing. We recommend verifying
-                    local protocols before your visit.
-                  </p>
-                </div>
-              </div>
+              
             </div>
           </div>
 
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
-              <h3 className="mb-5 font-bold text-gray-900">
+              <h3 className="mb-5 font-bold text-[#2563eb]">
                 Article Details
               </h3>
 

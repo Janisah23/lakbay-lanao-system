@@ -17,7 +17,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
-import { FiHeart, FiMousePointer, FiMove } from "react-icons/fi";
+import { FiHeart, FiMousePointer, FiMove, FiChevronRight } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { onAuthStateChanged } from "firebase/auth";
 import { useFavorites } from "../../components/context/FavoritesContext";
@@ -271,13 +271,17 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f9ff] font-sans text-gray-900">
+    <div className="min-h-screen topo-bg font-sans text-gray-900">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
         body,
         .font-sans {
           font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .topo-bg {
+          background: radial-gradient(ellipse at 50% 0%, #ddeeff 0%, #f0f7ff 30%, #f8fbff 60%, #ffffff 100%);
         }
 
         .highlight-swiper .swiper-pagination-bullet-active {
@@ -364,20 +368,20 @@ function Home() {
         </div>
       </section>
 
-      <section className="bg-transparent px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
+      <section className="bg-transparent px-4 py-12 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
         <div className="mx-auto max-w-7xl">
           <motion.div
             variants={headingReveal}
             initial="hidden"
             whileInView="show"
             viewport={{ once: false, amount: 0.4 }}
-            className="mb-10 text-center md:mb-14"
+            className="mb-8 text-center md:mb-14"
           >
-            <h2 className="text-2xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
+            <h2 className="text-xl font-bold tracking-tight text-[#2563eb] sm:text-3xl md:text-4xl">
               Travel Highlights
             </h2>
 
-            <p className="mt-2 text-sm text-gray-500 sm:text-base">
+            <p className="mt-1.5 text-xs text-gray-500 sm:text-base">
               Explore the beauty and culture of Lanao del Sur
             </p>
           </motion.div>
@@ -387,7 +391,7 @@ function Home() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: false, amount: 0.18 }}
-            className="relative overflow-hidden rounded-[20px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[28px] sm:p-3"
+            className="relative overflow-hidden rounded-[16px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[22px] sm:p-2.5 md:rounded-[28px] md:p-3"
           >
             {highlights.length > 0 ? (
               <Swiper
@@ -407,13 +411,13 @@ function Home() {
                 onSlideChange={(swiper) =>
                   setActiveHighlight(swiper.realIndex)
                 }
-                className="highlight-swiper overflow-hidden rounded-[16px] sm:rounded-[24px]"
+                className="highlight-swiper overflow-hidden rounded-[12px] sm:rounded-[18px] md:rounded-[24px]"
               >
-                <button className="highlight-prev absolute left-2 top-1/2 z-30 -translate-y-1/2 text-3xl font-light text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 hover:text-white/90 sm:left-6 sm:text-5xl">
+                <button className="highlight-prev absolute left-2 top-1/2 z-30 -translate-y-1/2 text-2xl font-light text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 hover:text-white/90 sm:left-4 sm:text-4xl md:left-6 md:text-5xl">
                   ‹
                 </button>
 
-                <button className="highlight-next absolute right-2 top-1/2 z-30 -translate-y-1/2 text-3xl font-light text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 hover:text-white/90 sm:right-6 sm:text-5xl">
+                <button className="highlight-next absolute right-2 top-1/2 z-30 -translate-y-1/2 text-2xl font-light text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 hover:text-white/90 sm:right-4 sm:text-4xl md:right-6 md:text-5xl">
                   ›
                 </button>
 
@@ -424,9 +428,9 @@ function Home() {
 
                   return (
                     <SwiperSlide key={item.id || index}>
-                      <div className="relative overflow-hidden rounded-[16px] bg-gray-100 sm:rounded-[24px]">
+                      <div className="relative overflow-hidden rounded-[12px] bg-gray-100 sm:rounded-[18px] md:rounded-[24px]">
                         {hasVideo && isActive ? (
-                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-black sm:aspect-video">
+                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-black sm:aspect-[16/9]">
                             <iframe
                               key={embedURL}
                               src={embedURL}
@@ -440,7 +444,7 @@ function Home() {
                           <img
                             src={item.imageURL || fallbackHighlightImage}
                             alt={item.title || "Travel Highlight"}
-                            className="aspect-[4/3] w-full object-cover sm:aspect-video"
+                            className="aspect-[4/3] w-full object-cover sm:aspect-[16/9]"
                             onError={(e) => {
                               e.currentTarget.src = fallbackHighlightImage;
                             }}
@@ -451,17 +455,17 @@ function Home() {
                           <>
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-                            <div className="absolute bottom-0 left-0 right-0 px-5 pb-10 text-center text-white sm:px-14 sm:pb-16">
-                              <span className="mb-2 inline-block rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white sm:mb-4 sm:px-4 sm:py-1.5 sm:text-[10px]">
+                            <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 text-center text-white sm:px-8 sm:pb-8 md:px-10 md:pb-10 lg:px-14 lg:pb-16">
+                              <span className="mb-1 inline-block rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-white sm:mb-1.5 sm:px-3 sm:py-0.5 sm:text-[8px] md:mb-2 md:px-3 md:py-1 md:text-[9px] lg:mb-4 lg:px-4 lg:py-1.5 lg:text-[10px]">
                                 {item.category || "Highlight"}
                               </span>
 
-                              <h3 className="text-xl font-extrabold leading-tight tracking-tight drop-shadow sm:text-3xl md:text-4xl">
+                              <h3 className="text-sm font-extrabold leading-tight tracking-tight drop-shadow sm:text-base md:text-lg lg:text-3xl xl:text-4xl">
                                 {item.title}
                               </h3>
 
                               {item.summary && (
-                                <p className="mx-auto mt-2 line-clamp-3 max-w-xl text-xs leading-relaxed text-white/80 sm:mt-3 sm:line-clamp-none sm:text-base">
+                                <p className="hidden mx-auto max-w-xl leading-relaxed text-white/80 lg:mt-3 lg:block lg:text-base">
                                   {item.summary}
                                 </p>
                               )}
@@ -474,8 +478,8 @@ function Home() {
                 })}
               </Swiper>
             ) : (
-              <div className="flex h-[300px] w-full items-center justify-center rounded-[16px] bg-blue-50 sm:h-[560px] sm:rounded-[24px]">
-                <p className="text-sm text-gray-400 sm:text-base">
+              <div className="flex h-[240px] w-full items-center justify-center rounded-[12px] bg-blue-50 sm:h-[360px] sm:rounded-[18px] md:h-[480px] md:rounded-[24px] lg:h-[560px]">
+                <p className="text-xs text-gray-400 sm:text-base">
                   No highlights available yet.
                 </p>
               </div>
@@ -484,6 +488,7 @@ function Home() {
         </div>
       </section>
 
+      {/* TOURISM CONTENT — white background instead of gradient blue */}
       <motion.section
         className="bg-transparent px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24"
         variants={sectionReveal}
@@ -512,6 +517,7 @@ function Home() {
             </p>
           </motion.div>
 
+          {/* Changed: white bg + blue border, removed gradient */}
           <div className="rounded-[20px] border border-blue-100 bg-white p-3 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[28px] sm:p-5 md:p-7">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {articles.slice(0, 3).map((article, index) => (
@@ -552,7 +558,7 @@ function Home() {
                           e.stopPropagation();
                           toggleFavorite(article);
                         }}
-                        className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 shadow-sm sm:right-3 sm:top-3 sm:h-8 sm:w-8"
+                        className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm sm:right-3 sm:top-3 sm:h-8 sm:w-8"
                       >
                         {favorites.some(
                           (fav) => String(fav.id) === String(article.id)
@@ -587,15 +593,17 @@ function Home() {
                       {getShortDescription(article.summary)}
                     </p>
 
+                    {/* Updated button style */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/article/${article.id}`);
                       }}
-                      className="mt-3 w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white transition hover:bg-blue-700 sm:mt-4 sm:px-4 sm:py-2 sm:text-[11px]"
+                      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] font-semibold text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-md active:scale-[0.98] sm:mt-4 sm:gap-2 sm:text-xs"
                     >
-                      Read more →
+                      Read more
+                      <FiChevronRight className="text-sm" />
                     </button>
                   </div>
                 </motion.div>
@@ -674,6 +682,7 @@ function Home() {
         </div>
       </motion.section>
 
+      {/* UPCOMING EVENTS */}
       <motion.section
         className="bg-transparent px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24"
         variants={sectionReveal}
@@ -773,11 +782,24 @@ function Home() {
                       {evt.title}
                     </h3>
 
-                    <div className="mt-auto pt-2 sm:pt-3">
+                    <div className="mt-1.5 sm:mt-2">
                       <div className="rounded-xl bg-[#f8fbff] px-2 py-1.5 text-center text-[9px] font-semibold uppercase tracking-wide text-gray-500 ring-1 ring-blue-50 sm:px-3 sm:py-2 sm:text-[10px]">
                         {formatEventDate(evt.eventDate)}
                       </div>
                     </div>
+
+                    {/* Updated button style */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/event/${evt.id}`);
+                      }}
+                      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#2563eb] px-4 py-2.5 text-[11px] font-semibold text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-md active:scale-[0.98] sm:mt-4 sm:gap-2 sm:text-xs"
+                    >
+                      See details
+                      <FiChevronRight className="text-sm" />
+                    </button>
                   </div>
                 </motion.div>
               ))}
