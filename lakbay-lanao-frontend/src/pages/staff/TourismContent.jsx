@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
-  FiSearch,
-  FiPlus,
-  FiX,
-  FiFilter,
-  FiList,
-  FiGrid,
-  FiEdit2,
-  FiArchive,
-  FiRefreshCw,
-  FiCalendar,
-  FiImage,
-  FiCheckCircle,
-  FiVideo,
-  FiChevronLeft,
-  FiChevronRight,
+  FiSearch, FiPlus, FiX, FiFilter, FiList, FiGrid, FiEdit2, FiArchive, FiRefreshCw,
+  FiCalendar, FiImage, FiCheckCircle, FiVideo, FiChevronLeft,
+  FiChevronRight, FiUser,
 } from "react-icons/fi";
 import {
   collection,
@@ -26,8 +14,6 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
 
 const CATEGORY_OPTIONS = {
   Article: [
@@ -43,7 +29,7 @@ const CATEGORY_OPTIONS = {
     "Featured Videos",
     "Featured Articles",
     "Trending Locations",
-    "Editor’s Picks",
+    "Editor's Picks",
     "Popular Attractions",
   ],
   Event: [
@@ -61,8 +47,8 @@ const INITIAL_FORM_DATA = {
   contentType: "",
   category: "",
   title: "",
+  writtenBy: "",
   summary: "",
-  content: "",
   status: "draft",
   imageURL: "",
   videoURL: "",
@@ -109,10 +95,7 @@ const ManageTourismContent = () => {
 
   const totalPages = Math.max(1, Math.ceil(filteredContent.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedContent = filteredContent.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const paginatedContent = filteredContent.slice(startIndex, startIndex + itemsPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -121,10 +104,8 @@ const ManageTourismContent = () => {
   const fetchContent = async () => {
     try {
       const snapshot = await getDocs(collection(db, "tourismContent"));
-
       const data = snapshot.docs.map((docItem) => {
         const raw = docItem.data();
-
         return {
           id: docItem.id,
           ...raw,
@@ -132,7 +113,6 @@ const ManageTourismContent = () => {
           updatedAt: raw.updatedAt?.toDate?.() || null,
         };
       });
-
       setContentList(data);
     } catch (error) {
       console.error("Error fetching content:", error);
@@ -156,13 +136,12 @@ const ManageTourismContent = () => {
 
   const openEditModal = (item) => {
     setEditingId(item.id);
-
     setFormData({
       contentType: item.contentType || "",
       category: item.category || "",
       title: item.title || "",
+      author: item.author || "",
       summary: item.summary || "",
-      content: item.content || "",
       status: item.status || "draft",
       imageURL: item.imageURL || "",
       videoURL: item.videoURL || "",
@@ -170,7 +149,6 @@ const ManageTourismContent = () => {
         ? new Date(item.eventDate.seconds * 1000).toISOString().split("T")[0]
         : item.eventDate || "",
     });
-
     setOpenModal(true);
   };
 
@@ -178,7 +156,6 @@ const ManageTourismContent = () => {
     await updateDoc(doc(db, "tourismContent", selectedId), {
       status: "archived",
     });
-
     setShowConfirm(false);
     fetchContent();
     showToast("Content archived successfully!");
@@ -188,7 +165,6 @@ const ManageTourismContent = () => {
     await updateDoc(doc(db, "tourismContent", id), {
       status: "draft",
     });
-
     fetchContent();
     showToast("Content restored to drafts!");
   };
@@ -215,14 +191,9 @@ const ManageTourismContent = () => {
         title: formData.title.trim(),
         summary: formData.summary?.trim() || "",
         videoURL: formData.videoURL?.trim() || "",
+        // Only keep author for Articles
+        author: formData.contentType === "Article" ? (formData.author?.trim() || "") : "",
       };
-
-      if (finalData.contentType === "Gallery") {
-        finalData.summary = "";
-        finalData.content = "";
-        finalData.videoURL = "";
-        finalData.eventDate = "";
-      }
 
       if (finalData.contentType !== "Event") {
         finalData.eventDate = "";
@@ -253,9 +224,7 @@ const ManageTourismContent = () => {
       setOpenModal(false);
       resetForm();
       fetchContent();
-      showToast(
-        editingId ? "Content updated successfully!" : "Content saved successfully!"
-      );
+      showToast(editingId ? "Content updated successfully!" : "Content saved successfully!");
     } catch (error) {
       console.error("Error saving content:", error);
       showToast("Failed to save content.");
@@ -266,29 +235,20 @@ const ManageTourismContent = () => {
 
   const uploadImage = async (file) => {
     setIsUploading(true);
-
     try {
       const data = new FormData();
-
       data.append("file", file);
       data.append("upload_preset", "tourism_upload");
 
       const res = await fetch(
         "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
-        {
-          method: "POST",
-          body: data,
-        }
+        { method: "POST", body: data }
       );
 
       const result = await res.json();
-
       setIsUploading(false);
 
-      if (!result.secure_url) {
-        throw new Error("Image upload failed.");
-      }
-
+      if (!result.secure_url) throw new Error("Image upload failed.");
       return result.secure_url;
     } catch (error) {
       setIsUploading(false);
@@ -320,9 +280,7 @@ const ManageTourismContent = () => {
         : "border-gray-200 bg-gray-50 text-gray-600";
 
     return (
-      <span
-        className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${style}`}
-      >
+      <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${style}`}>
         {status || "draft"}
       </span>
     );
@@ -341,9 +299,7 @@ const ManageTourismContent = () => {
             {Math.min(startIndex + itemsPerPage, filteredContent.length)}
           </span>{" "}
           of{" "}
-          <span className="font-semibold text-gray-700">
-            {filteredContent.length}
-          </span>{" "}
+          <span className="font-semibold text-gray-700">{filteredContent.length}</span>{" "}
           content items
         </p>
 
@@ -367,9 +323,7 @@ const ManageTourismContent = () => {
 
           <button
             type="button"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition ${
               currentPage === totalPages
@@ -387,6 +341,7 @@ const ManageTourismContent = () => {
   return (
     <div className="min-h-screen w-full bg-[#f8fbff] font-['Poppins']">
       <main className="mx-auto max-w-7xl px-6 pb-24 pt-10 lg:px-10">
+
         {/* HEADER */}
         <section className="mb-10">
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
@@ -400,8 +355,7 @@ const ManageTourismContent = () => {
               </h1>
 
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-gray-500">
-                Publish and manage articles, events, highlights, and promotional
-                content for Lakbay Lanao.
+                Publish and manage articles, events, highlights, and promotional content for Lakbay Lanao.
               </p>
             </div>
 
@@ -430,10 +384,7 @@ const ManageTourismContent = () => {
         <section className="mb-8 rounded-[28px] border border-blue-100 bg-white p-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)]">
           <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-center">
             <div>
-              <h2 className="text-lg font-bold text-[#2563eb]">
-                Content Library
-              </h2>
-
+              <h2 className="text-lg font-bold text-[#2563eb]">Content Library</h2>
               <p className="mt-1 text-sm text-gray-500">
                 Search, filter, edit, archive, or restore tourism content.
               </p>
@@ -454,7 +405,6 @@ const ManageTourismContent = () => {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_260px_auto]">
             <div className="relative w-full">
               <FiSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
-
               <input
                 type="text"
                 placeholder="Search content titles or summaries..."
@@ -462,7 +412,6 @@ const ManageTourismContent = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`${inputStyle} pl-11 pr-11`}
               />
-
               {searchTerm && (
                 <button
                   type="button"
@@ -476,7 +425,6 @@ const ManageTourismContent = () => {
 
             <div className="relative w-full">
               <FiFilter className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
-
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
@@ -525,14 +473,8 @@ const ManageTourismContent = () => {
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[#2563eb]">
               <FiSearch className="text-2xl" />
             </div>
-
-            <h3 className="text-lg font-semibold text-gray-700">
-              No content found
-            </h3>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your search or filters.
-            </p>
+            <h3 className="text-lg font-semibold text-gray-700">No content found</h3>
+            <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filters.</p>
           </section>
         ) : viewMode === "list" ? (
           <>
@@ -556,38 +498,35 @@ const ManageTourismContent = () => {
                         <div className="col-span-3 flex items-center gap-4 pr-2">
                           <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-blue-100 bg-[#f8fbff] text-gray-400">
                             {item.imageURL ? (
-                              <img
-                                src={item.imageURL}
-                                alt={item.title}
-                                className="h-full w-full object-cover"
-                              />
+                              <img src={item.imageURL} alt={item.title} className="h-full w-full object-cover" />
                             ) : item.videoURL ? (
                               <FiVideo className="text-lg" />
                             ) : (
                               <FiImage className="text-lg" />
                             )}
                           </div>
-
-                          <span className="line-clamp-2 font-semibold text-gray-700">
-                            {item.title}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="line-clamp-2 font-semibold text-gray-700">{item.title}</span>
+                            {item.contentType === "Article" && item.author && (
+                              <span className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                                <FiUser className="flex-shrink-0" />
+                                {item.author}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         <div className="col-span-2 flex flex-col items-start gap-1.5">
                           <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#2563eb]">
                             {item.contentType}
                           </span>
-
                           {item.category && (
-                            <span className="line-clamp-1 text-xs font-medium text-gray-500">
-                              {item.category}
-                            </span>
+                            <span className="line-clamp-1 text-xs font-medium text-gray-500">{item.category}</span>
                           )}
                         </div>
 
                         <div className="col-span-2 flex flex-col items-start gap-1.5">
                           <StatusBadge status={item.status} />
-
                           <span className="mt-1 flex items-center gap-1 text-xs font-medium text-gray-400">
                             <FiCalendar />
                             {item.createdAt?.toLocaleDateString() || "No date"}
@@ -595,11 +534,7 @@ const ManageTourismContent = () => {
                         </div>
 
                         <div className="col-span-4 pr-4 text-xs leading-relaxed text-gray-500 line-clamp-3">
-                          {item.summary || (
-                            <em className="text-gray-400">
-                              No summary available
-                            </em>
-                          )}
+                          {item.summary || <em className="text-gray-400">No summary available</em>}
                         </div>
 
                         <div className="col-span-1 flex flex-col items-center gap-2">
@@ -613,13 +548,9 @@ const ManageTourismContent = () => {
                                 <FiEdit2 />
                                 Edit
                               </button>
-
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setSelectedId(item.id);
-                                  setShowConfirm(true);
-                                }}
+                                onClick={() => { setSelectedId(item.id); setShowConfirm(true); }}
                                 className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-100 bg-white px-3 py-1.5 text-xs font-semibold text-red-500 shadow-sm transition hover:bg-red-50"
                               >
                                 <FiArchive />
@@ -643,7 +574,6 @@ const ManageTourismContent = () => {
                 </div>
               </div>
             </section>
-
             <Pagination />
           </>
         ) : (
@@ -670,7 +600,6 @@ const ManageTourismContent = () => {
                         <FiImage className="text-4xl" />
                       </div>
                     )}
-
                     <div className="absolute right-3 top-3">
                       <StatusBadge status={item.status} />
                     </div>
@@ -681,7 +610,6 @@ const ManageTourismContent = () => {
                       <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#2563eb]">
                         {item.contentType}
                       </span>
-
                       {item.category && (
                         <span className="line-clamp-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-500">
                           {item.category}
@@ -693,10 +621,15 @@ const ManageTourismContent = () => {
                       {item.title}
                     </h4>
 
+                    {item.contentType === "Article" && item.writtenBy && (
+                      <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-gray-400">
+                        <FiUser className="flex-shrink-0" />
+                        {item.writtenBy}
+                      </span>
+                    )}
+
                     <p className="mb-6 mt-2 line-clamp-3 flex-grow text-sm leading-relaxed text-gray-500">
-                      {item.summary || (
-                        <em className="text-gray-400">No summary available</em>
-                      )}
+                      {item.summary || <em className="text-gray-400">No summary available</em>}
                     </p>
 
                     <div className="mt-auto flex items-center gap-3 border-t border-blue-50 pt-4">
@@ -710,13 +643,9 @@ const ManageTourismContent = () => {
                             <FiEdit2 />
                             Edit
                           </button>
-
                           <button
                             type="button"
-                            onClick={() => {
-                              setSelectedId(item.id);
-                              setShowConfirm(true);
-                            }}
+                            onClick={() => { setSelectedId(item.id); setShowConfirm(true); }}
                             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-red-100 bg-white py-2 text-xs font-semibold text-red-500 shadow-sm transition hover:bg-red-50"
                           >
                             <FiArchive />
@@ -738,7 +667,6 @@ const ManageTourismContent = () => {
                 </div>
               ))}
             </section>
-
             <Pagination />
           </>
         )}
@@ -750,10 +678,7 @@ const ManageTourismContent = () => {
           <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[28px] border border-blue-100 bg-white p-7 shadow-[0_14px_35px_rgba(37,99,235,0.10)]">
             <button
               type="button"
-              onClick={() => {
-                setOpenModal(false);
-                resetForm();
-              }}
+              onClick={() => { setOpenModal(false); resetForm(); }}
               className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-gray-400 transition hover:text-red-500"
             >
               <FiX className="text-lg" />
@@ -761,26 +686,23 @@ const ManageTourismContent = () => {
 
             <div className="mb-6">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#2563eb]">
-                <FiFileContentIcon />
+                <FiImage className="text-xl" />
               </div>
-
               <h3 className="text-2xl font-bold text-[#2563eb]">
                 {editingId ? "Edit Content" : "Add Tourism Content"}
               </h3>
-
               <p className="mt-1 text-sm text-gray-500">
-                Create articles, highlights, or events for the public tourism
-                pages.
+                Create articles, highlights, or events for the public tourism pages.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Content Type & Category */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                     Content Type
                   </label>
-
                   <select
                     value={formData.contentType}
                     onChange={(e) =>
@@ -790,8 +712,8 @@ const ManageTourismContent = () => {
                         category: "",
                         eventDate: "",
                         videoURL: "",
+                        writtenBy: "",
                         summary: "",
-                        content: "",
                       })
                     }
                     required
@@ -808,99 +730,103 @@ const ManageTourismContent = () => {
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                     Category
                   </label>
-
                   <select
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     disabled={!formData.contentType}
                     className={`${inputStyle} cursor-pointer appearance-none disabled:cursor-not-allowed disabled:bg-blue-50/50`}
                   >
                     <option value="">Select Category</option>
                     {formData.contentType &&
                       CATEGORY_OPTIONS[formData.contentType]?.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
+                        <option key={cat} value={cat}>{cat}</option>
                       ))}
                   </select>
                 </div>
               </div>
 
+              {/* Title */}
               <div>
                 <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Title
                 </label>
-
                 <input
                   type="text"
                   placeholder="Content Title"
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                   className={inputStyle}
                 />
               </div>
 
+              {/* Author — Article only */}
+              {formData.contentType === "Article" && (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Written By
+                  </label>
+                  <div className="relative">
+                    <FiUser className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Name of the article author"
+                      value={formData.writtenBy}
+                      onChange={(e) => setFormData({ ...formData, writtenBy: e.target.value })}
+                      className={`${inputStyle} pl-11`}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Event Date */}
               {formData.contentType === "Event" && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                     Event Date
                   </label>
-
                   <input
                     type="date"
                     value={formData.eventDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, eventDate: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
                     required
                     className={inputStyle}
                   />
                 </div>
               )}
 
+              {/* Video URL — Highlight only */}
               {formData.contentType === "Highlight" && (
                 <div className="rounded-[18px] border border-blue-100 bg-blue-50/70 p-5">
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">
                     Video Link Optional
                   </label>
-
                   <input
                     type="text"
                     placeholder="Paste YouTube or Facebook video link"
                     value={formData.videoURL}
-                    onChange={(e) =>
-                      setFormData({ ...formData, videoURL: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, videoURL: e.target.value })}
                     className={inputStyle}
                   />
-
                   <p className="mt-2 text-xs text-gray-500">
                     Supported: YouTube and public Facebook video links.
                   </p>
                 </div>
               )}
 
+              {/* Cover Image Upload */}
               <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] p-4">
                 <label className="mb-3 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Upload Cover Image
                 </label>
-
                 <input
                   type="file"
                   accept="image/*"
                   onChange={async (e) => {
                     try {
                       const file = e.target.files[0];
-
                       if (!file) return;
-
                       const url = await uploadImage(file);
-
                       setFormData({ ...formData, imageURL: url });
                       showToast("Image uploaded successfully!");
                     } catch (error) {
@@ -910,91 +836,54 @@ const ManageTourismContent = () => {
                   }}
                   className="w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#2563eb] hover:file:bg-blue-100"
                 />
-
                 {isUploading && (
                   <p className="mt-2 text-xs font-bold text-[#2563eb] animate-pulse">
                     Uploading image...
                   </p>
                 )}
-
                 {formData.imageURL && (
                   <div className="mt-3 h-40 w-full overflow-hidden rounded-[16px] border border-blue-100 bg-white shadow-sm">
-                    <img
-                      src={formData.imageURL}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={formData.imageURL} alt="Preview" className="h-full w-full object-cover" />
                   </div>
                 )}
               </div>
 
-              {formData.contentType !== "Gallery" && (
-                <>
-                  <div>
-                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                      Short Summary
-                    </label>
+              {/* Quick Summary */}
+              <div>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Quick Summary
+                </label>
+                <textarea
+                  rows="8"
+                  placeholder="Brief overview of the content..."
+                  value={formData.summary}
+                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                  className={`${inputStyle} resize-none`}
+                />
+              </div>
 
-                    <textarea
-                      rows="2"
-                      placeholder="Brief overview of the content..."
-                      value={formData.summary}
-                      onChange={(e) =>
-                        setFormData({ ...formData, summary: e.target.value })
-                      }
-                      className={`${inputStyle} resize-none`}
-                    />
-                  </div>
-
-                  {formData.contentType !== "Highlight" && (
-                    <div>
-                      <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                        Full Content
-                      </label>
-
-                      <div className="overflow-hidden rounded-[18px] border border-blue-100 bg-white shadow-sm transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
-                        <ReactQuill
-                          theme="snow"
-                          value={formData.content}
-                          onChange={(value) =>
-                            setFormData({ ...formData, content: value })
-                          }
-                          className="min-h-[200px] bg-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
+              {/* Publishing Status */}
               <div>
                 <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Publishing Status
                 </label>
-
                 <select
                   value={formData.status}
-                  onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className={`${inputStyle} cursor-pointer appearance-none font-bold ${
-                    formData.status === "published"
-                      ? "text-green-600"
-                      : "text-gray-600"
+                    formData.status === "published" ? "text-green-600" : "text-gray-600"
                   }`}
                 >
-                  <option value="draft">Draft Hidden</option>
-                  <option value="published">Published Live</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
                 </select>
               </div>
 
+              {/* Actions */}
               <div className="flex justify-end gap-3 border-t border-blue-50 pt-6">
                 <button
                   type="button"
-                  onClick={() => {
-                    setOpenModal(false);
-                    resetForm();
-                  }}
+                  onClick={() => { setOpenModal(false); resetForm(); }}
                   className="rounded-full border border-[#2563eb]/20 bg-white px-6 py-3 text-sm font-medium text-[#2563eb] shadow-sm transition hover:bg-blue-50"
                 >
                   Cancel
@@ -1029,16 +918,10 @@ const ManageTourismContent = () => {
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
               <FiArchive className="text-3xl" />
             </div>
-
-            <h3 className="text-xl font-bold text-gray-700">
-              Archive Content?
-            </h3>
-
+            <h3 className="text-xl font-bold text-gray-700">Archive Content?</h3>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              This content will be moved to the archive and hidden from public
-              view. You can restore it later.
+              This content will be moved to the archive and hidden from public view. You can restore it later.
             </p>
-
             <div className="mt-8 flex justify-center gap-3">
               <button
                 type="button"
@@ -1047,7 +930,6 @@ const ManageTourismContent = () => {
               >
                 Cancel
               </button>
-
               <button
                 type="button"
                 onClick={handleArchive}
@@ -1069,10 +951,6 @@ const ManageTourismContent = () => {
       )}
     </div>
   );
-};
-
-const FiFileContentIcon = () => {
-  return <FiImage className="text-xl" />;
 };
 
 export default ManageTourismContent;
