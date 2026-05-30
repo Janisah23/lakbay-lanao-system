@@ -708,13 +708,7 @@ function Navbar() {
                       Itinerary Builder
                     </button>
 
-                    <button
-                      onClick={() => refreshNavigate("/favorites")}
-                      className="flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left text-[11px] font-semibold text-gray-600 transition hover:bg-white hover:text-blue-700 hover:shadow-sm"
-                    >
-                      <FiHeart className="text-blue-500" size={14} />
-                      Top Picks
-                    </button>
+                    
                   </div>
                 </div>
               )}
@@ -750,21 +744,13 @@ function Navbar() {
                 </button>
               ) : (
                 <>
-                  {isDashboardUser ? (
+                  {isDashboardUser && (
                     <button
                       onClick={() => refreshNavigate(`/${userProfile.role}/dashboard`)}
                       className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700"
                     >
                       <FiArrowLeft className="text-sm" />
                       Return to Dashboard
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleLogout}
-                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-red-50 px-4 py-2.5 text-xs font-bold text-red-500 shadow-sm transition hover:bg-red-100"
-                    >
-                      <FiLogOut className="text-sm" />
-                      Logout
                     </button>
                   )}
                 </>

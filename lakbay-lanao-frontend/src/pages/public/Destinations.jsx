@@ -201,7 +201,8 @@ function Destinations() {
             {item.imageURLs && item.imageURLs.length > 1 ? (
               <Swiper
                 modules={[Autoplay]}
-                autoplay={{ delay: 3500, disableOnInteraction: false }}
+                autoplay={{ delay: 30000, disableOnInteraction: false }}
+                speed={1000}
                 loop={true}
                 className="h-full w-full"
               >
@@ -409,7 +410,8 @@ function Destinations() {
                     {item.imageURLs && item.imageURLs.length > 1 ? (
                       <Swiper
                         modules={[Autoplay]}
-                        autoplay={{ delay: 3500, disableOnInteraction: false }}
+                        autoplay={{ delay: 30000, disableOnInteraction: false }}
+                        speed={1000}
                         loop={true}
                         className="h-full w-full"
                       >
@@ -496,7 +498,8 @@ function Destinations() {
                     {featuredItem.imageURLs && featuredItem.imageURLs.length > 1 ? (
                       <Swiper
                         modules={[Autoplay]}
-                        autoplay={{ delay: 3500, disableOnInteraction: false }}
+                        autoplay={{ delay: 30000, disableOnInteraction: false }}
+                        speed={1000}
                         loop={true}
                         className="absolute inset-0 h-full w-full z-0"
                       >
