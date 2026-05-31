@@ -43,6 +43,8 @@ const ArticleDetails = () => {
 
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
@@ -53,9 +55,12 @@ const ArticleDetails = () => {
       )
     : [];
 
-
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    setIsNavigating(false);
+    setShowSharePanel(false);
+    setLinkCopied(false);
+    setActiveGalleryIndex(0);
   }, [id]);
 
   useEffect(() => {
@@ -141,7 +146,17 @@ const ArticleDetails = () => {
     return `${firstSentence.slice(0, 72).trim()}...`;
   };
 
-  if (!articleDetail) {
+  const handleDelayedNavigate = (path) => {
+    setIsNavigating(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    setTimeout(() => {
+      navigate(path);
+    }, 2000);
+  };
+
+  // If initial load OR simulated navigating load is active, show the spinner screen
+  if (!articleDetail || isNavigating) {
     return (
       <div className="font-sans flex min-h-screen items-center justify-center bg-[#f3f9ff]">
         <div className="text-center">
@@ -348,8 +363,6 @@ const ArticleDetails = () => {
                   </div>
                 </div>
               )}
-
-              
             </div>
           </div>
 
@@ -423,7 +436,7 @@ const ArticleDetails = () => {
             </div>
 
             <button
-              onClick={() => navigate("/articles")}
+              onClick={() => handleDelayedNavigate("/articles")}
               className="hidden items-center gap-2 self-start rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50 md:flex"
             >
               View all articles <FiChevronRight />
@@ -441,7 +454,7 @@ const ArticleDetails = () => {
               {moreArticles.map((article) => (
                 <article
                   key={article.id}
-                  onClick={() => navigate(`/article/${article.id}`)}
+                  onClick={() => handleDelayedNavigate(`/article/${article.id}`)}
                   className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-blue-50 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md sm:min-h-[310px] sm:rounded-[24px]"
                 >
                   <div className="p-1.5 pb-0 sm:p-2 sm:pb-0">
@@ -473,7 +486,7 @@ const ArticleDetails = () => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/article/${article.id}`);
+                        handleDelayedNavigate(`/article/${article.id}`);
                       }}
                       className="mt-3 w-full rounded-full bg-[#2563eb] px-3 py-1.5 text-[10px] font-medium text-white shadow-sm transition hover:bg-blue-700 sm:mt-4 sm:w-fit sm:px-4 sm:py-2 sm:text-[11px]"
                     >
@@ -486,7 +499,7 @@ const ArticleDetails = () => {
           )}
 
           <button
-            onClick={() => navigate("/articles")}
+            onClick={() => handleDelayedNavigate("/articles")}
             className="mt-8 flex w-full items-center justify-center gap-2 rounded-full border border-[#2563eb]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#2563eb] shadow-sm transition hover:border-[#2563eb]/40 hover:bg-blue-50 sm:w-auto md:hidden"
           >
             View all articles <FiChevronRight />
