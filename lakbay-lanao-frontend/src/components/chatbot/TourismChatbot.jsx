@@ -315,17 +315,17 @@ function TourismChatbot() {
         `}
       >
         {/* HEADER */}
-        <div className="border-b border-blue-50 bg-white px-3 pb-3 pt-3">
-          <div className="relative flex items-center justify-between rounded-[20px] bg-[#2563eb] px-4 py-3 text-white shadow-[0_8px_18px_rgba(37,99,235,0.16)]">
+    <div className="z-10 bg-white px-3 pb-3 pt-3">
+          <div className="relative flex w-full items-center justify-between gap-1.5 rounded-2xl bg-[#2563eb] px-4 py-2.5 text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] sm:gap-2">
             <div className="flex items-center gap-3">
               <img
                 src={chatbotIcon}
                 alt="Assistant Logo"
-                className="h-10 w-10 object-contain"
+                className="h-9 w-9 object-contain drop-shadow-sm"
               />
 
-              <div>
-                <p className="text-[14px] font-bold tracking-wide text-white">
+              <div className="flex flex-col justify-center">
+                <p className="text-[14px] font-bold tracking-wide text-white leading-none">
                   GARI
                 </p>
                 <p className="text-[11px] font-medium leading-tight tracking-wide text-blue-100">
@@ -432,7 +432,7 @@ function TourismChatbot() {
                     <button
                       key={i}
                       onClick={() => sendMessage(q)}
-                      className="block w-full max-w-[88%] rounded-[18px] border border-blue-100 bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb]"
+                      className="block w-full max-w-[88%] rounded-[18px] border border-blue-100 bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-500 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb]"
                     >
                       {q}
                     </button>
