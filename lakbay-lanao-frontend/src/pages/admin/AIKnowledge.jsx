@@ -9,7 +9,7 @@ import {
   FiX,
 } from "react-icons/fi";
 
-const API = "http://localhost:5000/api/knowledge";
+const API = "https://lakbay-lanao-backend.onrender.com/api/knowledge";
 
 function AIKnowledge() {
   const [documents, setDocuments] = useState([]);
