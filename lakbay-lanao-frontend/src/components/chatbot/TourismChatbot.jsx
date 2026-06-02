@@ -34,6 +34,9 @@ function TourismChatbot() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showPromptBubble, setShowPromptBubble] = useState(true);
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
+  
+  // NEW: Added state to prevent spamming while AI is fetching
+  const [isAiFetching, setIsAiFetching] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -183,7 +186,8 @@ function TourismChatbot() {
   };
 
   const sendMessage = async (text) => {
-    if (!text.trim()) return;
+    // UPDATED: Prevent sending if empty or already fetching
+    if (!text.trim() || isAiFetching) return;
 
     const userMessage = {
       sender: "user",
@@ -194,6 +198,9 @@ function TourismChatbot() {
     setSuggestionsVisible(false);
     setInput("");
     setTyping(true);
+    
+    // UPDATED: Lock the UI
+    setIsAiFetching(true);
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || "https://lakbay-lanao-backend.onrender.com";
@@ -224,6 +231,8 @@ function TourismChatbot() {
       ]);
     } finally {
       setTyping(false);
+      // UPDATED: Unlock the UI whether successful or error
+      setIsAiFetching(false);
     }
   };
 
@@ -315,20 +324,20 @@ function TourismChatbot() {
         `}
       >
         {/* HEADER */}
-        <div className="border-b border-blue-50 bg-white px-3 pb-3 pt-3">
-          <div className="relative flex items-center justify-between rounded-[20px] bg-[#2563eb] px-4 py-3 text-white shadow-[0_8px_18px_rgba(37,99,235,0.16)]">
+    <div className="z-10 bg-white px-3 pb-3 pt-3">
+          <div className="relative flex w-full items-center justify-between gap-1.5 rounded-2xl bg-[#2563eb] px-4 py-2.5 text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] sm:gap-2">
             <div className="flex items-center gap-3">
               <img
                 src={chatbotIcon}
                 alt="Assistant Logo"
-                className="h-10 w-10 object-contain"
+                className="h-9 w-9 object-contain drop-shadow-sm"
               />
 
-              <div>
-                <p className="text-[14px] font-bold tracking-wide text-white">
+              <div className="flex flex-col justify-center">
+                <p className="text-[14px] font-bold tracking-wide text-white leading-none">
                   GARI
                 </p>
-                <p className="text-[11px] font-medium leading-tight tracking-wide text-blue-100">
+                <p className="text-[11px] font-medium leading-tight tracking-wide text-blue-100 mt-1">
                   Your Lanao Travel Guide
                 </p>
               </div>
@@ -338,14 +347,14 @@ function TourismChatbot() {
               <button
                 onClick={() => setShowClearConfirm(true)}
                 title="Clear Chat History"
-                className="rounded-full p-1.5 text-[17px] text-white/80 transition hover:bg-white/15 hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[16px] text-white/80 transition hover:bg-black/10 hover:text-white"
               >
                 <FiTrash2 />
               </button>
 
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-full px-2 py-1 text-lg leading-none text-white/90 transition hover:bg-white/15 hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold text-white/90 transition hover:bg-black/10 hover:text-white"
               >
                 ✕
               </button>
@@ -431,8 +440,10 @@ function TourismChatbot() {
                   {msg.options.map((q, i) => (
                     <button
                       key={i}
-                      onClick={() => sendMessage(q)}
-                      className="block w-full max-w-[88%] rounded-[18px] border border-blue-100 bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb]"
+                      // UPDATED: Disables clicking suggestions while fetching
+                      onClick={() => !isAiFetching && sendMessage(q)}
+                      disabled={isAiFetching}
+                      className={`block w-full max-w-[88%] rounded-[18px] border border-blue-100 bg-white px-4 py-2.5 text-left text-[12.5px] font-semibold text-gray-500 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563eb] ${isAiFetching ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       {q}
                     </button>
@@ -554,21 +565,26 @@ function TourismChatbot() {
 
         {/* INPUT AREA */}
         <div className="border-t border-blue-50 bg-white px-3 py-2.5">
-          <div className="flex items-center gap-2 rounded-full border border-blue-100 bg-white px-2 py-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.03),0_6px_16px_rgba(37,99,235,0.08)]">
+          {/* UPDATED: Added opacity when fetching */}
+          <div className={`flex items-center gap-2 rounded-full border border-blue-100 bg-white px-2 py-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.03),0_6px_16px_rgba(37,99,235,0.08)] ${isAiFetching ? 'opacity-70' : ''}`}>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage(input);
+                if (e.key === "Enter" && !isAiFetching) sendMessage(input);
               }}
               placeholder="Ask about destinations..."
-              className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400"
+              // UPDATED: Disable input field while AI is processing
+              disabled={isAiFetching}
+              className={`min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 ${isAiFetching ? 'cursor-not-allowed' : ''}`}
             />
 
             <button
               onClick={() => sendMessage(input)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-[0_6px_14px_rgba(37,99,235,0.20)] transition-all duration-200 hover:scale-105 hover:bg-blue-700"
+              // UPDATED: Disable button while AI is processing
+              disabled={isAiFetching}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-[0_6px_14px_rgba(37,99,235,0.20)] transition-all duration-200 ${isAiFetching ? 'cursor-not-allowed opacity-50' : 'hover:scale-105 hover:bg-blue-700'}`}
             >
               ➤
             </button>
