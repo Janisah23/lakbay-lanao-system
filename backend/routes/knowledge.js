@@ -42,20 +42,14 @@ async function getCollection(client) {
 }
 
 // ── Text helpers ──────────────────────────────────────────────────────────────
-
-/**
- * Split text into overlapping chunks.
- * Larger chunk size (1200) means fewer API calls for big docs.
- */
 function chunkText(text, chunkSize = 1200, overlap = 150) {
-  // Normalise excessive whitespace produced by table extraction
   const cleaned = text.replace(/[ \t]{3,}/g, "  ").replace(/\n{4,}/g, "\n\n").trim();
   const chunks = [];
   let start = 0;
   while (start < cleaned.length) {
     const end = Math.min(start + chunkSize, cleaned.length);
     const chunk = cleaned.slice(start, end).trim();
-    if (chunk.length > 40) chunks.push(chunk); // skip tiny artefacts
+    if (chunk.length > 40) chunks.push(chunk); 
     start += chunkSize - overlap;
   }
   return chunks;
@@ -76,7 +70,6 @@ async function extractText(file) {
 // ── Embedding with rate-limit retry ──────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const embedModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
-
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function embedChunk(text, retries = 5) {
@@ -92,7 +85,6 @@ async function embedChunk(text, retries = 5) {
       
       if ((isRateLimit || isServerError || isNetworkError) && attempt < retries) {
         const wait = Math.pow(2, attempt + 1) * 1000;
-        console.log(`[Attempt ${attempt + 1}/${retries}] Network/Rate issue. Retrying in ${wait / 1000}s…`);
         await sleep(wait);
         continue;
       }
@@ -101,27 +93,16 @@ async function embedChunk(text, retries = 5) {
   }
 }
 
-/**
- * Embed all chunks in batches with a small inter-request delay to stay
- * within Gemini's free-tier rate limit (~1500 RPM = 25 RPS).
- * We use 50ms delay → max 20 RPS (well within limits).
- */
 async function embedAllChunks(chunks) {
-  const DELAY_MS = 60;   // ms between individual requests
-  const BATCH_LOG = 50;  // log progress every N chunks
-
+  const DELAY_MS = 60;   
   const embeddings = [];
   for (let i = 0; i < chunks.length; i++) {
     embeddings.push(await embedChunk(chunks[i]));
-    if ((i + 1) % BATCH_LOG === 0) {
-      console.log(`  Embedded ${i + 1}/${chunks.length} chunks…`);
-    }
     if (i < chunks.length - 1) await sleep(DELAY_MS);
   }
   return embeddings;
 }
 
-// ── Upsert to ChromaDB in batches (avoid payload-size limits) ────────────────
 async function batchUpsert(collection, ids, embeddings, documents, metadatas, batchSize = 100) {
   for (let i = 0; i < ids.length; i += batchSize) {
     await collection.upsert({
@@ -130,7 +111,6 @@ async function batchUpsert(collection, ids, embeddings, documents, metadatas, ba
       documents: documents.slice(i, i + batchSize),
       metadatas: metadatas.slice(i, i + batchSize),
     });
-    console.log(`  Upserted ${Math.min(i + batchSize, ids.length)}/${ids.length} chunks to ChromaDB`);
   }
 }
 
@@ -138,8 +118,6 @@ async function batchUpsert(collection, ids, embeddings, documents, metadatas, ba
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded." });
-
-    console.log(`\n[Knowledge] Processing: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(1)} MB)`);
 
     const rawText = await extractText(req.file);
     if (!rawText.trim())
@@ -149,11 +127,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     const docName = req.file.originalname;
     const now = new Date().toISOString();
 
-    console.log(`[Knowledge] Chunked into ${chunks.length} pieces. Starting embedding…`);
-
     const embeddings = await embedAllChunks(chunks);
-
-    console.log(`[Knowledge] All embeddings done. Upserting to ChromaDB…`);
 
     const client = getChromaClient();
     const collection = await getCollection(client);
@@ -162,8 +136,6 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     const metadatas = chunks.map(() => ({ source: docName, uploadedAt: now }));
 
     await batchUpsert(collection, ids, embeddings, chunks, metadatas);
-
-    console.log(`[Knowledge] Done — ${chunks.length} chunks stored for "${docName}"`);
 
     res.json({
       message: `Uploaded "${docName}" — ${chunks.length} chunk(s) stored.`,
@@ -176,7 +148,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// ── GET /api/knowledge/documents ─────────────────────────────────────────────
+// ── GET /api/knowledge/documents (FIXED: SAFELY LOOPS 300 AT A TIME) ─────────
 router.get("/documents", async (req, res) => {
   try {
     const client = getChromaClient();
@@ -184,9 +156,8 @@ router.get("/documents", async (req, res) => {
     
     let allMetadatas = [];
     let offset = 0;
-    const limit = 300; // Max allowed by Chroma Cloud
+    const limit = 300; // Safe limit for Chroma Cloud
 
-    // Loop to fetch chunks in safe batches of 300
     while (true) {
       const result = await collection.get({ 
         limit: limit, 
@@ -194,17 +165,13 @@ router.get("/documents", async (req, res) => {
         include: ["metadatas"] 
       });
 
-      if (!result.metadatas || result.metadatas.length === 0) {
-        break; // No more chunks left
-      }
-
+      if (!result.metadatas || result.metadatas.length === 0) break;
+      
       allMetadatas.push(...result.metadatas);
 
-      if (result.metadatas.length < limit) {
-        break; // We reached the end of the database
-      }
+      if (result.metadatas.length < limit) break; // Reached the end
       
-      offset += limit; // Move to the next batch of 300
+      offset += limit;
     }
 
     const docs = {};
@@ -224,7 +191,7 @@ router.get("/documents", async (req, res) => {
   }
 });
 
-// ── DELETE /api/knowledge/documents/:name ────────────────────────────────────
+// ── DELETE /api/knowledge/documents/:name (FIXED: SAFELY LOOPS 300 AT A TIME) ─
 router.delete("/documents/:name", async (req, res) => {
   try {
     const docName = decodeURIComponent(req.params.name);
@@ -235,7 +202,7 @@ router.delete("/documents/:name", async (req, res) => {
     let offset = 0;
     const limit = 300;
 
-    // Fetch all chunk IDs belonging to this document safely using pagination
+    // Fetch IDs in batches
     while (true) {
       const result = await collection.get({ 
         where: { source: docName },
@@ -244,10 +211,10 @@ router.delete("/documents/:name", async (req, res) => {
       });
       
       if (!result.ids || result.ids.length === 0) break;
-
+      
       allIds.push(...result.ids);
 
-      if (result.ids.length < limit) break;
+      if (result.ids.length < limit) break; // Reached the end
       
       offset += limit;
     }
@@ -256,7 +223,7 @@ router.delete("/documents/:name", async (req, res) => {
       return res.status(404).json({ error: "Document not found in knowledge base." });
     }
 
-    // Delete chunks in safe batches of 300
+    // Delete in safe batches
     for (let i = 0; i < allIds.length; i += 300) {
       await collection.delete({ ids: allIds.slice(i, i + 300) });
     }
