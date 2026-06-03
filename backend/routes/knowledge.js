@@ -182,14 +182,33 @@ router.get("/documents", async (req, res) => {
     const client = getChromaClient();
     const collection = await getCollection(client);
     
-    // FIX: Added limit: 100000 so Chroma fetches all chunks, not just the first 10
-    const result = await collection.get({ 
-      limit: 100000, 
-      include: ["metadatas"] 
-    });
+    let allMetadatas = [];
+    let offset = 0;
+    const limit = 300; // Max allowed by Chroma Cloud
+
+    // Loop to fetch chunks in safe batches of 300
+    while (true) {
+      const result = await collection.get({ 
+        limit: limit, 
+        offset: offset,
+        include: ["metadatas"] 
+      });
+
+      if (!result.metadatas || result.metadatas.length === 0) {
+        break; // No more chunks left
+      }
+
+      allMetadatas.push(...result.metadatas);
+
+      if (result.metadatas.length < limit) {
+        break; // We reached the end of the database
+      }
+      
+      offset += limit; // Move to the next batch of 300
+    }
 
     const docs = {};
-    (result.metadatas || []).forEach((meta) => {
+    allMetadatas.forEach((meta) => {
       if (!meta) return;
       const src = meta.source || "Unknown";
       if (!docs[src]) {
@@ -212,19 +231,37 @@ router.delete("/documents/:name", async (req, res) => {
     const client = getChromaClient();
     const collection = await getCollection(client);
 
-    // FIX: Added limit: 100000 so we find ALL chunks to delete, not just 10
-    const result = await collection.get({ 
-      limit: 100000,
-      where: { source: docName } 
-    });
-    
-    if (!result.ids || result.ids.length === 0) {
+    let allIds = [];
+    let offset = 0;
+    const limit = 300;
+
+    // Fetch all chunk IDs belonging to this document safely using pagination
+    while (true) {
+      const result = await collection.get({ 
+        where: { source: docName },
+        limit: limit,
+        offset: offset
+      });
+      
+      if (!result.ids || result.ids.length === 0) break;
+
+      allIds.push(...result.ids);
+
+      if (result.ids.length < limit) break;
+      
+      offset += limit;
+    }
+
+    if (allIds.length === 0) {
       return res.status(404).json({ error: "Document not found in knowledge base." });
     }
 
-    await collection.delete({ ids: result.ids });
+    // Delete chunks in safe batches of 300
+    for (let i = 0; i < allIds.length; i += 300) {
+      await collection.delete({ ids: allIds.slice(i, i + 300) });
+    }
 
-    res.json({ message: `Deleted "${docName}" (${result.ids.length} chunks removed).` });
+    res.json({ message: `Deleted "${docName}" (${allIds.length} chunks removed).` });
   } catch (err) {
     console.error("[Knowledge] Delete error:", err.message);
     res.status(500).json({ error: err.message });
