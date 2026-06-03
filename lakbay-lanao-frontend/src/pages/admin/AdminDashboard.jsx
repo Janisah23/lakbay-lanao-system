@@ -70,10 +70,10 @@ function AdminDashboard() {
           getCountFromServer(usersCol, where("status", "==", "active")),
           getCountFromServer(destinationsCol, where("status", "==", "active")),
           getCountFromServer(
-            query(contentCol, where("contentType", "==", "Event"), where("status", "==", "active"))
+            query(contentCol, where("contentType", "==", "Event"), where("status", "==", "published"))
           ),
           getCountFromServer(
-            query(contentCol, where("contentType", "==", "Article"), where("status", "==", "active"))
+            query(contentCol, where("contentType", "==", "Article"), where("status", "==", "published"))
           ),
         ]);
 
