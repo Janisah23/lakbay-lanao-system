@@ -70,12 +70,12 @@ function StaffDashboard() {
           articlesCount,
           reviewsAgg,
         ] = await Promise.all([
-          getCountFromServer(destinationsCol),
+          getCountFromServer(destinationsCol, where("status", "==", "active")),
           getCountFromServer(
-            query(contentCol, where("contentType", "==", "Event"))
+            query(contentCol, where("contentType", "==", "Event"), where("status", "==", "active"))
           ),
           getCountFromServer(
-            query(contentCol, where("contentType", "==", "Article"))
+            query(contentCol, where("contentType", "==", "Article"), where("status", "==", "active"))
           ),
           getAggregateFromServer(reviewsCol, {
             avgRating: average("rating"),

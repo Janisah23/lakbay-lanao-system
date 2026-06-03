@@ -67,13 +67,13 @@ function AdminDashboard() {
           eventsCount,
           articlesCount,
         ] = await Promise.all([
-          getCountFromServer(usersCol),
-          getCountFromServer(destinationsCol),
+          getCountFromServer(usersCol, where("status", "==", "active")),
+          getCountFromServer(destinationsCol, where("status", "==", "active")),
           getCountFromServer(
-            query(contentCol, where("contentType", "==", "event"))
+            query(contentCol, where("contentType", "==", "Event"), where("status", "==", "active"))
           ),
           getCountFromServer(
-            query(contentCol, where("contentType", "==", "article"))
+            query(contentCol, where("contentType", "==", "Article"), where("status", "==", "active"))
           ),
         ]);
 
