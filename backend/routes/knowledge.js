@@ -181,7 +181,12 @@ router.get("/documents", async (req, res) => {
   try {
     const client = getChromaClient();
     const collection = await getCollection(client);
-    const result = await collection.get({ include: ["metadatas"] });
+    
+    // FIX: Added limit: 100000 so Chroma fetches all chunks, not just the first 10
+    const result = await collection.get({ 
+      limit: 100000, 
+      include: ["metadatas"] 
+    });
 
     const docs = {};
     (result.metadatas || []).forEach((meta) => {
@@ -207,7 +212,12 @@ router.delete("/documents/:name", async (req, res) => {
     const client = getChromaClient();
     const collection = await getCollection(client);
 
-    const result = await collection.get({ where: { source: docName } });
+    // FIX: Added limit: 100000 so we find ALL chunks to delete, not just 10
+    const result = await collection.get({ 
+      limit: 100000,
+      where: { source: docName } 
+    });
+    
     if (!result.ids || result.ids.length === 0) {
       return res.status(404).json({ error: "Document not found in knowledge base." });
     }
