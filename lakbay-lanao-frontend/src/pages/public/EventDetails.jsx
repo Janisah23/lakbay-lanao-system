@@ -17,6 +17,12 @@ import {
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md";
 import { FaTwitter, FaFacebookF, FaLink } from "react-icons/fa";
 
+// Swiper imports
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../../firebase/config";
 import {
@@ -43,7 +49,10 @@ const EventDetails = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
 
+  // Gallery and Swiper States
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
+  const [mainSwiper, setMainSwiper] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -54,6 +63,7 @@ const EventDetails = () => {
   useEffect(() => {
     setEventDetail(null);
     setActiveGalleryIndex(0);
+    setLightboxOpen(false);
     setShowSharePanel(false);
     setLinkCopied(false);
     setShowLoginNotice(false);
@@ -268,10 +278,16 @@ const EventDetails = () => {
     );
   }
 
-  const galleryImages = [
-    eventDetail.imageURL,
-    ...(eventDetail.galleryImages || []),
-  ].filter(Boolean);
+const galleryImages = [
+  ...(eventDetail.imageURLs || []),
+];
+
+if (
+  eventDetail.imageURL &&
+  !galleryImages.includes(eventDetail.imageURL)
+) {
+  galleryImages.unshift(eventDetail.imageURL);
+}
 
   const formattedDate = formatEventDate(eventDetail.eventDate);
   const locationStr = getEventLocation(eventDetail);
@@ -450,58 +466,172 @@ const EventDetails = () => {
         </div>
       </section>
 
-      {/* GALLERY */}
+      {/* GALLERY (SWIPER MAIN PREVIEW) */}
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
-        <div className="relative h-[240px] w-full overflow-hidden rounded-[20px] border border-white/80 bg-white/80 p-1.5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-sm sm:h-[320px] sm:rounded-[24px] sm:p-2 md:h-[460px] lg:h-[540px] lg:rounded-[28px]">
-          <div className="relative h-full w-full overflow-hidden rounded-[16px] sm:rounded-[20px] lg:rounded-[24px]">
-            <img
-              src={galleryImages[activeGalleryIndex] || "/default.jpg"}
-              alt={eventDetail.title}
-              className="h-full w-full object-cover transition-opacity duration-500"
-            />
+        <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
+          <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
+            <Swiper
+              onSwiper={setMainSwiper}
+              onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
+              observer={true}
+              observeParents={true}
+              modules={[Autoplay, Navigation]}
+              autoplay={{ delay: 30000, disableOnInteraction: false }}
+              speed={1200}
+              className="h-full w-full"
+            >
+              {galleryImages.length > 0 ? (
+                galleryImages.map((img, i) => (
+                  <SwiperSlide key={i} className="h-full w-full">
+                    <img
+                      src={img}
+                      alt={`${eventDetail.title || eventDetail.name} ${i + 1}`}
+                      onClick={() => setLightboxOpen(true)}
+                      className="h-full w-full cursor-zoom-in object-cover transition-transform duration-700 hover:scale-[1.005]"
+                    />
+                  </SwiperSlide>
+                ))
+              ) : (
+                <SwiperSlide className="h-full w-full">
+                  <img
+                    src="/default.jpg"
+                    alt={eventDetail.title || eventDetail.name}
+                    className="h-full w-full object-cover"
+                  />
+                </SwiperSlide>
+              )}
+            </Swiper>
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+            {/* Gradient Overlay for bottom elements (Thumbnails) */}
+            <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
+            {/* View fullscreen button */}
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="absolute bottom-3 right-3 z-20 rounded-full border border-white/70 bg-white px-3 py-1.5 text-[10px] font-semibold text-gray-800 shadow-sm transition hover:bg-blue-50 hover:text-[#2563eb] sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-xs"
+            >
+              View fullscreen
+            </button>
+
+            {/* Navigation Arrows (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <>
                 <button
-                  onClick={() =>
-                    setActiveGalleryIndex((i) => Math.max(i - 1, 0))
-                  }
-                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white sm:left-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    mainSwiper?.slidePrev();
+                  }}
+                  className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/40 opacity-0 group-hover:opacity-100 sm:left-4 sm:h-12 sm:w-12"
                 >
-                  <FiChevronLeft className="text-lg text-gray-700" />
+                  <FiChevronLeft className="text-xl sm:text-2xl" />
                 </button>
-
                 <button
-                  onClick={() =>
-                    setActiveGalleryIndex((i) =>
-                      Math.min(i + 1, galleryImages.length - 1)
-                    )
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow transition hover:bg-white sm:right-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    mainSwiper?.slideNext();
+                  }}
+                  className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/40 opacity-0 group-hover:opacity-100 sm:right-4 sm:h-12 sm:w-12"
                 >
-                  <FiChevronRight className="text-lg text-gray-700" />
+                  <FiChevronRight className="text-xl sm:text-2xl" />
                 </button>
+              </>
+            )}
 
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                  {galleryImages.map((_, i) => (
+            {/* THUMBNAILS embedded at the bottom of the image (Visible only on hover) */}
+            {galleryImages.length > 1 && (
+              <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
+                <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 justify-center">
+                  {galleryImages.map((img, i) => (
                     <button
                       key={i}
-                      onClick={() => setActiveGalleryIndex(i)}
-                      className={`rounded-full transition-all ${
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveGalleryIndex(i);
+                        if (mainSwiper) mainSwiper.slideTo(i);
+                      }}
+                      className={`h-12 w-16 flex-shrink-0 overflow-hidden rounded-[10px] border-2 bg-blue-50 transition-all sm:h-14 sm:w-20 sm:rounded-[12px] md:h-16 md:w-24 ${
                         i === activeGalleryIndex
-                          ? "h-2 w-6 bg-white"
-                          : "h-2 w-2 bg-white/50 hover:bg-white/80"
+                          ? "border-white shadow-[0_0_0_2px_rgba(255,255,255,0.4)]"
+                          : "border-transparent opacity-60 hover:opacity-100"
                       }`}
-                    />
+                    >
+                      <img
+                        src={img}
+                        alt={`Gallery ${i + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
       </section>
+
+      {/* LIGHTBOX (FULLSCREEN VIEW) */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxOpen(false);
+            }}
+            className="absolute right-5 top-5 z-[100000] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+          >
+            <FiX className="text-2xl" />
+          </button>
+
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveGalleryIndex((i) =>
+                    i === 0 ? galleryImages.length - 1 : i - 1
+                  );
+                }}
+                className="absolute left-4 top-1/2 z-[100000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              >
+                <FiChevronLeft className="text-4xl" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveGalleryIndex((i) =>
+                    i === galleryImages.length - 1 ? 0 : i + 1
+                  );
+                }}
+                className="absolute right-4 top-1/2 z-[100000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              >
+                <FiChevronRight className="text-4xl" />
+              </button>
+            </>
+          )}
+
+          <img
+            src={galleryImages[activeGalleryIndex] || "/default.jpg"}
+            alt={eventDetail.title || eventDetail.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-screen max-w-screen object-contain"
+          />
+
+          {galleryImages.length > 1 && (
+            <p className="absolute bottom-5 left-1/2 z-[100000] -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/70">
+              {activeGalleryIndex + 1} / {galleryImages.length}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* CONTENT + SIDEBAR */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
@@ -530,8 +660,6 @@ const EventDetails = () => {
                   </div>
                 </div>
               )}
-
-            
             </div>
           </div>
 

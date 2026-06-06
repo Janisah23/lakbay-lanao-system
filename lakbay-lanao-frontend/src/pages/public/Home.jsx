@@ -219,11 +219,54 @@ function Home() {
     return () => unsubscribe();
   }, [location.key]);
 
-  const highlights = content.filter(
+const highlights = content.filter(
     (item) =>
       item.contentType?.toLowerCase() === "highlight" &&
       item.status?.toLowerCase() === "published"
   );
+
+  // NEW: Flatten highlights to create a separate slide for each image and video
+  const highlightSlides = [];
+
+  highlights.forEach((item) => {
+    // 1. If there's a video, add it as the first slide for this highlight
+    if (item.videoURL) {
+      highlightSlides.push({
+        ...item,
+        mediaType: "video",
+        displayMedia: item.videoURL,
+        slideKey: `${item.id}-video`,
+      });
+    }
+
+    // 2. Handle both `imageURLs` (array) and `imageURL` (string)
+    const images =
+      item.imageURLs && Array.isArray(item.imageURLs) && item.imageURLs.length > 0
+        ? item.imageURLs
+        : item.imageURL
+        ? [item.imageURL]
+        : [];
+
+    // 3. Add image slides (or fallback if no media exists)
+    if (images.length === 0 && !item.videoURL) {
+      highlightSlides.push({
+        ...item,
+        mediaType: "image",
+        displayMedia: fallbackHighlightImage,
+        slideKey: `${item.id}-fallback`,
+      });
+    } else {
+      images.forEach((imgUrl, idx) => {
+        highlightSlides.push({
+          ...item,
+          mediaType: "image",
+          displayMedia: imgUrl,
+          slideKey: `${item.id}-img-${idx}`,
+        });
+      });
+    }
+  });
+
 
   const events = content.filter(
     (item) =>
@@ -393,7 +436,7 @@ function Home() {
             viewport={{ once: false, amount: 0.18 }}
             className="relative overflow-hidden rounded-[16px] border border-blue-100 bg-white p-2 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[22px] sm:p-2.5 md:rounded-[28px] md:p-3"
           >
-            {highlights.length > 0 ? (
+            {highlightSlides.length > 0 ? (
               <Swiper
                 modules={[Autoplay, Pagination, Navigation]}
                 autoplay={{
@@ -406,11 +449,10 @@ function Home() {
                   nextEl: ".highlight-next",
                   prevEl: ".highlight-prev",
                 }}
-                loop={highlights.length > 1}
+
+                loop={highlightSlides.length > 1}
                 allowTouchMove={true}
-                onSlideChange={(swiper) =>
-                  setActiveHighlight(swiper.realIndex)
-                }
+                onSlideChange={(swiper) => setActiveHighlight(swiper.realIndex)}
                 className="highlight-swiper overflow-hidden rounded-[12px] sm:rounded-[18px] md:rounded-[24px]"
               >
                 <button className="highlight-prev absolute left-2 top-1/2 z-30 -translate-y-1/2 text-2xl font-light text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 hover:text-white/90 sm:left-4 sm:text-4xl md:left-6 md:text-5xl">
@@ -421,20 +463,21 @@ function Home() {
                   ›
                 </button>
 
-                {highlights.map((item, index) => {
-                  const embedURL = getVideoEmbedURL(item.videoURL);
+                {highlightSlides.map((slide, index) => {
+                  const isVideo = slide.mediaType === "video";
+                  const embedURL = isVideo ? getVideoEmbedURL(slide.displayMedia) : "";
                   const hasVideo = Boolean(embedURL);
                   const isActive = activeHighlight === index;
 
                   return (
-                    <SwiperSlide key={item.id || index}>
+                    <SwiperSlide key={slide.slideKey}>
                       <div className="relative overflow-hidden rounded-[12px] bg-gray-100 sm:rounded-[18px] md:rounded-[24px]">
                         {hasVideo && isActive ? (
                           <div className="relative aspect-[4/3] w-full overflow-hidden bg-black sm:aspect-[16/9]">
                             <iframe
                               key={embedURL}
                               src={embedURL}
-                              title={item.title || "Highlight Video"}
+                              title={slide.title || "Highlight Video"}
                               className="absolute inset-0 h-full w-full border-0 bg-black"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                               allowFullScreen
@@ -442,8 +485,8 @@ function Home() {
                           </div>
                         ) : (
                           <img
-                            src={item.imageURL || fallbackHighlightImage}
-                            alt={item.title || "Travel Highlight"}
+                            src={slide.mediaType === "image" ? slide.displayMedia : fallbackHighlightImage}
+                            alt={slide.title || "Travel Highlight"}
                             className="aspect-[4/3] w-full object-cover sm:aspect-[16/9]"
                             onError={(e) => {
                               e.currentTarget.src = fallbackHighlightImage;
@@ -457,16 +500,16 @@ function Home() {
 
                             <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 text-center text-white sm:px-8 sm:pb-8 md:px-10 md:pb-10 lg:px-14 lg:pb-16">
                               <span className="mb-1 inline-block rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-white sm:mb-1.5 sm:px-3 sm:py-0.5 sm:text-[8px] md:mb-2 md:px-3 md:py-1 md:text-[9px] lg:mb-4 lg:px-4 lg:py-1.5 lg:text-[10px]">
-                                {item.category || "Highlight"}
+                                {slide.category || "Highlight"}
                               </span>
 
                               <h3 className="text-sm font-extrabold leading-tight tracking-tight drop-shadow sm:text-base md:text-lg lg:text-3xl xl:text-4xl">
-                                {item.title}
+                                {slide.title}
                               </h3>
 
-                              {item.summary && (
+                              {slide.summary && (
                                 <p className="hidden mx-auto max-w-xl leading-relaxed text-white/80 lg:mt-3 lg:block lg:text-base">
-                                  {item.summary}
+                                  {slide.summary}
                                 </p>
                               )}
                             </div>
@@ -488,7 +531,7 @@ function Home() {
         </div>
       </section>
 
-      {/* TOURISM CONTENT — white background instead of gradient blue */}
+      {/* TOURISM CONTENT */}
       <motion.section
         className="bg-transparent px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24"
         variants={sectionReveal}
@@ -517,7 +560,6 @@ function Home() {
             </p>
           </motion.div>
 
-          {/* Changed: white bg + blue border, removed gradient */}
           <div className="rounded-[20px] border border-blue-100 bg-white p-3 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[28px] sm:p-5 md:p-7">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {articles.slice(0, 3).map((article, index) => (

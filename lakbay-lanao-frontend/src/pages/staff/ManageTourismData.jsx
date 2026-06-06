@@ -17,6 +17,7 @@ import {
   FiCheckCircle,
   FiChevronLeft,
   FiChevronRight,
+  FiAlertCircle,
 } from "react-icons/fi";
 import {
   collection,
@@ -54,7 +55,6 @@ function ManageTourismData() {
   const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // NEW: Changed from single file to an array of files
   const [imageFiles, setImageFiles] = useState([]); 
   
   const [tourismList, setTourismList] = useState([]);
@@ -69,6 +69,8 @@ function ManageTourismData() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [toast, setToast] = useState("");
 
+  const [showMapAlert, setShowMapAlert] = useState(false);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -79,6 +81,8 @@ function ManageTourismData() {
     description: "",
     province: "Lanao del Sur",
     municipality: "",
+    barangay: "", 
+    street: "",   
     latitude: "",
     longitude: "",
   });
@@ -147,13 +151,10 @@ function ManageTourismData() {
     startIndex + itemsPerPage
   );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedCategory, showArchived, viewMode]);
-
   const resetForm = () => {
     setEditingId(null);
-    setImageFiles([]); // Reset files array
+    setImageFiles([]); 
+    setShowMapAlert(false);
     setFormData({
       name: "",
       category: "",
@@ -161,6 +162,8 @@ function ManageTourismData() {
       description: "",
       province: "Lanao del Sur",
       municipality: "",
+      barangay: "", 
+      street: "",   
       latitude: "",
       longitude: "",
     });
@@ -234,16 +237,36 @@ function ManageTourismData() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    const user = auth.currentUser;
+  // NEW: Appends newly selected images to the existing array
+  const handleImageSelection = (e) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setImageFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    }
+    // Clear the input value so the same file can be selected again if needed
+    e.target.value = null;
+  };
 
+  // NEW: Removes an image from the staging array
+  const removeImage = (indexToRemove) => {
+    setImageFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const user = auth.currentUser;
     if (!user) {
       alert("You must be logged in to add data.");
-      setLoading(false);
       return;
     }
 
-    e.preventDefault();
+    // Manual validation since we removed the HTML 'required' tag on the file input
+    if (!editingId && imageFiles.length === 0) {
+      alert("Please upload at least one image.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -289,7 +312,8 @@ function ManageTourismData() {
           return;
         }
       }
-        if (editingId) {
+      
+      if (editingId) {
         const updatePayload = {
           name: formData.name,
           category: formData.category,
@@ -298,6 +322,8 @@ function ManageTourismData() {
           location: {
             province: "Lanao del Sur",
             municipality: formData.municipality,
+            barangay: formData.barangay, 
+            street: formData.street,     
           },
           coordinates: {
             lat: Number(formData.latitude),
@@ -306,19 +332,13 @@ function ManageTourismData() {
         };
 
         if (uploadedURLs.length > 0) {
-          updatePayload.imageURL = uploadedURLs[0]; // Keep primary for map
-          updatePayload.imageURLs = uploadedURLs;   // Save the array for the slider
+          updatePayload.imageURL = uploadedURLs[0]; 
+          updatePayload.imageURLs = uploadedURLs;   
         }
 
         await updateDoc(doc(db, "tourismData", editingId), updatePayload);
         showToastMessage("Entry updated successfully!");
       } else {
-        if (uploadedURLs.length === 0) {
-          alert("Please upload at least one image");
-          setLoading(false);
-          return;
-        }
-
         await addDoc(collection(db, "tourismData"), {
           name: formData.name,
           category: formData.category,
@@ -327,13 +347,15 @@ function ManageTourismData() {
           location: {
             province: "Lanao del Sur",
             municipality: formData.municipality,
+            barangay: formData.barangay, 
+            street: formData.street,     
           },
           coordinates: {
             lat: Number(formData.latitude),
             lng: Number(formData.longitude),
           },
-          imageURL: uploadedURLs[0], // Primary cover image
-          imageURLs: uploadedURLs,   // Array of all images
+          imageURL: uploadedURLs[0], 
+          imageURLs: uploadedURLs,   
           status: "active",
           createdAt: serverTimestamp(),
         });
@@ -375,9 +397,12 @@ function ManageTourismData() {
       description: item.description,
       municipality: item.location?.municipality || "",
       province: item.location?.province || "Lanao del Sur",
+      barangay: item.location?.barangay || "", 
+      street: item.location?.street || "",     
       latitude: item.coordinates?.lat || "",
       longitude: item.coordinates?.lng || "",
     });
+    setShowMapAlert(false);
     setOpenModal(true);
   };
 
@@ -463,7 +488,10 @@ function ManageTourismData() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                onClick={() => setShowArchived(!showArchived)}
+                onClick={() => {
+                  setShowArchived(!showArchived);
+                  setCurrentPage(1); 
+                }}
                 className={
                   showArchived
                     ? "inline-flex items-center justify-center rounded-[18px] border border-red-100 bg-red-50 px-5 py-3 text-sm font-medium text-red-500 shadow-sm transition hover:bg-red-100"
@@ -521,14 +549,20 @@ function ManageTourismData() {
                 type="text"
                 placeholder="Search destinations..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); 
+                }}
                 className={`${inputStyle} pl-11 pr-11`}
               />
 
               {searchTerm && (
                 <button
                   type="button"
-                  onClick={() => setSearchTerm("")}
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCurrentPage(1); 
+                  }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                 >
                   <FiX className="text-base" />
@@ -541,7 +575,10 @@ function ManageTourismData() {
 
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setCurrentPage(1); 
+                }}
                 className={`${inputStyle} cursor-pointer appearance-none pl-11`}
               >
                 <option value="">All Categories</option>
@@ -557,7 +594,10 @@ function ManageTourismData() {
             <div className="flex h-[48px] items-center rounded-[18px] border border-blue-100 bg-white p-1 shadow-sm">
               <button
                 type="button"
-                onClick={() => setViewMode("content")}
+                onClick={() => {
+                  setViewMode("content");
+                  setCurrentPage(1); 
+                }}
                 className={`flex h-full items-center justify-center gap-2 rounded-[14px] px-4 text-sm font-medium transition ${
                   viewMode === "content"
                     ? "bg-blue-50 text-[#2563eb]"
@@ -570,7 +610,10 @@ function ManageTourismData() {
 
               <button
                 type="button"
-                onClick={() => setViewMode("tiles")}
+                onClick={() => {
+                  setViewMode("tiles");
+                  setCurrentPage(1); 
+                }}
                 className={`flex h-full items-center justify-center gap-2 rounded-[14px] px-4 text-sm font-medium transition ${
                   viewMode === "tiles"
                     ? "bg-blue-50 text-[#2563eb]"
@@ -840,9 +883,27 @@ function ManageTourismData() {
                   placeholder="e.g. Lake Lanao"
                   value={formData.name}
                   onChange={handleChange}
+                  onClick={() => setShowMapAlert(true)}
                   required
                   className={inputStyle}
                 />
+                
+                {/* NOTIFICATION/ALERT DIALOG for Google Maps */}
+                {showMapAlert && (
+                  <div className="mt-3 flex items-start gap-2 rounded-[16px] border border-blue-100 bg-[#f8fbff] p-3 text-sm text-blue-700 shadow-sm animate-fadeIn">
+                    <FiAlertCircle className="mt-0.5 flex-shrink-0 text-blue-600" />
+                    <span className="leading-relaxed">
+                      <strong>Important:</strong> Please ensure this tourist spot is already registered and visible on Google Maps before saving. This guarantees accurate map placement and geocoding.
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowMapAlert(false)} 
+                      className="ml-auto rounded-full p-1 transition hover:bg-blue-100 hover:text-blue-800"
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -904,6 +965,36 @@ function ManageTourismData() {
                   required
                   className={`${inputStyle} min-h-[200px] resize-y`}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Street / Building (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="street"
+                    placeholder="e.g. Quezon Avenue"
+                    value={formData.street}
+                    onChange={handleChange}
+                    className={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Barangay (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="barangay"
+                    placeholder="e.g. Poblacion"
+                    value={formData.barangay}
+                    onChange={handleChange}
+                    className={inputStyle}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -975,27 +1066,65 @@ function ManageTourismData() {
               </div>
 
               <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] p-4">
-                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   {editingId ? "Replace Images (Optional)" : "Upload Cover Images"}
                 </label>
                 
-                {/* NEW: Display count of selected files */}
+                <p className="mb-3 text-[11px] text-gray-500">
+                  Accepted formats: <strong className="text-gray-700">JPG, PNG, WEBP</strong>. Max size: <strong className="text-gray-700">30MB</strong> per image.
+                </p>
+
+                {/* CUSTOM UPLOAD BUTTON & NO IMAGE TEXT WRAPPER */}
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-blue-50/50 px-5 py-2.5 text-sm font-semibold text-[#2563eb] transition hover:bg-blue-100">
+                    <span>Browse Images</span>
+                    
+                    {/* HIDDEN NATIVE INPUT */}
+                    <input
+                      type="file"
+                      accept="image/jpeg, image/png, image/webp" 
+                      multiple 
+                      onChange={handleImageSelection}
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {/* HIDDEN WHEN IMAGES ARE UPLOADED */}
+                  {imageFiles.length === 0 && (
+                    <span className="text-xs font-medium italic text-gray-400">
+                      No uploaded images
+                    </span>
+                  )}
+                </div>
+
+                {/* Image Preview List showing what will be uploaded */}
                 {imageFiles.length > 0 && (
-                  <p className="mb-3 text-xs font-semibold text-[#2563eb]">
-                    {imageFiles.length} file(s) selected
-                  </p>
+                  <div className="mt-5 border-t border-blue-100/50 pt-4">
+                    <p className="mb-3 text-xs font-semibold text-[#2563eb]">
+                      {imageFiles.length} file(s) ready to upload:
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {imageFiles.map((file, index) => (
+                        <div key={index} className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-[14px] border border-blue-200 bg-white shadow-sm transition hover:border-[#2563eb]">
+                          <img 
+                            src={URL.createObjectURL(file)} 
+                            alt={`Preview ${index}`} 
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-110" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm transition hover:bg-red-600 hover:scale-110"
+                            title="Remove image"
+                          >
+                            <FiX className="text-[12px]" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple // NEW: Allow multiple selection
-                  onChange={(e) => setImageFiles(Array.from(e.target.files))}
-                  {...(!editingId && { required: true })}
-                  className="w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#2563eb] hover:file:bg-blue-100"
-                />
               </div>
-
               <div className="flex justify-end gap-3 border-t border-blue-50 pt-6">
                 <button
                   type="button"

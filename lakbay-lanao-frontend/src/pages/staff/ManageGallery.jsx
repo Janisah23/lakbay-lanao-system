@@ -22,6 +22,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
+import imageCompression from "browser-image-compression"; // NEW: Compression library
 
 function ManageGallery() {
   const [openModal, setOpenModal] = useState(false);
@@ -38,12 +39,14 @@ function ManageGallery() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mediaFile, setMediaFile] = useState(null);
+  
+  // State for multiple files
+  const [mediaFiles, setMediaFiles] = useState([]);
 
   const [formData, setFormData] = useState({
     title: "",
     category: "",
-    type: "",
+    type: "", // Kept for editing existing entries
   });
 
   const categories = [
@@ -52,8 +55,6 @@ function ManageGallery() {
     "Landmark",
     "Cultural Heritage Site",
   ];
-
-  const typeOptions = ["image", "video"];
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "gallery"), (snapshot) => {
@@ -92,7 +93,7 @@ function ManageGallery() {
       category: "",
       type: "",
     });
-    setMediaFile(null);
+    setMediaFiles([]);
     setEditingId(null);
   };
 
@@ -130,6 +131,17 @@ function ManageGallery() {
     }
   };
 
+  // Handle selection of multiple files
+  const handleMediaSelection = (e) => {
+    const files = Array.from(e.target.files);
+    setMediaFiles((prev) => [...prev, ...files]);
+  };
+
+  // Remove a specific file from the preview queue
+  const removeMedia = (indexToRemove) => {
+    setMediaFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const uploadToCloudinary = async (file, type) => {
     const uploadData = new FormData();
 
@@ -160,38 +172,82 @@ function ManageGallery() {
     setLoading(true);
 
     try {
-      let mediaURL = null;
-
-      if (mediaFile) {
-        mediaURL = await uploadToCloudinary(mediaFile, formData.type);
-      }
-
       if (editingId) {
+        // Handle Single Edit
+        let mediaURL = null;
+        let detectedType = formData.type; 
+
+        if (mediaFiles.length > 0) {
+          let fileToUpload = mediaFiles[0];
+          detectedType = fileToUpload.type.startsWith("video/") ? "video" : "image";
+          
+          // COMPRESS IF IMAGE
+          if (detectedType === "image") {
+            try {
+              fileToUpload = await imageCompression(fileToUpload, {
+                maxSizeMB: 2,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+              });
+            } catch (compressionError) {
+              console.error("Compression failed:", compressionError);
+              alert("Failed to compress image.");
+              setLoading(false);
+              return;
+            }
+          }
+
+          mediaURL = await uploadToCloudinary(fileToUpload, detectedType);
+        }
+
         await updateDoc(doc(db, "gallery", editingId), {
           title: formData.title,
           category: formData.category,
-          type: formData.type,
+          type: detectedType,
           ...(mediaURL && { src: mediaURL }),
         });
 
         showToastMessage("Media updated successfully!");
       } else {
-        if (!mediaURL) {
-          alert("Upload failed. No media URL returned.");
+        // Handle Multiple Uploads
+        if (mediaFiles.length === 0) {
+          alert("Please select at least one media file.");
           setLoading(false);
           return;
         }
 
-        await addDoc(collection(db, "gallery"), {
-          title: formData.title,
-          category: formData.category,
-          type: formData.type,
-          src: mediaURL,
-          status: "active",
-          createdAt: serverTimestamp(),
-        });
+        for (let i = 0; i < mediaFiles.length; i++) {
+          let file = mediaFiles[i];
+          const detectedType = file.type.startsWith("video/") ? "video" : "image";
+          
+          // COMPRESS IF IMAGE
+          if (detectedType === "image") {
+            try {
+              file = await imageCompression(file, {
+                maxSizeMB: 2,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+              });
+            } catch (compressionError) {
+              console.error("Compression failed for a file:", compressionError);
+              continue; // Skip this file and try the next one if compression fails
+            }
+          }
 
-        showToastMessage("Media added successfully!");
+          const mediaURL = await uploadToCloudinary(file, detectedType);
+          const docTitle = mediaFiles.length > 1 ? `${formData.title} ${i + 1}` : formData.title;
+
+          await addDoc(collection(db, "gallery"), {
+            title: docTitle,
+            category: formData.category,
+            type: detectedType, // Automatically set to video or image
+            src: mediaURL,
+            status: "active",
+            createdAt: serverTimestamp(),
+          });
+        }
+
+        showToastMessage(`${mediaFiles.length} media item(s) added successfully!`);
       }
 
       setOpenModal(false);
@@ -647,7 +703,7 @@ function ManageGallery() {
               </h3>
 
               <p className="mt-1 text-sm text-gray-500">
-                Add gallery images or videos with category and type details.
+                Add gallery images or videos. Format is detected automatically.
               </p>
             </div>
 
@@ -691,40 +747,77 @@ function ManageGallery() {
                 </select>
               </div>
 
-              <div>
-                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Media Type
-                </label>
-
-                <select
-                  value={formData.type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, type: e.target.value })
-                  }
-                  required
-                  className={`${inputStyle} cursor-pointer appearance-none capitalize`}
-                >
-                  <option value="">Select Type</option>
-                  {typeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+              {/* UPLOAD & PREVIEW SECTION USING PROVIDED JSX */}
               <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] p-4">
-                <label className="mb-3 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  {editingId ? "Replace File Optional" : "Upload File"}
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  {editingId ? "Replace Images (Optional)" : "Upload Cover Images"}
                 </label>
+                
+                <p className="mb-3 text-[11px] text-gray-500">
+                  Accepted formats: <strong className="text-gray-700">JPG, PNG, WEBP, MP4, WEBM</strong>. Max size: <strong className="text-gray-700">30MB</strong> per file.
+                </p>
 
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={(e) => setMediaFile(e.target.files[0])}
-                  {...(!editingId && { required: true })}
-                  className="w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-bold file:text-[#2563eb] hover:file:bg-blue-100"
-                />
+                {/* CUSTOM UPLOAD BUTTON & NO IMAGE TEXT WRAPPER */}
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-blue-50/50 px-5 py-2.5 text-sm font-semibold text-[#2563eb] transition hover:bg-blue-100">
+                    <span>Browse Files</span>
+                    
+                    {/* HIDDEN NATIVE INPUT */}
+                    <input
+                      type="file"
+                      accept="image/jpeg, image/png, image/webp, video/mp4, video/webm" 
+                      multiple={!editingId} 
+                      onChange={handleMediaSelection}
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {/* HIDDEN WHEN IMAGES ARE UPLOADED */}
+                  {mediaFiles.length === 0 && (
+                    <span className="text-xs font-medium italic text-gray-400">
+                      No media selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Image Preview List showing what will be uploaded */}
+                {mediaFiles.length > 0 && (
+                  <div className="mt-5 border-t border-blue-100/50 pt-4">
+                    <p className="mb-3 text-xs font-semibold text-[#2563eb]">
+                      {mediaFiles.length} file(s) ready to upload:
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {mediaFiles.map((file, index) => {
+                        const isVideo = file.type.startsWith("video/");
+                        const objectUrl = URL.createObjectURL(file);
+                        return (
+                          <div key={index} className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-[14px] border border-blue-200 bg-white shadow-sm transition hover:border-[#2563eb]">
+                            {isVideo ? (
+                                <video src={objectUrl} className="h-full w-full object-cover opacity-80" />
+                              ) : (
+                                <img 
+                                  src={objectUrl} 
+                                  alt={`Preview ${index}`} 
+                                  className="h-full w-full object-cover transition duration-300 group-hover:scale-110" 
+                                />
+                            )}
+                            {isVideo && (
+                              <FiVideo className="absolute text-white/90 drop-shadow-md text-lg" />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeMedia(index)}
+                              className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm transition hover:bg-red-600 hover:scale-110"
+                              title="Remove file"
+                            >
+                              <FiX className="text-[12px]" />
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 border-t border-blue-50 pt-6">

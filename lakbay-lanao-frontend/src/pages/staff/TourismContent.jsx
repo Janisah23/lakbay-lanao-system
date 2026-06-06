@@ -14,6 +14,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
+import imageCompression from 'browser-image-compression';
 
 const CATEGORY_OPTIONS = {
   Article: [
@@ -51,6 +52,7 @@ const INITIAL_FORM_DATA = {
   summary: "",
   status: "draft",
   imageURL: "",
+  imageURLs: [],
   videoURL: "",
   eventDate: "",
 };
@@ -68,6 +70,7 @@ const ManageTourismContent = () => {
   const [selectedId, setSelectedId] = useState(null);
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const [imageFiles, setImageFiles] = useState([]); // STAGING AREA FOR NEW UPLOADS
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -126,6 +129,7 @@ const ManageTourismContent = () => {
 
   const resetForm = () => {
     setEditingId(null);
+    setImageFiles([]); // Reset staging area
     setFormData(INITIAL_FORM_DATA);
   };
 
@@ -136,6 +140,7 @@ const ManageTourismContent = () => {
 
   const openEditModal = (item) => {
     setEditingId(item.id);
+    setImageFiles([]); // Clear staging area, ready for new replacement files if needed
     setFormData({
       contentType: item.contentType || "",
       category: item.category || "",
@@ -144,6 +149,7 @@ const ManageTourismContent = () => {
       summary: item.summary || "",
       status: item.status || "draft",
       imageURL: item.imageURL || "",
+      imageURLs: item.imageURLs || [],
       videoURL: item.videoURL || "",
       eventDate: item.eventDate?.seconds
         ? new Date(item.eventDate.seconds * 1000).toISOString().split("T")[0]
@@ -169,6 +175,66 @@ const ManageTourismContent = () => {
     showToast("Content restored to drafts!");
   };
 
+  const handleImageSelection = (e) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setImageFiles((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeImage = (index) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+const uploadImage = async (file) => {
+  if (!file) return null;
+
+  // 1. Compress the image before uploading
+  const options = {
+    maxSizeMB: 2, // Compress to max 2MB
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  };
+
+  let fileToUpload = file;
+  
+  // Only compress if it's actually an image (ignore if they somehow select a video here)
+  if (file.type.startsWith("image/")) {
+    try {
+      fileToUpload = await imageCompression(file, options);
+    } catch (compressionError) {
+      console.error("Failed to compress image:", compressionError);
+      throw new Error("Image compression failed.");
+    }
+  }
+
+  // 2. Prepare for Cloudinary
+  const formDataImage = new FormData();
+  formDataImage.append("file", fileToUpload);
+  
+  // Make SURE this matches your Cloudinary Upload Preset exactly!
+  formDataImage.append("upload_preset", "tourism_upload"); 
+
+  // 3. Send to Cloudinary
+  const response = await fetch(
+    "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
+    {
+      method: "POST",
+      body: formDataImage,
+    }
+  );
+
+  // 4. Handle Errors Better
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Cloudinary Error Details:", errorData); // This reveals the exact 400 error!
+    throw new Error(`Cloudinary upload failed: ${errorData.error?.message || response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -186,14 +252,31 @@ const ManageTourismContent = () => {
         return;
       }
 
+      let uploadedURLs = [];
+
+      // Loop and upload all selected images
+      if (imageFiles.length > 0) {
+        setIsUploading(true);
+        for (const file of imageFiles) {
+          const url = await uploadImage(file);
+          uploadedURLs.push(url);
+        }
+        setIsUploading(false);
+      }
+
       const finalData = {
         ...formData,
         title: formData.title.trim(),
         summary: formData.summary?.trim() || "",
         videoURL: formData.videoURL?.trim() || "",
-        // Only keep author for Articles
         author: formData.contentType === "Article" ? (formData.author?.trim() || "") : "",
       };
+
+      // Assign new image URLs if any were uploaded
+      if (uploadedURLs.length > 0) {
+        finalData.imageURL = uploadedURLs[0]; // Set first as primary
+        finalData.imageURLs = uploadedURLs; // Save the full array
+      }
 
       if (finalData.contentType !== "Event") {
         finalData.eventDate = "";
@@ -228,32 +311,10 @@ const ManageTourismContent = () => {
     } catch (error) {
       console.error("Error saving content:", error);
       showToast("Failed to save content.");
+      setIsUploading(false);
     }
 
     setLoading(false);
-  };
-
-  const uploadImage = async (file) => {
-    setIsUploading(true);
-    try {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("upload_preset", "tourism_upload");
-
-      const res = await fetch(
-        "https://api.cloudinary.com/v1_1/dbyz3shts/image/upload",
-        { method: "POST", body: data }
-      );
-
-      const result = await res.json();
-      setIsUploading(false);
-
-      if (!result.secure_url) throw new Error("Image upload failed.");
-      return result.secure_url;
-    } catch (error) {
-      setIsUploading(false);
-      throw error;
-    }
   };
 
   const clearFilters = () => {
@@ -814,37 +875,71 @@ const ManageTourismContent = () => {
                 </div>
               )}
 
-              {/* Cover Image Upload */}
+              {/* Cover Image Upload (MULTIPLE IMAGES INTEGRATION) */}
               <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] p-4">
-                <label className="mb-3 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Upload Cover Image
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  {editingId ? "Replace Images (Optional)" : "Upload Cover Images"}
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    try {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      const url = await uploadImage(file);
-                      setFormData({ ...formData, imageURL: url });
-                      showToast("Image uploaded successfully!");
-                    } catch (error) {
-                      console.error("Upload error:", error);
-                      showToast("Image upload failed.");
-                    }
-                  }}
-                  className="w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#2563eb] hover:file:bg-blue-100"
-                />
-                {isUploading && (
-                  <p className="mt-2 text-xs font-bold text-[#2563eb] animate-pulse">
-                    Uploading image...
-                  </p>
-                )}
-                {formData.imageURL && (
-                  <div className="mt-3 h-40 w-full overflow-hidden rounded-[16px] border border-blue-100 bg-white shadow-sm">
-                    <img src={formData.imageURL} alt="Preview" className="h-full w-full object-cover" />
+                
+                <p className="mb-3 text-[11px] text-gray-500">
+                  Accepted formats: <strong className="text-gray-700">JPG, PNG, WEBP</strong>. Max size: <strong className="text-gray-700">30MB</strong> per image.
+                </p>
+
+                {/* CUSTOM UPLOAD BUTTON & NO IMAGE TEXT WRAPPER */}
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-blue-50/50 px-5 py-2.5 text-sm font-semibold text-[#2563eb] transition hover:bg-blue-100">
+                    <span>Browse Images</span>
+                    
+                    {/* HIDDEN NATIVE INPUT */}
+                    <input
+                      type="file"
+                      accept="image/jpeg, image/png, image/webp" 
+                      multiple 
+                      onChange={handleImageSelection}
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {/* HIDDEN WHEN IMAGES ARE UPLOADED */}
+                  {imageFiles.length === 0 && (
+                    <span className="text-xs font-medium italic text-gray-400">
+                      No uploaded images
+                    </span>
+                  )}
+                </div>
+
+                {/* Image Preview List showing what will be uploaded */}
+                {imageFiles.length > 0 && (
+                  <div className="mt-5 border-t border-blue-100/50 pt-4">
+                    <p className="mb-3 text-xs font-semibold text-[#2563eb]">
+                      {imageFiles.length} file(s) ready to upload:
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {imageFiles.map((file, index) => (
+                        <div key={index} className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-[14px] border border-blue-200 bg-white shadow-sm transition hover:border-[#2563eb]">
+                          <img 
+                            src={URL.createObjectURL(file)} 
+                            alt={`Preview ${index}`} 
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-110" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm transition hover:bg-red-600 hover:scale-110"
+                            title="Remove image"
+                          >
+                            <FiX className="text-[12px]" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
+                
+                {isUploading && (
+                  <p className="mt-3 text-xs font-bold text-[#2563eb] animate-pulse">
+                    Uploading images...
+                  </p>
                 )}
               </div>
 
@@ -894,7 +989,7 @@ const ManageTourismContent = () => {
                   disabled={loading || isUploading}
                   className="inline-flex min-w-[150px] items-center justify-center rounded-full bg-[#2563eb] px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {loading ? (
+                  {loading || isUploading ? (
                     <span className="flex items-center gap-2">
                       <FiRefreshCw className="animate-spin" />
                       Saving...

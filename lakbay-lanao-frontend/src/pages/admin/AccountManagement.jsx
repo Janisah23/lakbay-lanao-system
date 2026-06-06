@@ -25,6 +25,7 @@ import { logAction } from "../../utils/logAction";
 
 function AccountManagement() {
   const [staffCount, setStaffCount] = useState(0);
+  const [touristCount, setTouristCount] = useState(0);
   const [activeCount, setActiveCount] = useState(0);
   const [inactiveCount, setInactiveCount] = useState(0);
   const [staffAccounts, setStaffAccounts] = useState([]);
@@ -49,6 +50,7 @@ function AccountManagement() {
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
       let staff = 0;
+      let tourists = 0;
       let active = 0;
       let inactive = 0;
       const staffList = [];
@@ -59,6 +61,9 @@ function AccountManagement() {
         if (data.role === "staff") {
           staff++;
           staffList.push({ id: docSnap.id, ...data });
+        } else if (data.role === "tourist" || !data.role) {
+          // Count users explicitly marked as tourists, or fallback users with no assigned role
+          tourists++;
         }
 
         if (!data.status || data.status === "active") {
@@ -69,6 +74,7 @@ function AccountManagement() {
       });
 
       setStaffCount(staff);
+      setTouristCount(tourists);
       setActiveCount(active);
       setInactiveCount(inactive);
       setStaffAccounts(staffList);
@@ -82,19 +88,6 @@ function AccountManagement() {
       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const toggleStatus = async (userId, currentStatus) => {
-    try {
-      const newStatus = currentStatus === "active" ? "inactive" : "active";
-
-      await updateDoc(doc(db, "users", userId), {
-        status: newStatus,
-      });
-    } catch (error) {
-      console.error("Error updating status:", error);
-      alert("Failed to update status. Check Firestore permissions.");
-    }
-  };
 
   const openEditModal = (user) => {
     setSelectedUser(user);
@@ -153,6 +146,19 @@ function AccountManagement() {
 
         await logAction({
           action: "Staff Deactivated",
+          userName: targetUser.name,
+          performedBy: adminData?.name || "Unknown",
+          role: adminData?.role || "admin",
+        });
+      }
+
+      if (confirmAction === "activate") {
+        await updateDoc(doc(db, "users", targetUser.id), {
+          status: "active",
+        });
+
+        await logAction({
+          action: "Staff Activated",
           userName: targetUser.name,
           performedBy: adminData?.name || "Unknown",
           role: adminData?.role || "admin",
@@ -258,8 +264,9 @@ function AccountManagement() {
         </section>
 
         {/* KPI Cards */}
-        <section className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <section className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
           <StatCard icon={<FiUsers />} label="Total Staff" value={staffCount} />
+          <StatCard icon={<FiUsers />} label="Total Tourists" value={touristCount} />
           <StatCard
             icon={<FiUserCheck />}
             label="Active Accounts"
@@ -407,7 +414,7 @@ function AccountManagement() {
                             type="button"
                             onClick={() => {
                               if (isInactive) {
-                                toggleStatus(user.id, user.status);
+                                openConfirm("activate", user);
                               } else {
                                 openConfirm("deactivate", user);
                               }
@@ -602,11 +609,15 @@ function AccountManagement() {
                 className={`mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full ${
                   confirmAction === "reset"
                     ? "bg-blue-50 text-[#2563eb]"
+                    : confirmAction === "activate"
+                    ? "bg-green-50 text-green-500"
                     : "bg-red-50 text-red-500"
                 }`}
               >
                 {confirmAction === "reset" ? (
                   <FiKey className="text-2xl" />
+                ) : confirmAction === "activate" ? (
+                  <FiUserCheck className="text-2xl" />
                 ) : (
                   <FiAlertCircle className="text-2xl" />
                 )}
@@ -615,6 +626,8 @@ function AccountManagement() {
               <h3 className="text-2xl font-bold text-gray-900">
                 {confirmAction === "reset"
                   ? "Reset Password"
+                  : confirmAction === "activate"
+                  ? "Activate Account"
                   : "Deactivate Account"}
               </h3>
 
@@ -626,6 +639,14 @@ function AccountManagement() {
                       {targetUser?.name}
                     </strong>
                     .
+                  </>
+                ) : confirmAction === "activate" ? (
+                  <>
+                    Are you sure you want to activate{" "}
+                    <strong className="text-gray-800">
+                      {targetUser?.name}
+                    </strong>
+                    ? They will regain access to the system.
                   </>
                 ) : (
                   <>
@@ -651,7 +672,7 @@ function AccountManagement() {
                   type="button"
                   onClick={handleConfirmAction}
                   className={`w-full ${
-                    confirmAction === "reset"
+                    confirmAction === "reset" || confirmAction === "activate"
                       ? primaryBtnStyle
                       : dangerBtnStyle
                   }`}

@@ -340,7 +340,26 @@ const PlacesDetails = () => {
     return { label: "Destinations", path: "/destinations" };
   };
 
+  // ─── FIXED: Now includes Street and Barangay in the location text ───
   const getLocationText = (place) => {
+    if (!place?.location) return "Lanao del Sur";
+
+    if (typeof place.location === "string") return place.location;
+
+    const parts = [
+      place.location.street,
+      place.location.barangay,
+      place.location.municipality,
+      place.location.province,
+    ].filter(Boolean);
+
+    if (parts.length > 0) return parts.join(", ");
+
+    return "Lanao del Sur";
+  };
+
+  // ─── NEW: Short version (municipality + province) for header badge ───
+  const getShortLocationText = (place) => {
     if (!place?.location) return "Lanao del Sur";
 
     if (typeof place.location === "string") return place.location;
@@ -363,10 +382,10 @@ const PlacesDetails = () => {
           
           {place.imageURLs && place.imageURLs.length > 1 ? (
             <div className="group/cardSwiper relative h-full w-full">
-            <Swiper
+              <Swiper
                 modules={[Autoplay, Navigation, Pagination]}
-                autoplay={{ delay: 30000, disableOnInteraction: false }} // Binagalan ang delay
-                speed={1000} // IDINAGDAG: Pampabagal ng slide transition
+                autoplay={{ delay: 30000, disableOnInteraction: false }}
+                speed={1000}
                 loop={true}
                 navigation={{
                   prevEl: `.prev-${place.id}`,
@@ -392,7 +411,6 @@ const PlacesDetails = () => {
                 ))}
               </Swiper>
 
-              {/* Inner Card Navigation & Pagination (Visible only on hover) */}
               <button
                 onClick={(e) => e.stopPropagation()}
                 className={`prev-${place.id} absolute left-2 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/20 text-white opacity-0 backdrop-blur-sm transition-all duration-300 hover:bg-black/40 group-hover/cardSwiper:opacity-100`}
@@ -495,7 +513,11 @@ const PlacesDetails = () => {
   const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
   const mapDirectionsUrl = `https://maps.google.com/maps?q=${mapQuery}`;
 
+  // Full location string (street + barangay + municipality + province)
   const locationStr = getLocationText(destinationDetail);
+  // Short version for the header badge (municipality + province only)
+  const shortLocationStr = getShortLocationText(destinationDetail);
+
   const saveCount = destinationDetail.saveCount || 0;
 
   return (
@@ -570,9 +592,10 @@ const PlacesDetails = () => {
 
               <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
+              {/* Use shortLocationStr in the header badge (municipality + province) */}
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiMapPin className="text-sm" />
-                <span>{locationStr}</span>
+                <span>{shortLocationStr}</span>
               </div>
             </div>
           </div>
@@ -605,7 +628,7 @@ const PlacesDetails = () => {
                       className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-[#2563eb]"
                     >
                       <FaTwitter className="text-[#1da1f2]" />
-                       X
+                      X
                     </a>
 
                     <a
@@ -655,15 +678,15 @@ const PlacesDetails = () => {
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
         <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
-            
-           <Swiper
+
+            <Swiper
               onSwiper={setMainSwiper}
               onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
-              observer={true} 
-              observeParents={true} 
+              observer={true}
+              observeParents={true}
               modules={[Autoplay, Navigation]}
-              autoplay={{ delay: 30000, disableOnInteraction: false }} // Ginawang 30 seconds
-              speed={1200} 
+              autoplay={{ delay: 30000, disableOnInteraction: false }}
+              speed={1200}
               className="h-full w-full"
             >
               {galleryImages.length > 0 ? (
@@ -688,7 +711,7 @@ const PlacesDetails = () => {
               )}
             </Swiper>
 
-            {/* Gradient Overlay for bottom elements (Thumbnails) */}
+            {/* Gradient Overlay */}
             <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
             {/* View fullscreen button */}
@@ -700,7 +723,7 @@ const PlacesDetails = () => {
               View fullscreen
             </button>
 
-            {/* Navigation Arrows (Visible only on hover) */}
+            {/* Navigation Arrows */}
             {galleryImages.length > 1 && (
               <>
                 <button
@@ -723,7 +746,8 @@ const PlacesDetails = () => {
                 </button>
               </>
             )}
-            {/* THUMBNAILS embedded at the bottom of the image (Visible only on hover) */}
+
+            {/* THUMBNAILS */}
             {galleryImages.length > 1 && (
               <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
                 <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 justify-center">
@@ -840,8 +864,6 @@ const PlacesDetails = () => {
                   </p>
                 )}
               </div>
-
-              
             </div>
 
             {/* MAP MOBILE */}
@@ -887,11 +909,27 @@ const PlacesDetails = () => {
               <h3 className="mb-5 font-bold text-gray-700">Key Details</h3>
 
               <div className="space-y-4">
+                {/* ─── FIXED: Location now shows Street + Barangay + Municipality + Province ─── */}
                 {[
                   {
                     icon: <FiMapPin />,
                     label: "Location",
                     value: locationStr,
+                    // Show each part on its own line if street/barangay exist
+                    subValue:
+                      destinationDetail.location &&
+                      typeof destinationDetail.location === "object" &&
+                      (destinationDetail.location.street ||
+                        destinationDetail.location.barangay)
+                        ? [
+                            destinationDetail.location.street,
+                            destinationDetail.location.barangay,
+                            destinationDetail.location.municipality,
+                            destinationDetail.location.province,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")
+                        : null,
                   },
                   {
                     icon: <FiTag />,
@@ -901,8 +939,7 @@ const PlacesDetails = () => {
                       destinationDetail.category ||
                       "Tourist Attraction",
                   },
-                 
-                ].map(({ icon, label, value }) => (
+                ].map(({ icon, label, value, subValue }) => (
                   <div key={label} className="flex items-start gap-4">
                     <span className="mt-0.5 flex-shrink-0 text-lg text-[#2563eb]">
                       {icon}
@@ -913,7 +950,7 @@ const PlacesDetails = () => {
                         {label}
                       </p>
                       <p className="mt-0.5 text-sm leading-snug text-gray-500">
-                        {value}
+                        {subValue || value}
                       </p>
                     </div>
                   </div>

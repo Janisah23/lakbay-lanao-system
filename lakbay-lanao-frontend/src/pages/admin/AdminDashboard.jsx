@@ -222,7 +222,7 @@ function AdminDashboard() {
               </span>
 
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-[#2563eb] md:text-4xl">
-                Platform Overview
+                Admin Dashboard
               </h1>
 
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-gray-500">
@@ -308,7 +308,7 @@ function AdminDashboard() {
                 <div>
                   <h2 className="flex items-center gap-2 text-xl font-bold text-[#2563eb]">
                     <FiActivity />
-                    7-Day Activity Trends
+                    7-Day Login Activity
                   </h2>
 
                   <p className="mt-2 text-sm text-gray-500">
