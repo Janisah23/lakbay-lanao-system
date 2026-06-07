@@ -237,17 +237,14 @@ function ManageTourismData() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // NEW: Appends newly selected images to the existing array
   const handleImageSelection = (e) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       setImageFiles((prevFiles) => [...prevFiles, ...newFiles]);
     }
-    // Clear the input value so the same file can be selected again if needed
     e.target.value = null;
   };
 
-  // NEW: Removes an image from the staging array
   const removeImage = (indexToRemove) => {
     setImageFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== indexToRemove));
   };
@@ -261,7 +258,6 @@ function ManageTourismData() {
       return;
     }
 
-    // Manual validation since we removed the HTML 'required' tag on the file input
     if (!editingId && imageFiles.length === 0) {
       alert("Please upload at least one image.");
       return;
@@ -1036,30 +1032,32 @@ function ManageTourismData() {
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Latitude Auto-filled
+                    Latitude
                   </label>
 
                   <input
                     type="number"
                     name="latitude"
                     value={formData.latitude}
-                    readOnly
-                    className="w-full cursor-not-allowed rounded-[18px] border border-blue-100 bg-blue-50/50 px-4 py-3 text-sm font-medium text-gray-500 outline-none"
+                    onChange={handleChange}
+                    step="any"
+                    className={inputStyle}
                     placeholder="e.g. 7.9942"
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Longitude Auto-filled
+                    Longitude
                   </label>
 
                   <input
                     type="number"
                     name="longitude"
                     value={formData.longitude}
-                    readOnly
-                    className="w-full cursor-not-allowed rounded-[18px] border border-blue-100 bg-blue-50/50 px-4 py-3 text-sm font-medium text-gray-500 outline-none"
+                    onChange={handleChange}
+                    step="any"
+                    className={inputStyle}
                     placeholder="e.g. 124.2845"
                   />
                 </div>
