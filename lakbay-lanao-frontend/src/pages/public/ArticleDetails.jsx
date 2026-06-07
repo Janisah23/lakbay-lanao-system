@@ -25,6 +25,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import { db, auth } from "../../firebase/config";
+import { onAuthStateChanged } from "firebase/auth"; // Added for tracking authentication state
 import {
   doc,
   getDoc,
@@ -56,6 +57,7 @@ const ArticleDetails = () => {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track if user is logged in
 
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
@@ -63,6 +65,14 @@ const ArticleDetails = () => {
   const galleryImages = [
     ...(articleDetail?.imageURLs || []),
   ].filter(Boolean);
+
+  // Monitor Auth State
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Reset states on ID change
   useEffect(() => {
@@ -280,26 +290,29 @@ const ArticleDetails = () => {
               )}
             </div>
 
-            <button
-              onClick={() => toggleFavorite(articleDetail)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
-                isFav
-                  ? "bg-[#2563eb] text-white hover:bg-blue-700"
-                  : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
-              }`}
-            >
-              {isFav ? (
-                <MdBookmarkAdded className="text-base" />
-              ) : (
-                <MdOutlineBookmarkAdd className="text-base" />
-              )}
-              {isFav ? "Saved" : "Save"}
-            </button>
+            {/* ONLY VISIBLE IF LOGGED IN (ADD TO FAVORITE BUTTON) */}
+            {isLoggedIn && (
+              <button
+                onClick={() => toggleFavorite(articleDetail)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
+                  isFav
+                    ? "bg-[#2563eb] text-white hover:bg-blue-700"
+                    : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
+                }`}
+              >
+                {isFav ? (
+                  <MdBookmarkAdded className="text-base" />
+                ) : (
+                  <MdOutlineBookmarkAdd className="text-base" />
+                )}
+                {isFav ? "Saved" : "Save"}
+              </button>
+            )}
           </div>
         </div>
       </section>
 
-      {/* GALLERY (SWIPER MAIN PREVIEW) — replaces the old static hero image */}
+      {/* GALLERY (SWIPER MAIN PREVIEW) */}
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
         <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
@@ -336,10 +349,8 @@ const ArticleDetails = () => {
               )}
             </Swiper>
 
-            {/* Gradient Overlay for bottom elements (Thumbnails) */}
             <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-            {/* View fullscreen button */}
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
@@ -348,7 +359,6 @@ const ArticleDetails = () => {
               View fullscreen
             </button>
 
-            {/* Navigation Arrows (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <>
                 <button
@@ -372,7 +382,6 @@ const ArticleDetails = () => {
               </>
             )}
 
-            {/* THUMBNAILS embedded at the bottom (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
                 <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 justify-center">

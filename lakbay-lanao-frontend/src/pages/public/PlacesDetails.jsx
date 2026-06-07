@@ -61,6 +61,7 @@ const PlacesDetails = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track logged in status globally
 
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -94,6 +95,7 @@ const PlacesDetails = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsLoggedIn(!!user); // Set global log-in state for conditional rendering
       if (user && id) {
         try {
           let reviewRef = doc(db, "tourismData", id, "reviews", user.uid);
@@ -439,19 +441,22 @@ const PlacesDetails = () => {
           <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/10 via-white/5 to-white/10" />
           <div className="absolute inset-x-0 top-0 z-10 pointer-events-none h-16 bg-gradient-to-b from-white/20 to-transparent" />
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFavorite(place);
-            }}
-            className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
-          >
-            {favorites.some((fav) => String(fav.id) === String(place.id)) ? (
-              <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-            ) : (
-              <FiHeart className="text-xs text-gray-500 sm:text-sm" />
-            )}
-          </button>
+          {/* ADD TO FAVORITE CARD BUTTON (ONLY FOR SIGNED-IN USERS) */}
+          {isLoggedIn && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(place);
+              }}
+              className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
+            >
+              {favorites.some((fav) => String(fav.id) === String(place.id)) ? (
+                <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+              ) : (
+                <FiHeart className="text-xs text-gray-500 sm:text-sm" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -655,21 +660,24 @@ const PlacesDetails = () => {
               )}
             </div>
 
-            <button
-              onClick={() => toggleFavorite(destinationDetail)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
-                isFav
-                  ? "bg-[#2563eb] text-white hover:bg-blue-700"
-                  : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
-              }`}
-            >
-              {isFav ? (
-                <MdBookmarkAdded className="text-base" />
-              ) : (
-                <MdOutlineBookmarkAdd className="text-base" />
-              )}
-              {isFav ? "Saved" : "Save"}
-            </button>
+            {/* ADD TO FAVORITE HEADER BUTTON (ONLY FOR SIGNED-IN USERS) */}
+            {isLoggedIn && (
+              <button
+                onClick={() => toggleFavorite(destinationDetail)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
+                  isFav
+                    ? "bg-[#2563eb] text-white hover:bg-blue-700"
+                    : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
+                }`}
+              >
+                {isFav ? (
+                  <MdBookmarkAdded className="text-base" />
+                ) : (
+                  <MdOutlineBookmarkAdd className="text-base" />
+                )}
+                {isFav ? "Saved" : "Save"}
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -909,13 +917,11 @@ const PlacesDetails = () => {
               <h3 className="mb-5 font-bold text-gray-700">Key Details</h3>
 
               <div className="space-y-4">
-                {/* ─── FIXED: Location now shows Street + Barangay + Municipality + Province ─── */}
                 {[
                   {
                     icon: <FiMapPin />,
                     label: "Location",
                     value: locationStr,
-                    // Show each part on its own line if street/barangay exist
                     subValue:
                       destinationDetail.location &&
                       typeof destinationDetail.location === "object" &&
@@ -958,113 +964,115 @@ const PlacesDetails = () => {
               </div>
             </div>
 
-            {/* RATING */}
-            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
-              {showPopup && (
-                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
-                  <span className="text-lg leading-none text-green-400">
-                    ✔
-                  </span>
-                  Rating submitted!
+            {/* RATING (HIDE COMPLETELY IF GUEST USER IS NOT LOGGED IN) */}
+            {isLoggedIn && (
+              <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
+                {showPopup && (
+                  <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                    <span className="text-lg leading-none text-green-400">
+                      ✔
+                    </span>
+                    Rating submitted!
+                  </div>
+                )}
+
+                <div className="mb-5">
+                  <h3 className="font-bold text-gray-700">Rate this place</h3>
+
+                  <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                    Share your thoughts with other travelers.
+                  </p>
                 </div>
-              )}
 
-              <div className="mb-5">
-                <h3 className="font-bold text-gray-700">Rate this place</h3>
+                {showLoginNotice && (
+                  <div className="mb-5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                        <FiAlertCircle className="text-lg" />
+                      </div>
 
-                <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                  Share your thoughts with other travelers.
-                </p>
-              </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-bold text-red-700">
+                              Login required
+                            </p>
 
-              {showLoginNotice && (
-                <div className="mb-5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
-                      <FiAlertCircle className="text-lg" />
-                    </div>
+                            <p className="mt-1 text-xs leading-relaxed text-red-500">
+                              Please log in first before submitting your rating.
+                            </p>
+                          </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-bold text-red-700">
-                            Login required
-                          </p>
-
-                          <p className="mt-1 text-xs leading-relaxed text-red-500">
-                            Please log in first before submitting your rating.
-                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginNotice(false)}
+                            className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
+                          >
+                            <FiX />
+                          </button>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setShowLoginNotice(false)}
-                          className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
-                        >
-                          <FiX />
-                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
-                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      onClick={() => {
-                        if (!isSubmitted) {
-                          setUserRating(star);
-                          setShowLoginNotice(false);
-                        }
-                      }}
-                      className={`transition-all duration-200 ${
-                        star <= userRating
-                          ? "scale-110 text-yellow-400"
-                          : "text-gray-200 hover:text-yellow-200"
-                      } ${
-                        isSubmitted
-                          ? "cursor-default"
-                          : "cursor-pointer hover:scale-110"
-                      }`}
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
-
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  {userRating > 0
-                    ? `${userRating} out of 5 Stars`
-                    : "Select a rating"}
-                </p>
-              </div>
-
-              <button
-                onClick={handleRating}
-                disabled={userRating === 0 || isSubmitted}
-                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-300 ${
-                  isSubmitted
-                    ? "cursor-default border border-green-200 bg-green-50 text-green-700"
-                    : userRating > 0
-                    ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
-                    : "cursor-not-allowed bg-gray-100 text-gray-400"
-                }`}
-              >
-                {isSubmitted ? (
-                  <>
-                    <span className="text-lg leading-none text-green-600">
-                      ✔
-                    </span>
-                    Rating Submitted
-                  </>
-                ) : (
-                  "Submit Rating"
                 )}
-              </button>
-            </div>
+
+                <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
+                  <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() => {
+                          if (!isSubmitted) {
+                            setUserRating(star);
+                            setShowLoginNotice(false);
+                          }
+                        }}
+                        className={`transition-all duration-200 ${
+                          star <= userRating
+                            ? "scale-110 text-yellow-400"
+                            : "text-gray-200 hover:text-yellow-200"
+                        } ${
+                          isSubmitted
+                            ? "cursor-default"
+                            : "cursor-pointer hover:scale-110"
+                        }`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    {userRating > 0
+                      ? `${userRating} out of 5 Stars`
+                      : "Select a rating"}
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleRating}
+                  disabled={userRating === 0 || isSubmitted}
+                  className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+                    isSubmitted
+                      ? "cursor-default border border-green-200 bg-green-50 text-green-700"
+                      : userRating > 0
+                      ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
+                      : "cursor-not-allowed bg-gray-100 text-gray-400"
+                  }`}
+                >
+                  {isSubmitted ? (
+                    <>
+                      <span className="text-lg leading-none text-green-600">
+                        ✔
+                      </span>
+                      Rating Submitted
+                    </>
+                  ) : (
+                    "Submit Rating"
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* MAP DESKTOP */}
             <div className="hidden overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm lg:block">

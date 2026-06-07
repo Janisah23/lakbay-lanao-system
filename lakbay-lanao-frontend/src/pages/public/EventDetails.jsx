@@ -48,6 +48,7 @@ const EventDetails = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state for guest UI handling
 
   // Gallery and Swiper States
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
@@ -72,6 +73,7 @@ const EventDetails = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsLoggedIn(!!user); // Sync overall logged-in status
       if (user && id) {
         try {
           const reviewRef = doc(db, "tourismContent", id, "reviews", user.uid);
@@ -278,16 +280,16 @@ const EventDetails = () => {
     );
   }
 
-const galleryImages = [
-  ...(eventDetail.imageURLs || []),
-];
+  const galleryImages = [
+    ...(eventDetail.imageURLs || []),
+  ];
 
-if (
-  eventDetail.imageURL &&
-  !galleryImages.includes(eventDetail.imageURL)
-) {
-  galleryImages.unshift(eventDetail.imageURL);
-}
+  if (
+    eventDetail.imageURL &&
+    !galleryImages.includes(eventDetail.imageURL)
+  ) {
+    galleryImages.unshift(eventDetail.imageURL);
+  }
 
   const formattedDate = formatEventDate(eventDetail.eventDate);
   const locationStr = getEventLocation(eventDetail);
@@ -451,17 +453,20 @@ if (
               )}
             </div>
 
-            <button
-              onClick={() => toggleFavorite(eventDetail)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
-                isFav
-                  ? "bg-[#2563eb] text-white hover:bg-blue-700"
-                  : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
-              }`}
-            >
-              {isFav ? <MdBookmarkAdded /> : <MdOutlineBookmarkAdd />}
-              {isFav ? "Saved" : "Save"}
-            </button>
+            {/* ADD TO FAVORITE HEADER BUTTON (ONLY FOR SIGNED-IN USERS) */}
+            {isLoggedIn && (
+              <button
+                onClick={() => toggleFavorite(eventDetail)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition sm:flex-none ${
+                  isFav
+                    ? "bg-[#2563eb] text-white hover:bg-blue-700"
+                    : "border border-gray-200 bg-white text-gray-700 hover:border-[#2563eb] hover:text-[#2563eb]"
+                }`}
+              >
+                {isFav ? <MdBookmarkAdded /> : <MdOutlineBookmarkAdd />}
+                {isFav ? "Saved" : "Save"}
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -698,103 +703,105 @@ if (
               </div>
             </div>
 
-            {/* RATING / FEEDBACK CARD */}
-            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
-              {showPopup && (
-                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
-                  ✔ Rating submitted!
+            {/* RATING / FEEDBACK CARD (HIDE COMPLETELY IF GUEST USER IS NOT LOGGED IN) */}
+            {isLoggedIn && (
+              <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
+                {showPopup && (
+                  <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                    ✔ Rating submitted!
+                  </div>
+                )}
+
+                <div className="mb-5">
+                  <h3 className="font-bold text-[#2563eb]">
+                    Rate your experience
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-relaxed text-gray-400">
+                    Share your feedback with other travelers.
+                  </p>
                 </div>
-              )}
 
-              <div className="mb-5">
-                <h3 className="font-bold text-[#2563eb]">
-                  Rate your experience
-                </h3>
+                {showLoginNotice && (
+                  <div className="mb-5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                        <FiAlertCircle className="text-lg" />
+                      </div>
 
-                <p className="mt-1 text-sm leading-relaxed text-gray-400">
-                  Share your feedback with other travelers.
-                </p>
-              </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-bold text-red-700">
+                              Login required
+                            </p>
 
-              {showLoginNotice && (
-                <div className="mb-5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
-                      <FiAlertCircle className="text-lg" />
-                    </div>
+                            <p className="mt-1 text-xs leading-relaxed text-red-500">
+                              Please log in first before submitting your rating.
+                            </p>
+                          </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-bold text-red-700">
-                            Login required
-                          </p>
-
-                          <p className="mt-1 text-xs leading-relaxed text-red-500">
-                            Please log in first before submitting your rating.
-                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginNotice(false)}
+                            className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
+                          >
+                            <FiX />
+                          </button>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setShowLoginNotice(false)}
-                          className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
-                        >
-                          <FiX />
-                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
-                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      onClick={() => {
-                        if (!isSubmitted) {
-                          setUserRating(star);
-                          setShowLoginNotice(false);
-                        }
-                      }}
-                      className={`transition-all duration-200 ${
-                        star <= userRating
-                          ? "scale-110 text-yellow-400"
-                          : "text-gray-200 hover:text-yellow-200"
-                      } ${
-                        isSubmitted
-                          ? "cursor-default"
-                          : "cursor-pointer hover:scale-110"
-                      }`}
-                    >
-                      ★
-                    </span>
-                  ))}
+                <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
+                  <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() => {
+                          if (!isSubmitted) {
+                            setUserRating(star);
+                            setShowLoginNotice(false);
+                          }
+                        }}
+                        className={`transition-all duration-200 ${
+                          star <= userRating
+                            ? "scale-110 text-yellow-400"
+                            : "text-gray-200 hover:text-yellow-200"
+                        } ${
+                          isSubmitted
+                            ? "cursor-default"
+                            : "cursor-pointer hover:scale-110"
+                        }`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    {userRating > 0
+                      ? `${userRating} out of 5 stars`
+                      : "Select a rating"}
+                  </p>
                 </div>
 
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  {userRating > 0
-                    ? `${userRating} out of 5 stars`
-                    : "Select a rating"}
-                </p>
+                <button
+                  onClick={handleRating}
+                  disabled={userRating === 0 || isSubmitted}
+                  className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition-all duration-300 ${
+                    isSubmitted
+                      ? "cursor-default border border-green-100 bg-green-50 text-green-700"
+                      : userRating > 0
+                      ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
+                      : "cursor-not-allowed bg-gray-100 text-gray-400"
+                  }`}
+                >
+                  {isSubmitted ? "Rating Submitted" : "Submit Rating"}
+                </button>
               </div>
-
-              <button
-                onClick={handleRating}
-                disabled={userRating === 0 || isSubmitted}
-                className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition-all duration-300 ${
-                  isSubmitted
-                    ? "cursor-default border border-green-100 bg-green-50 text-green-700"
-                    : userRating > 0
-                    ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
-                    : "cursor-not-allowed bg-gray-100 text-gray-400"
-                }`}
-              >
-                {isSubmitted ? "Rating Submitted" : "Submit Rating"}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </section>

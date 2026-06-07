@@ -24,6 +24,7 @@ import { useFavorites } from "../../components/context/FavoritesContext";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
+import Footer from "../../components/common/Footer";
 
 const CATEGORIES = ["All", "Beach", "Mountain", "Waterfall", "Island"];
 
@@ -285,7 +286,7 @@ function Destinations() {
   };
 
   return (
-    <div className="font-sans min-h-screen bg-[#f3f9ff] pb-24 text-gray-900">
+    <div className="font-sans flex flex-col min-h-screen bg-[#f3f9ff] text-gray-900">
       <Navbar />
 
       {/* HEADER */}
@@ -375,7 +376,7 @@ function Destinations() {
       </div>
 
       {/* MAIN */}
-      <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-10">
+      <main className="mx-auto w-full max-w-7xl flex-grow px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         {filteredData.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-blue-100 bg-white/85 py-20 text-center shadow-sm backdrop-blur-sm">
             <p className="text-sm font-medium text-gray-400">
@@ -601,7 +602,10 @@ function Destinations() {
           </div>
         )}
       </main>
+      
+      <Footer />
     </div>
+    
   );
 }
 

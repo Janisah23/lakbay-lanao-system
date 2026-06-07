@@ -7,6 +7,7 @@ import {
   doc,
   setDoc,
 } from "firebase/firestore";
+
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import { FaHeart } from "react-icons/fa";
@@ -19,6 +20,7 @@ import {
   FiList,
 } from "react-icons/fi";
 import { useFavorites } from "../../components/context/FavoritesContext";
+import Footer from "../../components/common/Footer";
 
 const CATEGORIES = [
   "All",
@@ -85,7 +87,6 @@ function CulturalHeritage() {
         const combined = [...tourismDataItems, ...tourismContentItems];
 
         const heritageOnly = combined.filter((item) => {
-          // FIX: Exclude any item that has been archived
           if (item.status && item.status.toLowerCase() === "archived") {
             return false;
           }
@@ -283,11 +284,12 @@ function CulturalHeritage() {
   };
 
   return (
-    <div className="font-sans min-h-screen bg-[#f3f9ff] pb-24 text-gray-900">
+    /* CHANGES HERE: Changed wrapper to full flex layout with min-h-screen */
+    <div className="font-sans flex flex-col min-h-screen bg-[#f3f9ff] text-gray-900">
       <Navbar />
 
       {/* HEADER */}
-      <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
+      <section className="mx-auto w-full max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold text-[#2563eb] shadow-sm">
@@ -373,7 +375,8 @@ function CulturalHeritage() {
       </div>
 
       {/* MAIN */}
-      <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-10">
+      {/* CHANGES HERE: Added 'flex-grow' to push footer downward */}
+      <main className="mx-auto w-full max-w-7xl flex-grow px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         {filteredData.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-blue-100 bg-white/85 py-20 text-center shadow-sm backdrop-blur-sm">
             <p className="text-sm font-medium text-gray-400">
@@ -554,6 +557,8 @@ function CulturalHeritage() {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -19,6 +19,7 @@ import {
   FiList,
 } from "react-icons/fi";
 import { useFavorites } from "../../components/context/FavoritesContext";
+import footer from "../../components/common/Footer";
 
 const CATEGORIES = ["All", "Hotel", "Restaurant", "Resort", "Cafe"];
 
@@ -345,7 +346,7 @@ function HotelsAndRestaurants() {
       </div>
 
       {/* MAIN */}
-      <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-10">
+      <main className="mx-auto max-w-7xl px-4 pt-8 pb-24 sm:px-6 lg:px-10">
         {filteredData.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-blue-100 bg-white/85 py-20 text-center shadow-sm backdrop-blur-sm">
             <p className="text-sm font-medium text-gray-400">
@@ -526,6 +527,7 @@ function HotelsAndRestaurants() {
           </div>
         )}
       </main>
+      <footer />  
     </div>
   );
 }
