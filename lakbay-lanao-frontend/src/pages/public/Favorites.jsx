@@ -216,7 +216,7 @@ function Favorites() {
   ).length;
 
   return (
-    <div className="font-sans min-h-screen bg-[#f3f9ff] pb-24 text-gray-900">
+    <div className="font-sans flex flex-col min-h-screen bg-[#f3f9ff] text-gray-900">
       <Navbar />
 
       {/* HERO */}
@@ -298,7 +298,7 @@ function Favorites() {
       </div>
 
       {/* MAIN */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-10">
+      <section className="mx-auto w-full max-w-7xl flex-grow px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         <div className="overflow-hidden rounded-[24px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[28px]">
           <div className="border-b border-gray-100 px-4 pb-5 pt-5 sm:px-6 md:px-8 md:pt-6">
             <div className="flex items-start gap-3 rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3 text-xs text-gray-600 sm:text-sm">

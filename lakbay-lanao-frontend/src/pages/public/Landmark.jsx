@@ -3,6 +3,7 @@ import { db, auth } from "../../firebase/config";
 import { collection, getDocs, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
+import footer from "../../components/common/Footer";
 import { FaHeart } from "react-icons/fa";
 import {
   FiHeart,

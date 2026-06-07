@@ -17,6 +17,7 @@ import {
   FiAlertCircle,
   FiEdit2,
   FiLayers,
+  FiCalendar,
 } from "react-icons/fi";
 import { MdDragIndicator } from "react-icons/md";
 import { db, auth } from "../../firebase/config";
@@ -51,12 +52,10 @@ const formatCategoryLabel = (category) => {
 
 const buildDays = (count, existing = {}) => {
   const d = {};
-
   for (let i = 1; i <= count; i++) {
     const key = `day${i}`;
     d[key] = existing[key] ?? [];
   }
-
   return d;
 };
 
@@ -76,13 +75,13 @@ const createDefaultTrip = (name = "Trip to Lanao del Sur") => ({
   dayCount: 3,
   days: buildDays(3),
   notes: {},
+  startDate: "",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });
 
 const getDefaultPlanner = () => {
   const firstTrip = createDefaultTrip("Trip to Lanao del Sur");
-
   return {
     currentTripId: firstTrip.id,
     trips: [firstTrip],
@@ -92,13 +91,13 @@ const getDefaultPlanner = () => {
 
 const normalizeTrip = (trip, index = 0) => {
   const count = trip?.dayCount ?? 3;
-
   return {
     id: trip?.id || createTripId(),
     name: trip?.name || `Trip ${index + 1}`,
     dayCount: count,
     days: buildDays(count, trip?.days ?? {}),
     notes: trip?.notes ?? {},
+    startDate: trip?.startDate ?? "",
     createdAt: trip?.createdAt || new Date().toISOString(),
     updatedAt: trip?.updatedAt || new Date().toISOString(),
   };
@@ -106,7 +105,6 @@ const normalizeTrip = (trip, index = 0) => {
 
 const normalizePlanner = (data) => {
   if (!data) return null;
-
   if (Array.isArray(data.trips)) {
     const trips = data.trips.length
       ? data.trips.map((trip, index) => normalizeTrip(trip, index))
@@ -131,6 +129,7 @@ const normalizePlanner = (data) => {
       dayCount: data.dayCount ?? 3,
       days: data.days ?? {},
       notes: data.notes ?? {},
+      startDate: data.startDate ?? "",
       updatedAt: data.updatedAt || new Date().toISOString(),
     },
     0
@@ -146,19 +145,15 @@ const normalizePlanner = (data) => {
 const readLocalPlanner = (uid) => {
   try {
     const raw = localStorage.getItem(getLocalKey(uid));
-
     if (raw) {
       const parsed = JSON.parse(raw);
       return normalizePlanner(parsed);
     }
-
     const oldRaw = localStorage.getItem(getOldLocalKey(uid));
-
     if (oldRaw) {
       const oldParsed = JSON.parse(oldRaw);
       return normalizePlanner(oldParsed);
     }
-
     return null;
   } catch (error) {
     console.error("Failed to read local itinerary:", error);
@@ -177,7 +172,6 @@ const writeLocalPlanner = (planner, uid) => {
 const isLocalNewer = (localPlanner, cloudPlanner) => {
   const localTime = new Date(localPlanner?.updatedAt || 0).getTime();
   const cloudTime = new Date(cloudPlanner?.updatedAt || 0).getTime();
-
   return localTime > cloudTime;
 };
 
@@ -195,7 +189,6 @@ function SaveBadge({ status, mode }) {
       </span>
     );
   }
-
   if (status === "saved") {
     return (
       <span className="flex items-center gap-1.5 text-xs font-medium text-green-500">
@@ -204,7 +197,6 @@ function SaveBadge({ status, mode }) {
       </span>
     );
   }
-
   return null;
 }
 
@@ -226,7 +218,6 @@ function PlaceCard({ place, index }) {
           }`}
         >
           <MdDragIndicator className="flex-shrink-0 text-xl text-gray-300" />
-
           <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-[12px] border border-blue-100 bg-[#f8fbff] shadow-sm sm:h-12 sm:w-12 sm:rounded-[14px]">
             <img
               src={place.imageURL || "/default.jpg"}
@@ -234,12 +225,10 @@ function PlaceCard({ place, index }) {
               className="h-full w-full object-cover"
             />
           </div>
-
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold leading-tight text-[#2563eb] sm:text-sm">
               {place.name || place.title}
             </p>
-
             <span
               className={`mt-1 inline-flex max-w-[92px] rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide ${catClass}`}
             >
@@ -269,12 +258,10 @@ function DayCard({
         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-sm font-bold text-white shadow-sm">
           {dayIndex + 1}
         </div>
-
         <div>
           <h3 className="text-base font-bold leading-tight text-[#2563eb]">
             Day {dayIndex + 1}
           </h3>
-
           <p className="mt-0.5 text-xs text-gray-500">
             {items.length === 0
               ? "No stops yet"
@@ -327,11 +314,9 @@ function DayCard({
                           >
                             <MdDragIndicator className="text-xl" />
                           </div>
-
                           <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-600">
                             {idx + 1}
                           </div>
-
                           <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-[12px] border border-blue-100 bg-[#f8fbff] shadow-sm sm:h-14 sm:w-14 sm:rounded-[14px]">
                             <img
                               src={place.imageURL || "/default.jpg"}
@@ -339,12 +324,10 @@ function DayCard({
                               className="h-full w-full object-cover"
                             />
                           </div>
-
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-bold leading-tight text-[#2563eb] sm:text-sm">
                               {place.name || place.title}
                             </p>
-
                             <div className="mt-1 flex flex-wrap items-center gap-2">
                               <span
                                 className={`inline-flex max-w-[92px] rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide ${catClass}`}
@@ -353,7 +336,6 @@ function DayCard({
                                   {formatCategoryLabel(place.category)}
                                 </span>
                               </span>
-
                               {place.location?.municipality && (
                                 <span className="flex items-center gap-0.5 text-[11px] text-gray-500">
                                   <FiMapPin className="text-[10px]" />
@@ -367,7 +349,6 @@ function DayCard({
                         <div className="flex flex-shrink-0 items-center gap-2 pl-8 sm:pl-10 md:pl-0">
                           <div className="flex items-center gap-1.5 rounded-[12px] border border-blue-100 bg-[#f8fbff] px-2.5 py-1.5 transition focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100">
                             <FiClock className="flex-shrink-0 text-xs text-gray-500" />
-
                             <input
                               type="time"
                               value={place.time || ""}
@@ -377,7 +358,6 @@ function DayCard({
                               className="w-20 border-none bg-transparent text-xs font-medium text-gray-600 outline-none"
                             />
                           </div>
-
                           <button
                             type="button"
                             onClick={() => onRemove(dayKey, idx)}
@@ -422,7 +402,10 @@ function SavedTripsPanel({
   onStartRenameTrip,
   onChangeRenameTrip,
   onSaveRenameTrip,
+  onUpdateTripDate,
 }) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
   return (
     <div className="rounded-[24px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:rounded-[28px]">
       <div className="flex items-start justify-between gap-4 border-b border-blue-50 px-5 py-5">
@@ -431,7 +414,6 @@ function SavedTripsPanel({
             <FiLayers className="text-base text-[#2563eb]" />
             <h2 className="text-base font-bold text-[#2563eb]">Saved Trips</h2>
           </div>
-
           <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
             Manage, rename, or switch between your trip plans.
           </p>
@@ -447,10 +429,11 @@ function SavedTripsPanel({
         </button>
       </div>
 
-      <div className="max-h-[360px] space-y-3 overflow-y-auto p-4">
+      <div className="max-h-[420px] space-y-3 overflow-y-auto p-4">
         {trips.map((trip) => {
           const isActive = trip.id === currentTripId;
           const isEditing = editingTripId === trip.id;
+          const isConfirmingDelete = confirmDeleteId === trip.id;
 
           const stopCount = Object.values(trip.days || {}).reduce(
             (total, dayItems) => total + dayItems.length,
@@ -461,12 +444,65 @@ function SavedTripsPanel({
             <div
               key={trip.id}
               className={`rounded-[20px] border p-4 transition ${
-                isActive
+                isConfirmingDelete
+                  ? "border-red-300 bg-white"
+                  : isActive
                   ? "border-[#2563eb] bg-blue-50/80 shadow-sm"
                   : "border-blue-100 bg-white hover:border-blue-200 hover:bg-[#f8fbff]"
               }`}
             >
-              {isEditing ? (
+              {isConfirmingDelete ? (
+                /* ── DELETE CONFIRMATION STATE ── */
+                <div className="overflow-hidden rounded-[14px] border border-red-200">
+                  {/* Header strip */}
+                  <div className="flex items-center gap-2.5 border-b border-red-200 bg-red-50 px-3.5 py-2.5">
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                      <FiTrash2 className="text-sm text-red-700" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-semibold leading-tight text-red-800">
+                        Delete this trip?
+                      </p>
+                      <p className="text-[11px] text-red-500">
+                        This action cannot be undone
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="px-3.5 py-3">
+                    <p className="mb-3 text-[12px] leading-relaxed text-gray-500">
+                      You're about to permanently delete{" "}
+                      <strong className="font-semibold text-gray-800">
+                        {trip.name || "this trip"}
+                      </strong>
+                      . All days and stops will be lost.
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onDeleteTrip(trip.id);
+                          setConfirmDeleteId(null);
+                        }}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-red-500 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600 active:scale-[0.98]"
+                      >
+                        <FiTrash2 className="text-[11px]" />
+                        Yes, delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="flex-1 rounded-full border border-blue-100 bg-white py-1.5 text-xs font-semibold text-gray-600 transition hover:border-blue-200 hover:bg-[#f8fbff] active:scale-[0.98]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : isEditing ? (
+                /* ── RENAME STATE ── */
                 <div className="space-y-2">
                   <input
                     type="text"
@@ -479,7 +515,6 @@ function SavedTripsPanel({
                     className="w-full rounded-[14px] border border-blue-100 bg-white px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100"
                     placeholder="Trip name"
                   />
-
                   <button
                     type="button"
                     onClick={() => onSaveRenameTrip(trip.id)}
@@ -489,69 +524,85 @@ function SavedTripsPanel({
                   </button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => onSelectTrip(trip.id)}
-                  className="w-full text-left"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={`truncate text-sm font-bold ${
-                          isActive ? "text-[#2563eb]" : "text-gray-800"
-                        }`}
-                      >
-                        {trip.name || "Untitled Trip"}
-                      </p>
-
-                      <p className="mt-1 text-xs text-gray-500">
-                        {trip.dayCount} day{trip.dayCount !== 1 ? "s" : ""} •{" "}
-                        {stopCount} stop{stopCount !== 1 ? "s" : ""}
-                      </p>
+                /* ── NORMAL STATE ── */
+                <div className="w-full">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTrip(trip.id)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`truncate text-sm font-bold ${
+                            isActive ? "text-[#2563eb]" : "text-gray-800"
+                          }`}
+                        >
+                          {trip.name || "Untitled Trip"}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {trip.dayCount} day{trip.dayCount !== 1 ? "s" : ""} •{" "}
+                          {stopCount} stop{stopCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      {isActive && (
+                        <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
+                          Active
+                        </span>
+                      )}
                     </div>
+                  </button>
 
-                    {isActive && (
-                      <span className="rounded-full bg-[#2563eb] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
-                        Active
-                      </span>
-                    )}
+                  {/* Trip Date Input Selector */}
+                  <div className="mt-2.5 flex items-center gap-1.5 rounded-[12px] border border-blue-100/70 bg-white/60 px-2 py-1 focus-within:border-[#2563eb]">
+                    <FiCalendar className="text-xs text-[#2563eb] flex-shrink-0" />
+                    <input
+                      type="date"
+                      value={trip.startDate || ""}
+                      onChange={(e) => onUpdateTripDate(trip.id, e.target.value)}
+                      className="w-full bg-transparent text-[11px] font-medium text-gray-600 outline-none cursor-pointer"
+                      title="Set Trip Start Date"
+                    />
                   </div>
-                </button>
-              )}
 
-              <div className="mt-3 flex items-center justify-between border-t border-blue-100/80 pt-3">
-                <span className="text-[10px] text-gray-400">
-                  Updated{" "}
-                  {trip.updatedAt
-                    ? new Date(trip.updatedAt).toLocaleDateString()
-                    : "recently"}
-                </span>
+                  <div className="mt-3 flex items-center justify-between border-t border-blue-100/80 pt-3">
+                    <span className="text-[10px] text-gray-400">
+                      Updated{" "}
+                      {trip.updatedAt
+                        ? new Date(trip.updatedAt).toLocaleDateString()
+                        : "recently"}
+                    </span>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => onStartRenameTrip(trip)}
-                    className="rounded-full p-1.5 text-gray-400 transition hover:bg-blue-50 hover:text-[#2563eb]"
-                    title="Rename trip"
-                  >
-                    <FiEdit2 className="text-sm" />
-                  </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onStartRenameTrip(trip)}
+                        className="rounded-full p-1.5 text-gray-400 transition hover:bg-blue-50 hover:text-[#2563eb]"
+                        title="Rename trip"
+                      >
+                        <FiEdit2 className="text-sm" />
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => onDeleteTrip(trip.id)}
-                    disabled={trips.length <= 1}
-                    className="rounded-full p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
-                    title={
-                      trips.length <= 1
-                        ? "At least one trip is required"
-                        : "Delete trip"
-                    }
-                  >
-                    <FiTrash2 className="text-sm" />
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (trips.length <= 1) return;
+                          setConfirmDeleteId(trip.id);
+                        }}
+                        disabled={trips.length <= 1}
+                        className="rounded-full p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
+                        title={
+                          trips.length <= 1
+                            ? "At least one trip is required"
+                            : "Delete trip"
+                        }
+                      >
+                        <FiTrash2 className="text-sm" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
@@ -560,158 +611,397 @@ function SavedTripsPanel({
   );
 }
 
-function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops }) {
-  const date = new Date().toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops, startDate }) {
+  const dateStr = startDate
+    ? new Date(startDate).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+    : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div className="w-[794px] min-h-[1123px] bg-[#f3f9ff] p-7 font-sans text-slate-900">
-      <section className="rounded-[24px] border border-blue-100 bg-white p-8">
-        <header className="flex items-center justify-between gap-6 border-b border-blue-100 pb-6">
-          <div className="flex items-center gap-4">
-            <img
-              src={lakbayLogo}
-              alt="Lakbay Lanao Logo"
-              className="h-[58px] w-[58px] rounded-[16px] object-contain"
-            />
-
-            <div>
-              <p className="m-0 text-[23px] font-extrabold tracking-tight text-[#2563eb]">
-                Lakbay Lanao
-              </p>
-
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                Provincial Tourism Office
-                <br />
-                Lanao del Sur, Philippines
-              </p>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <h1 className="m-0 text-2xl font-extrabold tracking-tight text-slate-900">
-              {tripName || "My Itinerary"}
-            </h1>
-
-            <p className="mt-1.5 text-xs text-slate-500">Generated {date}</p>
-          </div>
-        </header>
-
-        <section className="my-6 grid grid-cols-3 gap-3">
-          <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Trip Length
+    <div
+      style={{
+        width: "720px",
+        minHeight: "1123px",
+        backgroundColor: "#ffffff",
+        padding: "24px 28px",
+        fontFamily: "Arial, sans-serif",
+        color: "#111827",
+        fontSize: "12px",
+        lineHeight: "1.5",
+      }}
+    >
+      {/* ── HEADER ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "2px solid #2563eb",
+          paddingBottom: "20px",
+          marginBottom: "28px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <img
+            src={lakbayLogo}
+            alt="Lakbay Lanao Logo"
+            style={{ height: "52px", width: "52px", objectFit: "contain" }}
+          />
+          <div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "20px",
+                fontWeight: "800",
+                color: "#2563eb",
+                letterSpacing: "-0.3px",
+              }}
+            >
+              Lakbay Lanao
             </p>
-
-            <p className="mt-1 text-lg font-extrabold text-[#2563eb]">
-              {dayCount} Day{dayCount !== 1 ? "s" : ""}
-            </p>
-          </div>
-
-          <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Total Stops
-            </p>
-
-            <p className="mt-1 text-lg font-extrabold text-[#2563eb]">
-              {totalStops}
-            </p>
-          </div>
-
-          <div className="rounded-[18px] border border-blue-100 bg-[#f8fbff] px-4 py-3.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Prepared For
-            </p>
-
-            <p className="mt-1 text-lg font-extrabold text-[#2563eb]">
-              Traveler
+            <p
+              style={{
+                margin: "3px 0 0",
+                fontSize: "11px",
+                color: "#6b7280",
+                lineHeight: "1.5",
+              }}
+            >
+              Provincial Tourism Office
+              <br />
+              Lanao del Sur, Philippines
             </p>
           </div>
-        </section>
+        </div>
 
-        <section className="space-y-[18px]">
-          {Object.keys(days).map((dayKey, dayIndex) => {
-            const items = days[dayKey] || [];
-            const dayNote = notes[dayKey] || "";
+        <div style={{ textAlign: "right" }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "11px",
+              color: "#6b7280",
+              textTransform: "uppercase",
+              letterSpacing: "0.8px",
+              fontWeight: "700",
+            }}
+          >
+            Official Travel Itinerary
+          </p>
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: "11px",
+              color: "#9ca3af",
+            }}
+          >
+            {startDate ? `Trip Date: ${dateStr}` : `Generated ${dateStr}`}
+          </p>
+        </div>
+      </div>
 
-            return (
-              <div
-                key={dayKey}
-                className="overflow-hidden rounded-[20px] border border-blue-100 bg-white"
+      {/* ── DOCUMENT TITLE ── */}
+      <div style={{ marginBottom: "24px" }}>
+        <h1
+          style={{
+            fontSize: "28px",
+            fontWeight: "800",
+            color: "#111827",
+            marginBottom: "6px",
+          }}
+        >
+          {tripName || "My Itinerary"}
+        </h1>
+
+        <p
+          style={{
+            fontSize: "12px",
+            color: "#6b7280",
+            lineHeight: "1.6",
+          }}
+        >
+          Official travel itinerary generated through Lakbay Lanao.
+        </p>
+      </div>
+
+      {/* ── TRIP INFORMATION ── */}
+      <div
+        style={{
+          border: "1px solid #dbeafe",
+          backgroundColor: "#f8fbff",
+          padding: "18px",
+          marginBottom: "30px",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "12px",
+            fontWeight: "700",
+            color: "#2563eb",
+            marginBottom: "12px",
+            textTransform: "uppercase",
+            letterSpacing: "0.8px",
+          }}
+        >
+          Trip Information
+        </div>
+
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "12px",
+          }}
+        >
+          <tbody>
+            <tr>
+              <td
+                style={{
+                  width: "140px",
+                  padding: "6px 0",
+                  fontWeight: "700",
+                  color: "#374151",
+                }}
               >
-                <div className="flex items-center gap-3 border-b border-blue-100 bg-[#f8fbff] px-5 py-4">
-                  <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#2563eb] text-[13px] font-extrabold text-white">
-                    {dayIndex + 1}
-                  </div>
+                Trip Name
+              </td>
+              <td>{tripName}</td>
+            </tr>
 
-                  <div>
-                    <h2 className="m-0 text-base font-extrabold text-[#2563eb]">
-                      Day {dayIndex + 1}
-                    </h2>
+            <tr>
+              <td
+                style={{
+                  padding: "6px 0",
+                  fontWeight: "700",
+                  color: "#374151",
+                }}
+              >
+                Start Date
+              </td>
+              <td>{dateStr}</td>
+            </tr>
 
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {items.length} stop{items.length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </div>
+            <tr>
+              <td
+                style={{
+                  padding: "6px 0",
+                  fontWeight: "700",
+                  color: "#374151",
+                }}
+              >
+                Duration
+              </td>
+              <td>
+                {dayCount} Day{dayCount > 1 ? "s" : ""}
+              </td>
+            </tr>
 
-                <div className="px-5 py-3">
-                  {items.length === 0 ? (
-                    <div className="my-2 rounded-[14px] border border-dashed border-blue-100 bg-[#f8fbff] p-4 text-center text-[13px] text-slate-400">
-                      No stops added yet.
-                    </div>
-                  ) : (
-                    <div>
-                      {items.map((place, i) => (
-                        <div
-                          key={`${dayKey}-${place.id}-${i}`}
-                          className="flex gap-3 border-b border-[#eef2ff] py-3 last:border-b-0"
-                        >
-                          <div className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-extrabold text-[#2563eb]">
-                            {i + 1}
-                          </div>
+            <tr>
+              <td
+                style={{
+                  padding: "6px 0",
+                  fontWeight: "700",
+                  color: "#374151",
+                }}
+              >
+                Total Stops
+              </td>
+              <td>
+                {totalStops} Stop{totalStops !== 1 ? "s" : ""}
+              </td>
+            </tr>
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex justify-between gap-4">
-                              <p className="m-0 text-sm font-extrabold text-slate-900">
-                                {place.name || place.title || "Untitled stop"}
-                              </p>
+            <tr>
+              <td
+                style={{
+                  padding: "6px 0",
+                  fontWeight: "700",
+                  color: "#374151",
+                }}
+              >
+                Destination
+              </td>
+              <td>Lanao del Sur, Philippines</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-                              <span className="flex-shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-extrabold text-[#2563eb]">
-                                {place.time || "Time not set"}
-                              </span>
-                            </div>
+      {/* ── DAILY ITINERARY TABLES ── */}
+      {Object.keys(days).map((dayKey, dayIndex) => {
+        const items = days[dayKey] || [];
+        const dayNote = notes[dayKey] || "";
 
-                            <p className="mt-1 text-xs text-slate-500">
-                              {formatCategoryLabel(place.category)} ·{" "}
-                              {place.location?.municipality || "Lanao del Sur"}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+        return (
+          <div
+            key={dayKey}
+            style={{
+              marginBottom: "26px",
+              pageBreakInside: "avoid",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#2563eb",
+                color: "#ffffff",
+                padding: "10px 14px",
+                fontSize: "13px",
+                fontWeight: "700",
+                letterSpacing: "0.5px",
+                marginBottom: "0",
+              }}
+            >
+              DAY {dayIndex + 1} ITINERARY
+            </div>
 
-                  {dayNote && (
-                    <div className="mt-3 rounded-[16px] border border-blue-100 bg-[#f8fbff] px-3.5 py-3 text-xs leading-relaxed text-slate-600">
-                      <strong>Notes:</strong> {dayNote}
-                    </div>
-                  )}
-                </div>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                border: "1px solid #d1d5db",
+                fontSize: "11px",
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: "#f9fafb" }}>
+                  <th
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "8px",
+                      width: "70px",
+                      textAlign: "left",
+                    }}
+                  >
+                    Time
+                  </th>
+
+                  <th
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "8px",
+                      textAlign: "left",
+                    }}
+                  >
+                    Destination
+                  </th>
+
+                  <th
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "8px",
+                      width: "120px",
+                      textAlign: "left",
+                    }}
+                  >
+                    Category
+                  </th>
+
+                  <th
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "8px",
+                      width: "120px",
+                      textAlign: "left",
+                    }}
+                  >
+                    Municipality
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      style={{
+                        padding: "14px",
+                        textAlign: "center",
+                        color: "#9ca3af",
+                        border: "1px solid #d1d5db",
+                      }}
+                    >
+                      No destinations added.
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((place, i) => (
+                    <tr key={i}>
+                      <td
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "8px",
+                        }}
+                      >
+                        {place.time || "--"}
+                      </td>
+
+                      <td
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "8px",
+                          fontWeight: "700",
+                        }}
+                      >
+                        {place.name || place.title}
+                      </td>
+
+                      <td
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "8px",
+                        }}
+                      >
+                        {formatCategoryLabel(place.category)}
+                      </td>
+
+                      <td
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "8px",
+                        }}
+                      >
+                        {place.location?.municipality || "-"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            {dayNote && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  borderLeft: "4px solid #2563eb",
+                  backgroundColor: "#f8fbff",
+                  padding: "10px 14px",
+                  fontSize: "11px",
+                  color: "#374151",
+                  lineHeight: "1.7",
+                }}
+              >
+                <strong>Notes:</strong> {dayNote}
               </div>
-            );
-          })}
-        </section>
+            )}
+          </div>
+        );
+      })}
 
-        <footer className="mt-7 border-t border-blue-100 pt-5 text-center text-[11px] leading-relaxed text-slate-400">
-          Lakbay Lanao · Explore Lanao del Sur with confidence
-          <br />
-          This itinerary was generated from your saved trip plan.
-        </footer>
-      </section>
+      {/* ── FOOTER ── */}
+      <div
+        style={{
+          marginTop: "40px",
+          borderTop: "1px solid #e5e7eb",
+          paddingTop: "16px",
+          textAlign: "center",
+          fontSize: "10px",
+          color: "#9ca3af",
+          lineHeight: "1.8",
+        }}
+      >
+        Lakbay Lanao · Explore Lanao del Sur with confidence
+        <br />
+        This itinerary was generated from your saved trip plan.
+      </div>
     </div>
   );
 }
@@ -729,6 +1019,7 @@ function Itinerary() {
   const [dayCount, setDayCount] = useState(3);
   const [days, setDays] = useState(buildDays(3));
   const [notes, setNotes] = useState({});
+  const [tripStartDate, setTripStartDate] = useState("");
 
   const [editingTripId, setEditingTripId] = useState(null);
   const [editingTripName, setEditingTripName] = useState("");
@@ -757,12 +1048,12 @@ function Itinerary() {
 
   const applyTripToEditor = useCallback((trip) => {
     if (!trip) return;
-
     setCurrentTripId(trip.id);
     setTripName(trip.name || "Untitled Trip");
     setDayCount(trip.dayCount ?? 3);
     setDays(buildDays(trip.dayCount ?? 3, trip.days ?? {}));
     setNotes(trip.notes ?? {});
+    setTripStartDate(trip.startDate ?? "");
   }, []);
 
   const buildPlannerPayload = useCallback((tripsData, activeId) => {
@@ -776,12 +1067,10 @@ function Itinerary() {
   const saveLocalImmediately = useCallback(
     (tripsData, activeId) => {
       const payload = buildPlannerPayload(tripsData, activeId);
-
       writeLocalPlanner(payload, uid);
       setSaveMode("device");
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus(null), 1800);
-
       return payload;
     },
     [buildPlannerPayload, uid]
@@ -790,10 +1079,8 @@ function Itinerary() {
   const syncToCloud = useCallback(
     async (payload, manual = false) => {
       if (!uid) return;
-
       setSaveMode("cloud");
       setSaveStatus("saving");
-
       try {
         await setDoc(doc(db, "users", uid, "itinerary", "plan"), payload);
         setSaveStatus("saved");
@@ -802,7 +1089,6 @@ function Itinerary() {
         setSaveMode("device");
         setSaveStatus("saved");
       }
-
       setTimeout(() => setSaveStatus(null), manual ? 3000 : 2200);
     },
     [uid]
@@ -811,9 +1097,7 @@ function Itinerary() {
   const persistPlanner = useCallback(
     (tripsData, activeId, immediateCloud = false) => {
       const payload = saveLocalImmediately(tripsData, activeId);
-
       if (!uid) return;
-
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
 
       if (immediateCloud) {
@@ -830,7 +1114,6 @@ function Itinerary() {
   const persistActiveTrip = useCallback(
     (nextValues, immediateCloud = false) => {
       const activeId = currentTripId || trips[0]?.id || createTripId();
-
       const existingTrip =
         trips.find((trip) => trip.id === activeId) ||
         createDefaultTrip("Trip to Lanao del Sur");
@@ -842,11 +1125,11 @@ function Itinerary() {
         dayCount: nextValues.dayCount ?? dayCount,
         days: nextValues.days ?? days,
         notes: nextValues.notes ?? notes,
+        startDate: nextValues.startDate ?? tripStartDate,
         updatedAt: new Date().toISOString(),
       });
 
       const hasTrip = trips.some((trip) => trip.id === activeId);
-
       const updatedTrips = hasTrip
         ? trips.map((trip) => (trip.id === activeId ? updatedTrip : trip))
         : [updatedTrip, ...trips];
@@ -862,22 +1145,37 @@ function Itinerary() {
       dayCount,
       days,
       notes,
+      tripStartDate,
       persistPlanner,
     ]
   );
+
+  const handleUpdateTripDate = (tripId, dateValue) => {
+    const updatedTrips = trips.map((trip) =>
+      trip.id === tripId
+        ? { ...trip, startDate: dateValue, updatedAt: new Date().toISOString() }
+        : trip
+    );
+    setTrips(updatedTrips);
+    if (tripId === currentTripId) {
+      setTripStartDate(dateValue);
+    }
+    persistPlanner(updatedTrips, currentTripId, true);
+  };
 
   const handleDownloadPDF = async () => {
     if (!pdfRef.current) return;
 
     const options = {
-      margin: 0,
+      margin: [4, 4, 4, 4],
       filename: `Lakbay-Lanao-${sanitizeFileName(tripName)}-${new Date()
         .toISOString()
         .slice(0, 10)}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#f3f9ff" },
-      jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      html2pdf: { scale: 1.5 },
+      html2canvas: { useCORS: true, logging: false, letterRendering: true, scale: 1.5 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css"] },
     };
 
     await html2pdf().set(options).from(pdfRef.current).save();
@@ -886,16 +1184,17 @@ function Itinerary() {
   const resetPlan = async () => {
     const freshDays = buildDays(3);
     const freshNotes = {};
-
     setDayCount(3);
     setDays(freshDays);
     setNotes(freshNotes);
+    setTripStartDate("");
 
     persistActiveTrip(
       {
         dayCount: 3,
         days: freshDays,
         notes: freshNotes,
+        startDate: "",
       },
       true
     );
@@ -904,7 +1203,6 @@ function Itinerary() {
   const handleCreateTrip = () => {
     const newTripNumber = trips.length + 1;
     const newTrip = createDefaultTrip(`Trip ${newTripNumber}`);
-
     const updatedTrips = [newTrip, ...trips];
 
     setTrips(updatedTrips);
@@ -918,12 +1216,10 @@ function Itinerary() {
 
     setEditingTripId(null);
     setEditingTripName("");
-
     applyTripToEditor(selectedTrip);
 
     const updatedPlanner = buildPlannerPayload(trips, tripId);
     writeLocalPlanner(updatedPlanner, uid);
-
     if (uid) {
       syncToCloud(updatedPlanner, false);
     }
@@ -935,13 +1231,6 @@ function Itinerary() {
       return;
     }
 
-    const tripToDelete = trips.find((trip) => trip.id === tripId);
-    const confirmDelete = window.confirm(
-      `Delete "${tripToDelete?.name || "this trip"}"? This cannot be undone.`
-    );
-
-    if (!confirmDelete) return;
-
     const updatedTrips = trips.filter((trip) => trip.id !== tripId);
     const nextActiveTrip =
       tripId === currentTripId
@@ -951,7 +1240,6 @@ function Itinerary() {
 
     setEditingTripId(null);
     setEditingTripName("");
-
     setTrips(updatedTrips);
     applyTripToEditor(nextActiveTrip);
     persistPlanner(updatedTrips, nextActiveTrip.id, true);
@@ -964,26 +1252,18 @@ function Itinerary() {
 
   const handleSaveRenameTrip = (tripId) => {
     const finalName = editingTripName.trim() || "Untitled Trip";
-
     const updatedTrips = trips.map((trip) =>
       trip.id === tripId
-        ? {
-            ...trip,
-            name: finalName,
-            updatedAt: new Date().toISOString(),
-          }
+        ? { ...trip, name: finalName, updatedAt: new Date().toISOString() }
         : trip
     );
 
     setTrips(updatedTrips);
-
     if (tripId === currentTripId) {
       setTripName(finalName);
     }
-
     setEditingTripId(null);
     setEditingTripName("");
-
     persistPlanner(updatedTrips, currentTripId, true);
   };
 
@@ -992,7 +1272,6 @@ function Itinerary() {
       setUid(user?.uid || null);
       setIsAuthReady(true);
     });
-
     return () => unsub();
   }, []);
 
@@ -1008,7 +1287,6 @@ function Itinerary() {
 
           if (snap.exists()) {
             const cloudPlanner = normalizePlanner(snap.data());
-
             const chosenPlanner =
               localPlanner && isLocalNewer(localPlanner, cloudPlanner)
                 ? localPlanner
@@ -1025,10 +1303,7 @@ function Itinerary() {
             );
 
             writeLocalPlanner(
-              {
-                ...normalized,
-                updatedAt: new Date().toISOString(),
-              },
+              { ...normalized, updatedAt: new Date().toISOString() },
               uid
             );
 
@@ -1055,7 +1330,6 @@ function Itinerary() {
             });
           } else {
             const freshPlanner = getDefaultPlanner();
-
             setTrips(freshPlanner.trips);
             applyTripToEditor(freshPlanner.trips[0]);
             writeLocalPlanner(freshPlanner, uid);
@@ -1073,7 +1347,6 @@ function Itinerary() {
             );
           } else {
             const freshPlanner = getDefaultPlanner();
-
             setTrips(freshPlanner.trips);
             applyTripToEditor(freshPlanner.trips[0]);
             writeLocalPlanner(freshPlanner, null);
@@ -1081,7 +1354,6 @@ function Itinerary() {
         }
       } catch (err) {
         console.error("Failed to load itinerary:", err);
-
         const freshPlanner = getDefaultPlanner();
         setTrips(freshPlanner.trips);
         applyTripToEditor(freshPlanner.trips[0]);
@@ -1106,6 +1378,7 @@ function Itinerary() {
               dayCount,
               days,
               notes,
+              startDate: tripStartDate,
               updatedAt: new Date().toISOString(),
             }
           : trip
@@ -1116,7 +1389,6 @@ function Itinerary() {
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [
     currentTripId,
@@ -1125,6 +1397,7 @@ function Itinerary() {
     dayCount,
     days,
     notes,
+    tripStartDate,
     buildPlannerPayload,
   ]);
 
@@ -1152,7 +1425,6 @@ function Itinerary() {
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-
     const { source, destination, draggableId } = result;
 
     if (source.droppableId === "places") {
@@ -1176,42 +1448,25 @@ function Itinerary() {
       updated.splice(destination.index, 0, newItem);
 
       const updatedDays = { ...days, [destDay]: updated };
-
       setDays(updatedDays);
-
-      persistActiveTrip(
-        {
-          days: updatedDays,
-        },
-        true
-      );
-
+      persistActiveTrip({ days: updatedDays }, true);
       return;
     }
 
     if (source.droppableId === destination.droppableId) {
       const dayKey = source.droppableId;
-
       const updatedDays = {
         ...days,
         [dayKey]: reorder(days[dayKey], source.index, destination.index),
       };
 
       setDays(updatedDays);
-
-      persistActiveTrip(
-        {
-          days: updatedDays,
-        },
-        true
-      );
-
+      persistActiveTrip({ days: updatedDays }, true);
       return;
     }
 
     const srcKey = source.droppableId;
     const dstKey = destination.droppableId;
-
     if (!days[srcKey] || !days[dstKey]) return;
 
     const srcItems = [...days[srcKey]];
@@ -1236,13 +1491,7 @@ function Itinerary() {
     };
 
     setDays(updatedDays);
-
-    persistActiveTrip(
-      {
-        days: updatedDays,
-      },
-      true
-    );
+    persistActiveTrip({ days: updatedDays }, true);
   };
 
   const removePlace = (dayKey, idx) => {
@@ -1250,15 +1499,8 @@ function Itinerary() {
     updated.splice(idx, 1);
 
     const updatedDays = { ...days, [dayKey]: updated };
-
     setDays(updatedDays);
-
-    persistActiveTrip(
-      {
-        days: updatedDays,
-      },
-      true
-    );
+    persistActiveTrip({ days: updatedDays }, true);
   };
 
   const updateTime = (dayKey, idx, value) => {
@@ -1266,28 +1508,14 @@ function Itinerary() {
     updated[idx] = { ...updated[idx], time: value };
 
     const updatedDays = { ...days, [dayKey]: updated };
-
     setDays(updatedDays);
-
-    persistActiveTrip(
-      {
-        days: updatedDays,
-      },
-      false
-    );
+    persistActiveTrip({ days: updatedDays }, false);
   };
 
   const updateNote = (dayKey, value) => {
     const updatedNotes = { ...notes, [dayKey]: value };
-
     setNotes(updatedNotes);
-
-    persistActiveTrip(
-      {
-        notes: updatedNotes,
-      },
-      false
-    );
+    persistActiveTrip({ notes: updatedNotes }, false);
   };
 
   if (!isAuthReady || !loaded) {
@@ -1306,6 +1534,7 @@ function Itinerary() {
             notes={notes}
             dayCount={dayCount}
             totalStops={totalStops}
+            startDate={tripStartDate}
           />
         </div>
       </div>
@@ -1317,16 +1546,13 @@ function Itinerary() {
           alt="Itinerary"
           className="absolute inset-0 h-full w-full object-cover"
         />
-
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-black/70" />
-
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end px-4 pb-10 sm:px-6 sm:pb-14">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
               <h1 className="text-3xl font-bold leading-tight text-white drop-shadow sm:text-4xl md:text-5xl">
                 My Itinerary
               </h1>
-
               <p className="mt-2 max-w-lg text-sm font-light leading-relaxed text-gray-100 sm:text-base">
                 Create multiple trips, organize saved destinations by day, and
                 download each itinerary as a PDF.
@@ -1342,7 +1568,6 @@ function Itinerary() {
                   Trips
                 </p>
               </div>
-
               <div className="rounded-[18px] border border-white/30 bg-white/15 px-4 py-2.5 text-center shadow-sm backdrop-blur-[2px] sm:rounded-2xl sm:px-5 sm:py-3">
                 <p className="text-xl font-bold text-white sm:text-2xl">
                   {totalStops}
@@ -1359,9 +1584,17 @@ function Itinerary() {
       {/* CURRENT TRIP BAR */}
       <div className="relative z-10 mx-auto -mt-5 max-w-7xl px-4 sm:px-6 lg:px-10">
         <div className="flex flex-col items-start justify-between gap-5 rounded-[24px] border border-white/80 bg-white/95 px-4 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[26px] sm:px-7 lg:flex-row lg:items-center">
-          <h2 className="text-base font-bold text-[#2563eb] sm:pl-3 sm:text-lg">
-            {tripName || "Untitled Trip"}
-          </h2>
+          <div className="flex flex-col gap-1 sm:pl-3">
+            <h2 className="text-base font-bold text-[#2563eb] sm:text-lg">
+              {tripName || "Untitled Trip"}
+            </h2>
+            {tripStartDate && (
+              <p className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                <FiCalendar className="text-[#2563eb]" />
+                Starts: {new Date(tripStartDate).toLocaleDateString("en-PH", { year: 'numeric', month: 'short', day: 'numeric' })}
+              </p>
+            )}
+          </div>
 
           <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:flex lg:flex-wrap lg:items-center lg:gap-3">
             <div className="sm:col-span-2 lg:col-span-1">
@@ -1395,11 +1628,9 @@ function Itinerary() {
               >
                 <FiMinus className="text-xs" />
               </button>
-
               <span className="w-16 text-center text-sm font-bold text-gray-600">
                 {dayCount} {dayCount === 1 ? "Day" : "Days"}
               </span>
-
               <button
                 type="button"
                 onClick={() => handleDayChange(1)}
@@ -1437,6 +1668,7 @@ function Itinerary() {
                 onStartRenameTrip={handleStartRenameTrip}
                 onChangeRenameTrip={setEditingTripName}
                 onSaveRenameTrip={handleSaveRenameTrip}
+                onUpdateTripDate={handleUpdateTripDate}
               />
 
               <Droppable droppableId="places" isDropDisabled>
@@ -1449,12 +1681,10 @@ function Itinerary() {
                     <div className="border-b border-blue-50 px-5 pb-4 pt-5">
                       <div className="mb-1 flex items-center gap-2">
                         <FiMapPin className="text-base text-[#2563eb]" />
-
                         <h2 className="text-base font-bold text-[#2563eb]">
                           Saved Places
                         </h2>
                       </div>
-
                       <p className="text-xs leading-relaxed text-gray-500">
                         Drag any place into a day on the right.
                       </p>
@@ -1463,7 +1693,6 @@ function Itinerary() {
                     {favorites.length > 0 && places.length === 0 && (
                       <div className="mx-4 mt-4 flex gap-2 rounded-[14px] border border-amber-100 bg-amber-50 p-3 text-xs text-amber-700">
                         <FiInfo className="mt-0.5 flex-shrink-0" />
-
                         <span>
                           Your saved items aren't destinations, landmarks,
                           establishments, or cultural sites.
@@ -1480,7 +1709,6 @@ function Itinerary() {
                           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
                             <FiMapPin className="text-xl text-blue-300" />
                           </div>
-
                           <p className="text-sm leading-relaxed text-gray-500">
                             No saved places yet. Heart destinations on the map
                             or explore page first.
@@ -1495,7 +1723,6 @@ function Itinerary() {
                           />
                         ))
                       )}
-
                       {provided.placeholder}
                     </div>
                   </div>
