@@ -6,6 +6,11 @@ import {
   FaEnvelope,
 } from "react-icons/fa";
 
+// BALIDONG IMPORTS: Eksaktong relative path mula sa components/common/ patungo sa assets/
+import barmmLogo from "../../assets/barmm.png";
+import dictLogo from "../../assets/dict.png";
+import dotLogo from "../../assets/dot.png";
+
 function Footer() {
   const navigate = useNavigate();
 
@@ -18,15 +23,33 @@ function Footer() {
     { label: "Itinerary Builder", path: "/itinerary" },
   ];
 
+  const agencyPartners = [
+    {
+      img: barmmLogo, 
+      alt: "BARMM Official Website",
+      url: "https://bangsamoro.gov.ph/",
+    },
+    {
+      img: dictLogo,
+      alt: "DICT Official Website",
+      url: "https://dict.gov.ph/",
+    },
+    {
+      img: dotLogo,
+      alt: "DOT Official Website",
+      url: "https://beta.tourism.gov.ph/",
+    },
+  ];
+
   const handleNavigate = (path) => {
     navigate(path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <footer className="relative bg-[#030712] text-gray-300">
+    <footer className="relative bg-[#030712] text-gray-300 w-full">
       <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-3 lg:px-8">
-        {/* BRAND */}
+        {/* BRAND & SOCIALS */}
         <div>
           <h2
             onClick={() => handleNavigate("/")}
@@ -82,7 +105,7 @@ function Footer() {
           </ul>
         </div>
 
-        {/* CONTACT */}
+        {/* CONTACT & PARTNERS */}
         <div>
           <h3 className="text-lg font-semibold text-white">Contact</h3>
 
@@ -106,6 +129,33 @@ function Footer() {
           <p className="mt-7 max-w-sm text-sm leading-6 text-gray-500">
             Department of Tourism · BARMM · Province of Lanao del Sur
           </p>
+
+          {/* LOGOS UNDER CONTACT */}
+          <div className="mt-6 border-t border-white/5 pt-5">
+            {/* FIXED: Gumamit ng fragments at flex arrangement para sa pipe separator `|` */}
+            <div className="flex items-center gap-4 w-fit">
+              {agencyPartners.map((agency, idx) => (
+                <div key={idx} className="flex items-center gap-4">
+                  <a
+                    href={agency.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="transition duration-300 hover:scale-105"
+                  >
+                    <img
+                      src={agency.img}
+                      alt={agency.alt}
+                      className="h-10 w-auto object-contain brightness-110"
+                    />
+                  </a>
+                  {/* Naglagay ng vertical divider element, maliban sa pinakahuling logo */}
+                  {idx < agencyPartners.length - 1 && (
+                    <span className="text-gray-700 font-light select-none">|</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

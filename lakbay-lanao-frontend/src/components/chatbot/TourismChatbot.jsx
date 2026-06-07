@@ -215,7 +215,7 @@ function TourismChatbot() {
 
       const botReply = {
         sender: "bot",
-        text: data.reply || data.error || "Sorry, I couldn't get a response.",
+        text: data.reply || data.error || "Oh no, I'm having a little trouble finding that information right now. Could you try asking me again? Thanks for understanding Gari! 😊",
       };
 
       setMessages((prev) => [...prev, botReply]);
@@ -226,7 +226,7 @@ function TourismChatbot() {
         ...prev,
         {
           sender: "bot",
-          text: "⚠️ Could not reach the server. Please make sure the backend is running.",
+        text: "Oops! It looks like my connection got lost along the way. Please check your internet connection or try again in a moment, and I'll be right here to help you! - Gari",
         },
       ]);
     } finally {
