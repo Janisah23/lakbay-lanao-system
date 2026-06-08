@@ -17,7 +17,7 @@ const DEFAULT_MESSAGES = [
   {
     sender: "suggestions",
     options: [
-      "Tell me about Maranao history",
+      "Tell me about Mranao history",
       "What is Lanao del Sur known for?",
       "Suggest cultural sites to visit",
       "Help me plan a Lanao trip",
@@ -422,7 +422,7 @@ function TourismChatbot() {
 
                   <p className="mt-3 max-w-[285px] text-[11px] leading-[1.1] text-gray-400">
                     Ask about destinations, events, hotels, food spots, cultural
-                    heritage, travel tips, and the rich Maranao history of Lanao
+                    heritage, travel tips, and the rich Mranao history of Lanao
                     del Sur.
                   </p>
                 </div>
