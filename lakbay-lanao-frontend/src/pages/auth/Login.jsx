@@ -198,8 +198,9 @@ function Login() {
 
   return (
     <div
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f3f9ff] bg-cover bg-center bg-no-repeat px-5 py-10"
-      style={{ backgroundImage: `url(${loginpage})` }}
+      /* Pinalitan ang bg-center ng bg-bottom */
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f3f9ff] bg-cover bg-bottom bg-no-repeat px-5 py-15"
+     style={{ backgroundImage: `url(${loginpage})` }}
     >
       <div className="absolute inset-0 bg-[#f3f9ff]/82" />
       <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-[#f8fbff]/70 to-[#dbeafe]/72" />
@@ -317,10 +318,10 @@ function Login() {
               )}
             </AnimatePresence>
 
-            <button
+           <button
               type="submit"
               disabled={loading}
-              className="mt-1 flex w-full items-center justify-center rounded-[20px] bg-[#2563eb] py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_25px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_30px_rgba(37,99,235,0.28)] active:scale-[0.98] disabled:opacity-80"
+              className="mt-1 flex w-full items-center justify-center rounded-[20px] bg-gradient-to-b from-[#3b82f6] to-[#2563eb] py-3.5 text-[15px] font-semibold text-white shadow-[inset_0_1px_0px_rgba(255,255,255,0.4),inset_0_-3px_4px_rgba(0,0,0,0.2),0_6px_12px_rgba(37,99,235,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0px_rgba(255,255,255,0.5),inset_0_-3px_4px_rgba(0,0,0,0.2),0_8px_16px_rgba(37,99,235,0.4)] active:translate-y-[2px] active:scale-[0.98] active:shadow-[inset_0_1px_0px_rgba(255,255,255,0.3),0_2px_4px_rgba(37,99,235,0.3)] disabled:opacity-80"
             >
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />

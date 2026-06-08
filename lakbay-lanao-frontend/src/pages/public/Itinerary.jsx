@@ -252,6 +252,8 @@ function DayCard({
   onUpdateTime,
   onUpdateNote,
 }) {
+  const [confirmRemove, setConfirmRemove] = useState(null); // { idx }
+
   return (
     <div className="overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:rounded-[28px]">
       <div className="flex items-center gap-3 border-b border-blue-50 bg-[#f8fbff] px-4 py-4 sm:px-6 sm:py-5">
@@ -358,13 +360,39 @@ function DayCard({
                               className="w-20 border-none bg-transparent text-xs font-medium text-gray-600 outline-none"
                             />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => onRemove(dayKey, idx)}
-                            className="rounded-[10px] p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-400"
-                          >
-                            <FiTrash2 className="text-sm" />
-                          </button>
+
+                          {confirmRemove?.idx === idx ? (
+                            <div className="flex items-center gap-1.5 rounded-[12px] border border-red-100 bg-red-50 px-2.5 py-1.5">
+                              <span className="text-[11px] font-medium text-red-500 whitespace-nowrap">
+                                Remove?
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onRemove(dayKey, idx);
+                                  setConfirmRemove(null);
+                                }}
+                                className="rounded-[8px] bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white transition hover:bg-red-600"
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmRemove(null)}
+                                className="rounded-[8px] border border-red-100 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-500 transition hover:bg-gray-50"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmRemove({ idx })}
+                              className="rounded-[10px] p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-400"
+                            >
+                              <FiTrash2 className="text-sm" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}

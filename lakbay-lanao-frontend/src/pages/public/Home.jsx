@@ -40,6 +40,8 @@ function Home() {
   const [articles, setArticles] = useState([]);
   const [content, setContent] = useState([]);
   const [activeHighlight, setActiveHighlight] = useState(0);
+  // ADDED: track signed-in user
+  const [uid, setUid] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -162,9 +164,10 @@ function Home() {
     }
   };
 
+  // CHANGED: now tracks uid state instead of just console.log
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("AUTH USER:", user);
+      setUid(user?.uid || null);
     });
 
     return () => unsubscribe();
@@ -595,21 +598,24 @@ const highlights = content.filter(
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(article);
-                        }}
-                        className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm sm:right-3 sm:top-3 sm:h-8 sm:w-8"
-                      >
-                        {favorites.some(
-                          (fav) => String(fav.id) === String(article.id)
-                        ) ? (
-                          <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-                        ) : (
-                          <FiHeart className="text-xs text-[#2563eb] sm:text-sm" />
-                        )}
-                      </button>
+                      {/* CHANGED: only show heart button when signed in */}
+                      {uid && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(article);
+                          }}
+                          className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm sm:right-3 sm:top-3 sm:h-8 sm:w-8"
+                        >
+                          {favorites.some(
+                            (fav) => String(fav.id) === String(article.id)
+                          ) ? (
+                            <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                          ) : (
+                            <FiHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                          )}
+                        </button>
+                      )}
 
                       {showHeart === article.id && (
                         <FaHeart
@@ -635,7 +641,6 @@ const highlights = content.filter(
                       {getShortDescription(article.summary)}
                     </p>
 
-                    {/* Updated button style */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -788,21 +793,24 @@ const highlights = content.filter(
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(evt);
-                        }}
-                        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 shadow-sm sm:right-3 sm:top-3 sm:h-8 sm:w-8"
-                      >
-                        {favorites.some(
-                          (fav) => String(fav.id) === String(evt.id)
-                        ) ? (
-                          <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-                        ) : (
-                          <FiHeart className="text-xs text-[#2563eb] sm:text-sm" />
-                        )}
-                      </button>
+                      {/* CHANGED: only show heart button when signed in */}
+                      {uid && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(evt);
+                          }}
+                          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 shadow-sm sm:right-3 sm:top-3 sm:h-8 sm:w-8"
+                        >
+                          {favorites.some(
+                            (fav) => String(fav.id) === String(evt.id)
+                          ) ? (
+                            <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                          ) : (
+                            <FiHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                          )}
+                        </button>
+                      )}
 
                       {showHeart === evt.id && (
                         <FaHeart
@@ -830,7 +838,6 @@ const highlights = content.filter(
                       </div>
                     </div>
 
-                    {/* Updated button style */}
                     <button
                       type="button"
                       onClick={(e) => {
