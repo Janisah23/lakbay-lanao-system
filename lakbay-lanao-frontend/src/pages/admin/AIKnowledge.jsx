@@ -16,14 +16,16 @@ function AIKnowledge() {
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingName, setDeletingName] = useState(null);
+  const [documentToDelete, setDocumentToDelete] = useState(null); // Added state for the custom delete modal
   const [toast, setToast] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileToConfirm, setFileToConfirm] = useState(null);
   const fileRef = useRef(null);
 
-  const showToast = (type, msg) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 4000);
+  // REDESIGNED: Toast now accepts a title for better context
+  const showToast = (type, title, msg) => {
+    setToast({ type, title, msg });
+    setTimeout(() => setToast(null), 5000); // Increased to 5s so users have time to read
   };
 
   const fetchDocuments = useCallback(async () => {
@@ -37,7 +39,13 @@ function AIKnowledge() {
 
       setDocuments(data.documents || []);
     } catch (err) {
-      showToast("error", "Failed to load documents: " + err.message);
+      console.error(err);
+      // HUMAN-READABLE ERROR
+      showToast(
+        "error",
+        "Connection Error",
+        "We're having trouble loading your documents right now. Please check your internet connection and try refreshing."
+      );
     } finally {
       setLoadingDocs(false);
     }
@@ -57,7 +65,12 @@ function AIKnowledge() {
     ];
 
     if (!allowed.includes(file.type)) {
-      return showToast("error", "Only PDF, TXT, and DOCX files are supported.");
+      // HUMAN-READABLE ERROR
+      return showToast(
+        "error",
+        "Unsupported File Type",
+        "Oops! We only accept PDF, TXT, and DOCX files. Please choose a different file format."
+      );
     }
 
     setFileToConfirm(file);
@@ -81,10 +94,20 @@ function AIKnowledge() {
 
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
-      showToast("success", data.message);
+      showToast(
+        "success",
+        "Upload Complete",
+        "Your document has been successfully processed and added to the chatbot's knowledge base."
+      );
       fetchDocuments();
     } catch (err) {
-      showToast("error", err.message);
+      console.error(err);
+      // HUMAN-READABLE ERROR
+      showToast(
+        "error",
+        "Upload Failed",
+        "We couldn't process your document. The file might be corrupted, too large, or our servers are busy. Please try again."
+      );
     } finally {
       setUploading(false);
       setFileToConfirm(null);
@@ -93,10 +116,13 @@ function AIKnowledge() {
     }
   };
 
-  const handleDelete = async (name) => {
-    if (!window.confirm(`Delete "${name}" from the knowledge base?`)) return;
-
-    setDeletingName(name);
+  // REDESIGNED: Execute the deletion after the custom modal confirms it
+  const executeDelete = async () => {
+    if (!documentToDelete) return;
+    
+    const name = documentToDelete;
+    setDocumentToDelete(null); // Close modal immediately
+    setDeletingName(name); // Show loading spinner on the specific item
 
     try {
       const res = await fetch(`${API}/documents/${encodeURIComponent(name)}`, {
@@ -107,10 +133,20 @@ function AIKnowledge() {
 
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
-      showToast("success", data.message);
+      showToast(
+        "success",
+        "Document Removed",
+        "The file was successfully deleted and is no longer used by the chatbot."
+      );
       setDocuments((prev) => prev.filter((d) => d.name !== name));
     } catch (err) {
-      showToast("error", err.message);
+      console.error(err);
+      // HUMAN-READABLE ERROR
+      showToast(
+        "error",
+        "Deletion Failed",
+        "We ran into a snag while trying to remove this document. Please wait a moment and try again."
+      );
     } finally {
       setDeletingName(null);
     }
@@ -127,6 +163,41 @@ function AIKnowledge() {
 
   return (
     <div className="min-h-screen w-full bg-[#f8fbff] font-['Poppins']">
+      
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {documentToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md scale-100 transform overflow-hidden rounded-[28px] border border-gray-100 bg-white p-7 shadow-2xl transition-all">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
+              <FiTrash2 className="text-3xl" />
+            </div>
+            
+            <h3 className="text-center text-xl font-bold text-gray-900">
+              Delete Document
+            </h3>
+            
+            <p className="mt-2 text-center text-sm leading-relaxed text-gray-500">
+              Are you sure you want to permanently remove <span className="font-semibold text-gray-800">"{documentToDelete}"</span>? The AI will no longer use this file as a reference.
+            </p>
+            
+            <div className="mt-7 flex justify-center gap-3">
+              <button
+                onClick={() => setDocumentToDelete(null)}
+                className="rounded-full border border-gray-200 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeDelete}
+                className="rounded-full bg-red-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-600"
+              >
+                Yes, delete it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="mx-auto max-w-7xl px-6 pb-24 pt-10 lg:px-10">
         {/* HEADER */}
         <section className="mb-10">
@@ -144,32 +215,63 @@ function AIKnowledge() {
           </p>
         </section>
 
-        {/* TOAST */}
+        {/* REDESIGNED TOAST NOTIFICATION */}
         {toast && (
           <div
-            className={`mb-6 flex items-center justify-between gap-4 rounded-[20px] border px-5 py-4 text-sm font-medium shadow-[0_8px_24px_rgba(37,99,235,0.06)] ${
+            className={`mb-6 overflow-hidden rounded-[20px] border shadow-sm transition-all duration-300 ${
               toast.type === "success"
-                ? "border-green-100 bg-green-50 text-green-700"
-                : "border-red-100 bg-red-50 text-red-700"
+                ? "border-green-200 bg-green-50"
+                : "border-red-200 bg-red-50"
             }`}
           >
-            <div className="flex items-center gap-3">
-              {toast.type === "success" ? (
-                <FiCheckCircle className="text-lg text-green-600" />
-              ) : (
-                <FiAlertCircle className="text-lg text-red-600" />
-              )}
+            <div className="flex items-start gap-4 p-5">
+              <div
+                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                  toast.type === "success"
+                    ? "bg-green-100 text-green-600"
+                    : "bg-red-100 text-red-600"
+                }`}
+              >
+                {toast.type === "success" ? (
+                  <FiCheckCircle className="text-xl" />
+                ) : (
+                  <FiAlertCircle className="text-xl" />
+                )}
+              </div>
 
-              <span>{toast.msg}</span>
+              <div className="flex-1">
+                <h3
+                  className={`text-sm font-bold ${
+                    toast.type === "success"
+                      ? "text-green-800"
+                      : "text-red-800"
+                  }`}
+                >
+                  {toast.title}
+                </h3>
+                <p
+                  className={`mt-1 text-sm leading-relaxed ${
+                    toast.type === "success"
+                      ? "text-green-700"
+                      : "text-red-700"
+                  }`}
+                >
+                  {toast.msg}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                className={`shrink-0 rounded-full p-1.5 transition ${
+                  toast.type === "success"
+                    ? "text-green-500 hover:bg-green-100"
+                    : "text-red-500 hover:bg-red-100"
+                }`}
+              >
+                <FiX className="text-lg" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              className="rounded-full p-1 transition hover:bg-white"
-            >
-              <FiX />
-            </button>
           </div>
         )}
 
@@ -373,7 +475,8 @@ function AIKnowledge() {
 
                     <button
                       type="button"
-                      onClick={() => handleDelete(doc.name)}
+                      // Trigger the custom modal instead of window.confirm
+                      onClick={() => setDocumentToDelete(doc.name)}
                       disabled={deletingName === doc.name}
                       className="inline-flex items-center justify-center gap-2 rounded-full border border-red-100 bg-white px-5 py-2.5 text-sm font-medium text-red-500 shadow-sm transition hover:border-red-500 hover:bg-red-500 hover:text-white disabled:opacity-50"
                     >
