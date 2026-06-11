@@ -76,6 +76,7 @@ const createDefaultTrip = (name = "Trip to Lanao del Sur") => ({
   dayCount: 3,
   days: buildDays(3),
   notes: {},
+  dayDates: {},
   startDate: "",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -98,6 +99,7 @@ const normalizeTrip = (trip, index = 0) => {
     dayCount: count,
     days: buildDays(count, trip?.days ?? {}),
     notes: trip?.notes ?? {},
+    dayDates: trip?.dayDates ?? {}, // <-- ADD THIS
     startDate: trip?.startDate ?? "",
     createdAt: trip?.createdAt || new Date().toISOString(),
     updatedAt: trip?.updatedAt || new Date().toISOString(),
@@ -245,19 +247,21 @@ function PlaceCard({ place, index }) {
 }
 
 function DayCard({
-  dayKey,
+dayKey,
   dayIndex,
   items,
   notes,
+  dayDate,        
   onRemove,
   onUpdateTime,
   onUpdateNote,
+  onUpdateDayDate,
 }) {
-  const [confirmRemove, setConfirmRemove] = useState(null); // { idx }
+const [confirmRemove, setConfirmRemove] = useState(null); // { idx }
 
   return (
     <div className="overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_8px_24px_rgba(37,99,235,0.06)] sm:rounded-[28px]">
-      <div className="flex items-center gap-3 border-b border-blue-50 bg-[#f8fbff] px-4 py-4 sm:px-6 sm:py-5">
+     <div className="flex items-center gap-3 border-b border-blue-50 bg-[#f8fbff] px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-sm font-bold text-white shadow-sm">
           {dayIndex + 1}
         </div>
@@ -265,11 +269,20 @@ function DayCard({
           <h3 className="text-base font-bold leading-tight text-[#2563eb]">
             Day {dayIndex + 1}
           </h3>
-          <p className="mt-0.5 text-xs text-gray-500">
-            {items.length === 0
-              ? "No stops yet"
-              : `${items.length} stop${items.length > 1 ? "s" : ""}`}
-          </p>
+          
+         
+         <div className="mt-1.5 mb-1 flex items-center gap-2 rounded-[10px] border border-blue-200 bg-white px-2.5 py-1.5 shadow-sm transition-all focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-blue-100 hover:border-blue-300 w-max cursor-pointer">
+            <FiCalendar className="text-sm text-[#2563eb] flex-shrink-0" />
+            <input
+              type="date"
+              value={dayDate || ""}
+              onChange={(e) => onUpdateDayDate(dayKey, e.target.value)}
+              className="bg-transparent text-xs font-semibold text-gray-700 outline-none cursor-pointer w-[110px] sm:w-[120px]"
+              title="Set date for this day"
+            />
+          </div>
+
+        
         </div>
       </div>
 
@@ -577,16 +590,7 @@ function SavedTripsPanel({
                     </div>
                   </button>
 
-                  <div className="mt-2.5 flex items-center gap-1.5 rounded-[12px] border border-blue-100/70 bg-white/60 px-2 py-1 focus-within:border-[#2563eb]">
-                    <FiCalendar className="text-xs text-[#2563eb] flex-shrink-0" />
-                    <input
-                      type="date"
-                      value={trip.startDate || ""}
-                      onChange={(e) => onUpdateTripDate(trip.id, e.target.value)}
-                      className="w-full bg-transparent text-[11px] font-medium text-gray-600 outline-none cursor-pointer"
-                      title="Set Trip Start Date"
-                    />
-                  </div>
+              
 
                   <div className="mt-3 flex items-center justify-between border-t border-blue-100/80 pt-3">
                     <span className="text-[10px] text-gray-400">
@@ -919,6 +923,7 @@ function Itinerary() {
   const [days, setDays] = useState(buildDays(3));
   const [notes, setNotes] = useState({});
   const [tripStartDate, setTripStartDate] = useState("");
+  const [dayDates, setDayDates] = useState({}); 
 
   const [editingTripId, setEditingTripId] = useState(null);
   const [editingTripName, setEditingTripName] = useState("");
@@ -952,6 +957,7 @@ function Itinerary() {
     setDayCount(trip.dayCount ?? 3);
     setDays(buildDays(trip.dayCount ?? 3, trip.days ?? {}));
     setNotes(trip.notes ?? {});
+    setDayDates(trip.dayDates ?? {}); // <-- ADD THIS
     setTripStartDate(trip.startDate ?? "");
   }, []);
 
@@ -1024,6 +1030,7 @@ function Itinerary() {
         dayCount: nextValues.dayCount ?? dayCount,
         days: nextValues.days ?? days,
         notes: nextValues.notes ?? notes,
+        dayDates: nextValues.dayDates ?? dayDates,
         startDate: nextValues.startDate ?? tripStartDate,
         updatedAt: new Date().toISOString(),
       });
@@ -1037,8 +1044,14 @@ function Itinerary() {
       setCurrentTripId(activeId);
       persistPlanner(updatedTrips, activeId, immediateCloud);
     },
-    [currentTripId, trips, tripName, dayCount, days, notes, tripStartDate, persistPlanner]
+   [currentTripId, trips, tripName, dayCount, days, notes, dayDates, tripStartDate, persistPlanner]
   );
+
+  const updateDayDate = (dayKey, dateValue) => {
+    const updatedDayDates = { ...dayDates, [dayKey]: dateValue };
+    setDayDates(updatedDayDates);
+    persistActiveTrip({ dayDates: updatedDayDates }, false);
+  };
 
   const handleUpdateTripDate = (tripId, dateValue) => {
     const updatedTrips = trips.map((trip) =>
@@ -1383,23 +1396,21 @@ function Itinerary() {
         </div>
       </section>
 
-      {/* CURRENT TRIP BAR */}
-      <div className="relative z-10 mx-auto -mt-5 max-w-7xl px-4 sm:px-6 lg:px-10">
-        <div className="flex flex-col items-start justify-between gap-5 rounded-[24px] border border-white/80 bg-white/95 px-4 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[26px] sm:px-7 lg:flex-row lg:items-center">
-          <div className="flex flex-col gap-1 sm:pl-3">
+     {/* CURRENT TRIP BAR */}
+      <div className="relative z-10 mx-auto -mt-5 w-full max-w-7xl px-4 sm:px-6 lg:px-10">
+        <div className="flex flex-col items-start justify-between w-full gap-5 rounded-[24px] border border-white/80 bg-white/95 px-4 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[26px] sm:px-7 lg:flex-row lg:items-center">
+          
+          {/* Left Side: Trip Name & Date */}
+          <div className="flex flex-col gap-1 w-full sm:pl-3 lg:w-auto">
             <h2 className="text-base font-bold text-[#2563eb] sm:text-lg">
               {tripName || "Untitled Trip"}
             </h2>
-            {tripStartDate && (
-              <p className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
-                <FiCalendar className="text-[#2563eb]" />
-                Starts: {new Date(tripStartDate).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })}
-              </p>
-            )}
+           
           </div>
 
+          {/* Right Side: Buttons & Set Days */}
           <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:flex lg:flex-wrap lg:items-center lg:gap-3">
-            <div className="sm:col-span-2 lg:col-span-1">
+            <div className="sm:col-span-2 lg:col-span-1 flex items-center">
               <SaveBadge status={saveStatus} mode={saveMode} />
             </div>
 
@@ -1421,7 +1432,8 @@ function Itinerary() {
               Reset
             </button>
 
-            <div className="flex w-full items-center justify-center gap-3 rounded-full border border-blue-100 bg-[#f8fbff] px-4 py-2 sm:col-span-2 lg:w-auto">
+            {/* Set Days Incremental Badge */}
+            <div className="flex w-full items-center justify-between sm:justify-center gap-3 rounded-full border border-blue-100 bg-[#f8fbff] px-4 py-2 sm:col-span-2 lg:w-auto">
               <button
                 type="button"
                 onClick={() => handleDayChange(-1)}
@@ -1443,7 +1455,9 @@ function Itinerary() {
               </button>
             </div>
           </div>
+          
         </div>
+      
 
         {ruleNotice && (
           <div className="mt-4 flex items-center gap-3 rounded-[18px] border border-red-100 bg-red-50 px-5 py-3 text-sm font-medium text-red-600 shadow-sm">
@@ -1526,20 +1540,22 @@ function Itinerary() {
               </Droppable>
             </aside>
 
-            {/* DAYS */}
-            <div className="space-y-6">
-              {Object.keys(days).map((dayKey, index) => (
-                <DayCard
-                  key={dayKey}
-                  dayKey={dayKey}
-                  dayIndex={index}
-                  items={days[dayKey]}
-                  notes={notes}
-                  onRemove={removePlace}
-                  onUpdateTime={updateTime}
-                  onUpdateNote={updateNote}
-                />
-              ))}
+          {/* DAYS */}
+          <div className="space-y-6">
+            {Object.keys(days).map((dayKey, index) => (
+              <DayCard
+                key={dayKey}
+                dayKey={dayKey}
+                dayIndex={index}
+                items={days[dayKey]}
+                notes={notes}
+                dayDate={dayDates[dayKey]}      // <-- ADD THIS
+                onRemove={removePlace}
+                onUpdateTime={updateTime}
+                onUpdateNote={updateNote}
+                onUpdateDayDate={updateDayDate} // <-- ADD THIS
+              />
+            ))}
 
               {Object.keys(days).length === 0 && (
                 <div className="rounded-[28px] border border-dashed border-blue-100 bg-white py-20 text-center shadow-sm">
