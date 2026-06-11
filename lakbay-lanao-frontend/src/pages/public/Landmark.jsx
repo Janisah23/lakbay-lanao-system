@@ -3,7 +3,7 @@ import { db, auth } from "../../firebase/config";
 import { collection, getDocs, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
-import footer from "../../components/common/Footer";
+import Footer from "../../components/common/Footer";
 import { FaHeart } from "react-icons/fa";
 import {
   FiHeart,
@@ -58,9 +58,18 @@ function Landmarks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [showHeart, setShowHeart] = useState(null);
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
 
   const navigate = useNavigate();
   const { favorites } = useFavorites();
+
+  // Track auth state changes
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,7 +94,6 @@ function Landmarks() {
         const combined = [...tourismDataItems, ...tourismContentItems];
 
         const landmarksOnly = combined.filter((item) => {
-          // FIX: Exclude archived items immediately
           if (item.status === "archived") return false;
 
           const contentType = normalize(item.contentType);
@@ -244,16 +252,19 @@ function Landmarks() {
               {item.type || item.category || "Landmark"}
             </span>
 
-            <button
-              onClick={(e) => handleToggleFavorite(e, item)}
-              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-sm transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
-            >
-              {isFav ? (
-                <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-              ) : (
-                <FiHeart className="text-xs text-gray-500 sm:text-sm" />
-              )}
-            </button>
+            {/* Only show heart button if user is logged in */}
+            {currentUser && (
+              <button
+                onClick={(e) => handleToggleFavorite(e, item)}
+                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-sm transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
+              >
+                {isFav ? (
+                  <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                ) : (
+                  <FiHeart className="text-xs text-gray-500 sm:text-sm" />
+                )}
+              </button>
+            )}
 
             {showHeart === item.id && (
               <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-3xl text-[#2563eb] sm:text-4xl lg:text-5xl" />
@@ -298,11 +309,11 @@ function Landmarks() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f9ff] pb-24 font-sans text-gray-900">
+    <div className="font-sans flex flex-col min-h-screen bg-[#f3f9ff] text-gray-900">
       <Navbar />
 
       {/* HEADER */}
-      <section className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
+     <section className="mx-auto w-full max-w-7xl px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-semibold text-[#2563eb] shadow-sm">
@@ -312,7 +323,8 @@ function Landmarks() {
 
             <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#2563eb] sm:text-4xl md:text-5xl">
               Lanao
-              <br className="hidden md:block" /> Landmarks
+              <br className="hidden md:block" />
+              Landmarks
             </h1>
 
             <p className="mt-3 max-w-md text-sm font-light leading-relaxed text-gray-500 sm:text-base">
@@ -389,7 +401,7 @@ function Landmarks() {
       </div>
 
       {/* MAIN */}
-      <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-10">
+      <main className="mx-auto w-full max-w-7xl flex-grow px-4 pt-8 pb-24 sm:px-6 lg:px-10">
         {filteredData.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-blue-100 bg-white py-20 text-center shadow-sm">
             <p className="text-sm font-medium text-gray-400">
@@ -448,16 +460,19 @@ function Landmarks() {
                     )}
                   </div>
 
-                  <button
-                    onClick={(e) => handleToggleFavorite(e, item)}
-                    className="mr-0 flex-shrink-0 rounded-full bg-blue-50 p-2 transition hover:bg-blue-100 sm:mr-2 sm:p-2.5"
-                  >
-                    {isFav ? (
-                      <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-                    ) : (
-                      <FiHeart className="text-xs text-gray-400 sm:text-sm" />
-                    )}
-                  </button>
+                  {/* Only show heart button in list view if user is logged in */}
+                  {currentUser && (
+                    <button
+                      onClick={(e) => handleToggleFavorite(e, item)}
+                      className="mr-0 flex-shrink-0 rounded-full bg-blue-50 p-2 transition hover:bg-blue-100 sm:mr-2 sm:p-2.5"
+                    >
+                      {isFav ? (
+                        <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                      ) : (
+                        <FiHeart className="text-xs text-gray-400 sm:text-sm" />
+                      )}
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -498,18 +513,21 @@ function Landmarks() {
                       </span>
                     </div>
 
-                    <button
-                      onClick={(e) => handleToggleFavorite(e, featuredItem)}
-                      className="absolute right-4 top-4 z-10 rounded-full border border-white/80 bg-white/95 p-2.5 shadow-sm transition hover:bg-blue-50 sm:right-5 sm:top-5"
-                    >
-                      {favorites.some(
-                        (fav) => String(fav.id) === String(featuredItem.id)
-                      ) ? (
-                        <FaHeart className="text-base text-[#2563eb]" />
-                      ) : (
-                        <FiHeart className="text-base text-gray-500" />
-                      )}
-                    </button>
+                    {/* Only show heart button on featured card if user is logged in */}
+                    {currentUser && (
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, featuredItem)}
+                        className="absolute right-4 top-4 z-10 rounded-full border border-white/80 bg-white/95 p-2.5 shadow-sm transition hover:bg-blue-50 sm:right-5 sm:top-5"
+                      >
+                        {favorites.some(
+                          (fav) => String(fav.id) === String(featuredItem.id)
+                        ) ? (
+                          <FaHeart className="text-base text-[#2563eb]" />
+                        ) : (
+                          <FiHeart className="text-base text-gray-500" />
+                        )}
+                      </button>
+                    )}
 
                     {showHeart === featuredItem.id && (
                       <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-5xl text-[#2563eb] sm:text-6xl" />
@@ -611,6 +629,8 @@ function Landmarks() {
           </button>
         </section>
       )}
+
+      <Footer />
     </div>
   );
 }

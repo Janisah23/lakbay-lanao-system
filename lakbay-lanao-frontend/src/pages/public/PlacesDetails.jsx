@@ -15,6 +15,7 @@ import {
   FiTag,
   FiSun,
   FiAlertCircle,
+  FiLock,
 } from "react-icons/fi";
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md";
 import {
@@ -61,12 +62,10 @@ const PlacesDetails = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track logged in status globally
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-
-  // State to hold the main Swiper instance so we can sync it with thumbnails/lightbox
   const [mainSwiper, setMainSwiper] = useState(null);
 
   const [showSharePanel, setShowSharePanel] = useState(false);
@@ -75,7 +74,6 @@ const PlacesDetails = () => {
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
 
-  // Reset states on ID change
   useEffect(() => {
     setShowLoginNotice(false);
     setShowPopup(false);
@@ -86,7 +84,6 @@ const PlacesDetails = () => {
     if (mainSwiper) mainSwiper.slideTo(0);
   }, [id, mainSwiper]);
 
-  // Sync main Swiper when the active index changes (e.g., from Lightbox arrows or thumbnails)
   useEffect(() => {
     if (mainSwiper && mainSwiper.activeIndex !== activeGalleryIndex) {
       mainSwiper.slideTo(activeGalleryIndex);
@@ -95,7 +92,7 @@ const PlacesDetails = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setIsLoggedIn(!!user); // Set global log-in state for conditional rendering
+      setIsLoggedIn(!!user);
       if (user && id) {
         try {
           let reviewRef = doc(db, "tourismData", id, "reviews", user.uid);
@@ -342,7 +339,6 @@ const PlacesDetails = () => {
     return { label: "Destinations", path: "/destinations" };
   };
 
-  // ─── FIXED: Now includes Street and Barangay in the location text ───
   const getLocationText = (place) => {
     if (!place?.location) return "Lanao del Sur";
 
@@ -360,7 +356,6 @@ const PlacesDetails = () => {
     return "Lanao del Sur";
   };
 
-  // ─── NEW: Short version (municipality + province) for header badge ───
   const getShortLocationText = (place) => {
     if (!place?.location) return "Lanao del Sur";
 
@@ -441,7 +436,6 @@ const PlacesDetails = () => {
           <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/10 via-white/5 to-white/10" />
           <div className="absolute inset-x-0 top-0 z-10 pointer-events-none h-16 bg-gradient-to-b from-white/20 to-transparent" />
 
-          {/* ADD TO FAVORITE CARD BUTTON (ONLY FOR SIGNED-IN USERS) */}
           {isLoggedIn && (
             <button
               onClick={(e) => {
@@ -498,7 +492,6 @@ const PlacesDetails = () => {
 
   const breadcrumb = getBreadcrumbData();
 
-  // Safely merge legacy imageURL, new imageURLs array, and legacy galleryImages
   const rawGalleryImages = [
     destinationDetail.imageURL,
     ...(destinationDetail.imageURLs || []),
@@ -518,9 +511,7 @@ const PlacesDetails = () => {
   const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
   const mapDirectionsUrl = `https://maps.google.com/maps?q=${mapQuery}`;
 
-  // Full location string (street + barangay + municipality + province)
   const locationStr = getLocationText(destinationDetail);
-  // Short version for the header badge (municipality + province only)
   const shortLocationStr = getShortLocationText(destinationDetail);
 
   const saveCount = destinationDetail.saveCount || 0;
@@ -597,7 +588,6 @@ const PlacesDetails = () => {
 
               <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
-              {/* Use shortLocationStr in the header badge (municipality + province) */}
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiMapPin className="text-sm" />
                 <span>{shortLocationStr}</span>
@@ -660,7 +650,6 @@ const PlacesDetails = () => {
               )}
             </div>
 
-            {/* ADD TO FAVORITE HEADER BUTTON (ONLY FOR SIGNED-IN USERS) */}
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(destinationDetail)}
@@ -686,7 +675,6 @@ const PlacesDetails = () => {
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
         <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
-
             <Swiper
               onSwiper={setMainSwiper}
               onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
@@ -719,10 +707,8 @@ const PlacesDetails = () => {
               )}
             </Swiper>
 
-            {/* Gradient Overlay */}
             <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-            {/* View fullscreen button */}
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
@@ -731,7 +717,6 @@ const PlacesDetails = () => {
               View fullscreen
             </button>
 
-            {/* Navigation Arrows */}
             {galleryImages.length > 1 && (
               <>
                 <button
@@ -755,7 +740,6 @@ const PlacesDetails = () => {
               </>
             )}
 
-            {/* THUMBNAILS */}
             {galleryImages.length > 1 && (
               <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
                 <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 justify-center">
@@ -788,7 +772,7 @@ const PlacesDetails = () => {
         </div>
       </section>
 
-      {/* LIGHTBOX (FULLSCREEN VIEW) */}
+      {/* LIGHTBOX */}
       {lightboxOpen && (
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"
@@ -964,115 +948,116 @@ const PlacesDetails = () => {
               </div>
             </div>
 
-            {/* RATING (HIDE COMPLETELY IF GUEST USER IS NOT LOGGED IN) */}
-            {isLoggedIn && (
-              <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
-                {showPopup && (
-                  <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
-                    <span className="text-lg leading-none text-green-400">
-                      ✔
+            {/* RATING CARD — always visible, locked for guests */}
+            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
+              {showPopup && (
+                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                  <span className="text-lg leading-none text-green-400">✔</span>
+                  Rating submitted!
+                </div>
+              )}
+
+              <div className="mb-5">
+                <h3 className="font-bold text-gray-700">Rate this place</h3>
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                  Share your thoughts with other travelers.
+                </p>
+              </div>
+
+              {/* Stars — interactive if logged in, decorative if guest */}
+              <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
+                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      onClick={() => {
+                        if (isLoggedIn && !isSubmitted) {
+                          setUserRating(star);
+                          setShowLoginNotice(false);
+                        }
+                      }}
+                      className={`transition-all duration-200 ${
+                        star <= userRating
+                          ? "scale-110 text-yellow-400"
+                          : "text-gray-200 hover:text-yellow-200"
+                      } ${
+                        !isLoggedIn || isSubmitted
+                          ? "cursor-default"
+                          : "cursor-pointer hover:scale-110"
+                      }`}
+                    >
+                      ★
                     </span>
-                    Rating submitted!
-                  </div>
-                )}
-
-                <div className="mb-5">
-                  <h3 className="font-bold text-gray-700">Rate this place</h3>
-
-                  <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                    Share your thoughts with other travelers.
-                  </p>
+                  ))}
                 </div>
 
-                {showLoginNotice && (
-                  <div className="mb-5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
-                        <FiAlertCircle className="text-lg" />
-                      </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {!isLoggedIn
+                    ? "Sign in to rate this place"
+                    : userRating > 0
+                    ? `${userRating} out of 5 Stars`
+                    : "Select a rating"}
+                </p>
+              </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-red-700">
-                              Login required
-                            </p>
-
-                            <p className="mt-1 text-xs leading-relaxed text-red-500">
-                              Please log in first before submitting your rating.
-                            </p>
+              {/* Guest lock notice */}
+              {!isLoggedIn ? (
+                <div className="mt-4 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-400">
+                  <FiLock className="text-base" />
+                  Sign in to submit a rating
+                </div>
+              ) : (
+                <>
+                  {showLoginNotice && (
+                    <div className="mb-4 mt-4 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                          <FiAlertCircle className="text-lg" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-red-700">Login required</p>
+                              <p className="mt-1 text-xs leading-relaxed text-red-500">
+                                Please log in first before submitting your rating.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowLoginNotice(false)}
+                              className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
+                            >
+                              <FiX />
+                            </button>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setShowLoginNotice(false)}
-                            className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
-                          >
-                            <FiX />
-                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
-                  <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        onClick={() => {
-                          if (!isSubmitted) {
-                            setUserRating(star);
-                            setShowLoginNotice(false);
-                          }
-                        }}
-                        className={`transition-all duration-200 ${
-                          star <= userRating
-                            ? "scale-110 text-yellow-400"
-                            : "text-gray-200 hover:text-yellow-200"
-                        } ${
-                          isSubmitted
-                            ? "cursor-default"
-                            : "cursor-pointer hover:scale-110"
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                    {userRating > 0
-                      ? `${userRating} out of 5 Stars`
-                      : "Select a rating"}
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleRating}
-                  disabled={userRating === 0 || isSubmitted}
-                  className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-300 ${
-                    isSubmitted
-                      ? "cursor-default border border-green-200 bg-green-50 text-green-700"
-                      : userRating > 0
-                      ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
-                      : "cursor-not-allowed bg-gray-100 text-gray-400"
-                  }`}
-                >
-                  {isSubmitted ? (
-                    <>
-                      <span className="text-lg leading-none text-green-600">
-                        ✔
-                      </span>
-                      Rating Submitted
-                    </>
-                  ) : (
-                    "Submit Rating"
                   )}
-                </button>
-              </div>
-            )}
+
+                  <button
+                    onClick={handleRating}
+                    disabled={userRating === 0 || isSubmitted}
+                    className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+                      isSubmitted
+                        ? "cursor-default border border-green-200 bg-green-50 text-green-700"
+                        : userRating > 0
+                        ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
+                        : "cursor-not-allowed bg-gray-100 text-gray-400"
+                    }`}
+                  >
+                    {isSubmitted ? (
+                      <>
+                        <span className="text-lg leading-none text-green-600">✔</span>
+                        Rating Submitted
+                      </>
+                    ) : (
+                      "Submit Rating"
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
 
             {/* MAP DESKTOP */}
             <div className="hidden overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm lg:block">
@@ -1111,7 +1096,7 @@ const PlacesDetails = () => {
         </div>
       </section>
 
-      {/* SIMILAR PLACES TO EXPLORE */}
+      {/* SIMILAR PLACES */}
       {morePlaces.length > 0 && (
         <section className="border-t border-blue-50 bg-[#f3f9ff] px-4 py-16 sm:px-6 md:px-12 md:py-20 lg:px-20 lg:py-24">
           <div className="mx-auto max-w-7xl">

@@ -14,6 +14,8 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiX,
+  FiLock,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md";
 import { FaTwitter, FaFacebookF, FaLink } from "react-icons/fa";
@@ -25,7 +27,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import { db, auth } from "../../firebase/config";
-import { onAuthStateChanged } from "firebase/auth"; // Added for tracking authentication state
+import { onAuthStateChanged } from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -38,6 +40,7 @@ import {
   limit,
   updateDoc,
   increment,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useFavorites } from "../../components/context/FavoritesContext";
 
@@ -49,30 +52,49 @@ const ArticleDetails = () => {
   const [articleDetail, setArticleDetail] = useState(null);
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-
-  // Main Swiper instance for syncing thumbnails/lightbox
   const [mainSwiper, setMainSwiper] = useState(null);
 
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const [isNavigating, setIsNavigating] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track if user is logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const [userRating, setUserRating] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [showLoginNotice, setShowLoginNotice] = useState(false);
 
   const { favorites } = useFavorites();
   const isFav = favorites.some((fav) => String(fav.id) === String(id));
 
-  const galleryImages = [
-    ...(articleDetail?.imageURLs || []),
-  ].filter(Boolean);
+  const galleryImages = [...(articleDetail?.imageURLs || [])].filter(Boolean);
 
-  // Monitor Auth State
+  // Monitor Auth State + check existing review
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setIsLoggedIn(!!user);
+      if (user && id) {
+        try {
+          const reviewRef = doc(db, "tourismContent", id, "reviews", user.uid);
+          const reviewSnap = await getDoc(reviewRef);
+          if (reviewSnap.exists()) {
+            setUserRating(reviewSnap.data().rating);
+            setIsSubmitted(true);
+          } else {
+            setUserRating(0);
+            setIsSubmitted(false);
+          }
+        } catch (error) {
+          console.error("Error checking user review:", error);
+        }
+      } else {
+        setUserRating(0);
+        setIsSubmitted(false);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [id]);
 
   // Reset states on ID change
   useEffect(() => {
@@ -82,10 +104,12 @@ const ArticleDetails = () => {
     setLinkCopied(false);
     setActiveGalleryIndex(0);
     setLightboxOpen(false);
+    setShowLoginNotice(false);
+    setShowPopup(false);
     if (mainSwiper) mainSwiper.slideTo(0);
   }, [id, mainSwiper]);
 
-  // Sync main Swiper when activeGalleryIndex changes (e.g., from lightbox arrows)
+  // Sync main Swiper when activeGalleryIndex changes
   useEffect(() => {
     if (mainSwiper && mainSwiper.activeIndex !== activeGalleryIndex) {
       mainSwiper.slideTo(activeGalleryIndex);
@@ -139,7 +163,7 @@ const ArticleDetails = () => {
     const user = auth.currentUser;
 
     if (!user) {
-      alert("Please log in to add to your list.");
+      setShowLoginNotice(true);
       return;
     }
 
@@ -155,6 +179,60 @@ const ArticleDetails = () => {
       await updateDoc(doc(db, "tourismContent", item.id), {
         saveCount: increment(1),
       }).catch(() => {});
+    }
+  };
+
+  const handleRating = async () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      setShowLoginNotice(true);
+      return;
+    }
+
+    if (isSubmitted) return;
+    if (!articleDetail) return;
+
+    try {
+      const reviewRef = doc(
+        db,
+        "tourismContent",
+        articleDetail.id,
+        "reviews",
+        user.uid
+      );
+
+      await setDoc(reviewRef, {
+        userId: user.uid,
+        rating: userRating,
+        createdAt: serverTimestamp(),
+      });
+
+      const currentRating = articleDetail.rating || 0;
+      const currentCount = articleDetail.reviewsCount || 0;
+      const newCount = currentCount + 1;
+      const newAverage =
+        (currentRating * currentCount + userRating) / newCount;
+
+      const articleRef = doc(db, "tourismContent", articleDetail.id);
+
+      await updateDoc(articleRef, {
+        rating: newAverage,
+        reviewsCount: newCount,
+      });
+
+      setArticleDetail((prev) => ({
+        ...prev,
+        rating: newAverage,
+        reviewsCount: newCount,
+      }));
+
+      setIsSubmitted(true);
+      setShowLoginNotice(false);
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
     }
   };
 
@@ -184,7 +262,6 @@ const ArticleDetails = () => {
     }, 2000);
   };
 
-  // Show spinner during initial load OR simulated navigation
   if (!articleDetail || isNavigating) {
     return (
       <div className="font-sans flex min-h-screen items-center justify-center bg-[#f3f9ff]">
@@ -224,10 +301,30 @@ const ArticleDetails = () => {
             </h1>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-600 sm:text-sm">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm tracking-widest text-yellow-400 sm:text-base">
+                  {"★".repeat(Math.floor(articleDetail.rating || 4))}
+                  <span className="text-yellow-200">
+                    {"★".repeat(5 - Math.floor(articleDetail.rating || 4))}
+                  </span>
+                </span>
+                <span className="font-bold text-gray-900">
+                  {articleDetail.rating
+                    ? articleDetail.rating.toFixed(1)
+                    : "—"}
+                </span>
+                <span className="text-gray-400">
+                  ({articleDetail.reviewsCount || 0})
+                </span>
+              </div>
+
+              <div className="hidden h-4 w-px bg-gray-200 sm:block" />
+
               <div className="flex items-center gap-1.5 text-gray-500">
                 <FiBookmark className="text-sm" />
                 <span>{saveCount.toLocaleString()} saves</span>
               </div>
+
               <div className="hidden h-4 w-px bg-gray-200 sm:block" />
 
               <div className="flex items-center gap-1.5 text-gray-500">
@@ -290,7 +387,6 @@ const ArticleDetails = () => {
               )}
             </div>
 
-            {/* ONLY VISIBLE IF LOGGED IN (ADD TO FAVORITE BUTTON) */}
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(articleDetail)}
@@ -312,11 +408,10 @@ const ArticleDetails = () => {
         </div>
       </section>
 
-      {/* GALLERY (SWIPER MAIN PREVIEW) */}
+      {/* GALLERY */}
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
         <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
-
             <Swiper
               onSwiper={setMainSwiper}
               onSlideChange={(swiper) => setActiveGalleryIndex(swiper.activeIndex)}
@@ -414,7 +509,7 @@ const ArticleDetails = () => {
         </div>
       </section>
 
-      {/* LIGHTBOX (FULLSCREEN VIEW) */}
+      {/* LIGHTBOX */}
       {lightboxOpen && (
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"
@@ -510,9 +605,7 @@ const ArticleDetails = () => {
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
-              <h3 className="mb-5 font-bold text-[#2563eb]">
-                Article Details
-              </h3>
+              <h3 className="mb-5 font-bold text-[#2563eb]">Article Details</h3>
 
               <div className="space-y-4">
                 {[
@@ -539,12 +632,10 @@ const ArticleDetails = () => {
                     <span className="mt-0.5 flex-shrink-0 text-lg text-[#2563eb]">
                       {icon}
                     </span>
-
                     <div>
                       <p className="text-xs font-semibold text-gray-900">
                         {label}
                       </p>
-
                       <p className="mt-0.5 text-sm leading-snug text-gray-500">
                         {value}
                       </p>
@@ -552,6 +643,117 @@ const ArticleDetails = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* RATING CARD — always visible, locked for guests */}
+            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
+              {showPopup && (
+                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                  <span className="text-lg leading-none text-green-400">✔</span>
+                  Rating submitted!
+                </div>
+              )}
+
+              <div className="mb-5">
+                <h3 className="font-bold text-gray-700">Rate this article</h3>
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                  Share your thoughts with other readers.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
+                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      onClick={() => {
+                        if (isLoggedIn && !isSubmitted) {
+                          setUserRating(star);
+                          setShowLoginNotice(false);
+                        }
+                      }}
+                      className={`transition-all duration-200 ${
+                        star <= userRating
+                          ? "scale-110 text-yellow-400"
+                          : "text-gray-200 hover:text-yellow-200"
+                      } ${
+                        !isLoggedIn || isSubmitted
+                          ? "cursor-default"
+                          : "cursor-pointer hover:scale-110"
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {!isLoggedIn
+                    ? "Sign in to rate this article"
+                    : userRating > 0
+                    ? `${userRating} out of 5 stars`
+                    : "Select a rating"}
+                </p>
+              </div>
+
+              {!isLoggedIn ? (
+                <div className="mt-4 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-400">
+                  <FiLock className="text-base" />
+                  Sign in to submit a rating
+                </div>
+              ) : (
+                <>
+                  {showLoginNotice && (
+                    <div className="mb-4 mt-4 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                          <FiAlertCircle className="text-lg" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-red-700">
+                                Login required
+                              </p>
+                              <p className="mt-1 text-xs leading-relaxed text-red-500">
+                                Please log in first before submitting your rating.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowLoginNotice(false)}
+                              className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
+                            >
+                              <FiX />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleRating}
+                    disabled={userRating === 0 || isSubmitted}
+                    className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+                      isSubmitted
+                        ? "cursor-default border border-green-200 bg-green-50 text-green-700"
+                        : userRating > 0
+                        ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
+                        : "cursor-not-allowed bg-gray-100 text-gray-400"
+                    }`}
+                  >
+                    {isSubmitted ? (
+                      <>
+                        <span className="text-lg leading-none text-green-600">✔</span>
+                        Rating Submitted
+                      </>
+                    ) : (
+                      "Submit Rating"
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -595,7 +797,9 @@ const ArticleDetails = () => {
               {moreArticles.map((article) => (
                 <article
                   key={article.id}
-                  onClick={() => handleDelayedNavigate(`/article/${article.id}`)}
+                  onClick={() =>
+                    handleDelayedNavigate(`/article/${article.id}`)
+                  }
                   className="group flex min-h-[250px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-blue-50 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md sm:min-h-[310px] sm:rounded-[24px]"
                 >
                   <div className="p-1.5 pb-0 sm:p-2 sm:pb-0">

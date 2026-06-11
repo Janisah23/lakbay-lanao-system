@@ -62,9 +62,18 @@ function CulturalHeritage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [showHeart, setShowHeart] = useState(null);
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
 
   const navigate = useNavigate();
   const { favorites } = useFavorites();
+
+  // Track auth state changes
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -230,16 +239,19 @@ function CulturalHeritage() {
               {item.type || item.category || "Heritage"}
             </span>
 
-            <button
-              onClick={(e) => handleToggleFavorite(e, item)}
-              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
-            >
-              {isFav ? (
-                <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-              ) : (
-                <FiHeart className="text-xs text-gray-500 sm:text-sm" />
-              )}
-            </button>
+            {/* Only show heart button if user is logged in */}
+            {currentUser && (
+              <button
+                onClick={(e) => handleToggleFavorite(e, item)}
+                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4 lg:h-9 lg:w-9"
+              >
+                {isFav ? (
+                  <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                ) : (
+                  <FiHeart className="text-xs text-gray-500 sm:text-sm" />
+                )}
+              </button>
+            )}
 
             {showHeart === item.id && (
               <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-3xl text-[#2563eb] sm:text-4xl lg:text-5xl" />
@@ -284,7 +296,6 @@ function CulturalHeritage() {
   };
 
   return (
-    /* CHANGES HERE: Changed wrapper to full flex layout with min-h-screen */
     <div className="font-sans flex flex-col min-h-screen bg-[#f3f9ff] text-gray-900">
       <Navbar />
 
@@ -375,7 +386,6 @@ function CulturalHeritage() {
       </div>
 
       {/* MAIN */}
-      {/* CHANGES HERE: Added 'flex-grow' to push footer downward */}
       <main className="mx-auto w-full max-w-7xl flex-grow px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         {filteredData.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-blue-100 bg-white/85 py-20 text-center shadow-sm backdrop-blur-sm">
@@ -437,16 +447,19 @@ function CulturalHeritage() {
                     )}
                   </div>
 
-                  <button
-                    onClick={(e) => handleToggleFavorite(e, item)}
-                    className="mr-0 flex-shrink-0 rounded-full bg-blue-50 p-2 transition hover:bg-blue-100 sm:mr-1 sm:p-2.5"
-                  >
-                    {isFav ? (
-                      <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
-                    ) : (
-                      <FiHeart className="text-xs text-gray-400 sm:text-sm" />
-                    )}
-                  </button>
+                  {/* Only show heart button in list view if user is logged in */}
+                  {currentUser && (
+                    <button
+                      onClick={(e) => handleToggleFavorite(e, item)}
+                      className="mr-0 flex-shrink-0 rounded-full bg-blue-50 p-2 transition hover:bg-blue-100 sm:mr-1 sm:p-2.5"
+                    >
+                      {isFav ? (
+                        <FaHeart className="text-xs text-[#2563eb] sm:text-sm" />
+                      ) : (
+                        <FiHeart className="text-xs text-gray-400 sm:text-sm" />
+                      )}
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -487,18 +500,21 @@ function CulturalHeritage() {
                       </span>
                     </div>
 
-                    <button
-                      onClick={(e) => handleToggleFavorite(e, featuredItem)}
-                      className="absolute right-4 top-4 z-10 rounded-full border border-white/70 bg-white/95 p-2.5 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-5 sm:top-5"
-                    >
-                      {favorites.some(
-                        (fav) => String(fav.id) === String(featuredItem.id)
-                      ) ? (
-                        <FaHeart className="text-base text-[#2563eb]" />
-                      ) : (
-                        <FiHeart className="text-base text-gray-500" />
-                      )}
-                    </button>
+                    {/* Only show heart button on featured card if user is logged in */}
+                    {currentUser && (
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, featuredItem)}
+                        className="absolute right-4 top-4 z-10 rounded-full border border-white/70 bg-white/95 p-2.5 shadow-sm backdrop-blur-md transition hover:bg-blue-50 sm:right-5 sm:top-5"
+                      >
+                        {favorites.some(
+                          (fav) => String(fav.id) === String(featuredItem.id)
+                        ) ? (
+                          <FaHeart className="text-base text-[#2563eb]" />
+                        ) : (
+                          <FiHeart className="text-base text-gray-500" />
+                        )}
+                      </button>
+                    )}
 
                     {showHeart === featuredItem.id && (
                       <FaHeart className="pointer-events-none absolute inset-0 z-20 m-auto animate-ping text-5xl text-[#2563eb] sm:text-6xl" />

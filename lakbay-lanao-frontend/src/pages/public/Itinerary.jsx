@@ -1,4 +1,5 @@
 import Navbar from "../../components/common/Navbar";
+import Footer from "../../components/common/Footer";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useFavorites } from "../../components/context/FavoritesContext";
@@ -480,9 +481,7 @@ function SavedTripsPanel({
               }`}
             >
               {isConfirmingDelete ? (
-                /* ── DELETE CONFIRMATION STATE ── */
                 <div className="overflow-hidden rounded-[14px] border border-red-200">
-                  {/* Header strip */}
                   <div className="flex items-center gap-2.5 border-b border-red-200 bg-red-50 px-3.5 py-2.5">
                     <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
                       <FiTrash2 className="text-sm text-red-700" />
@@ -497,7 +496,6 @@ function SavedTripsPanel({
                     </div>
                   </div>
 
-                  {/* Body */}
                   <div className="px-3.5 py-3">
                     <p className="mb-3 text-[12px] leading-relaxed text-gray-500">
                       You're about to permanently delete{" "}
@@ -530,7 +528,6 @@ function SavedTripsPanel({
                   </div>
                 </div>
               ) : isEditing ? (
-                /* ── RENAME STATE ── */
                 <div className="space-y-2">
                   <input
                     type="text"
@@ -552,7 +549,6 @@ function SavedTripsPanel({
                   </button>
                 </div>
               ) : (
-                /* ── NORMAL STATE ── */
                 <div className="w-full">
                   <button
                     type="button"
@@ -581,7 +577,6 @@ function SavedTripsPanel({
                     </div>
                   </button>
 
-                  {/* Trip Date Input Selector */}
                   <div className="mt-2.5 flex items-center gap-1.5 rounded-[12px] border border-blue-100/70 bg-white/60 px-2 py-1 focus-within:border-[#2563eb]">
                     <FiCalendar className="text-xs text-[#2563eb] flex-shrink-0" />
                     <input
@@ -781,70 +776,31 @@ function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops, sta
         >
           <tbody>
             <tr>
-              <td
-                style={{
-                  width: "140px",
-                  padding: "6px 0",
-                  fontWeight: "700",
-                  color: "#374151",
-                }}
-              >
+              <td style={{ width: "140px", padding: "6px 0", fontWeight: "700", color: "#374151" }}>
                 Trip Name
               </td>
               <td>{tripName}</td>
             </tr>
-
             <tr>
-              <td
-                style={{
-                  padding: "6px 0",
-                  fontWeight: "700",
-                  color: "#374151",
-                }}
-              >
+              <td style={{ padding: "6px 0", fontWeight: "700", color: "#374151" }}>
                 Start Date
               </td>
               <td>{dateStr}</td>
             </tr>
-
             <tr>
-              <td
-                style={{
-                  padding: "6px 0",
-                  fontWeight: "700",
-                  color: "#374151",
-                }}
-              >
+              <td style={{ padding: "6px 0", fontWeight: "700", color: "#374151" }}>
                 Duration
               </td>
-              <td>
-                {dayCount} Day{dayCount > 1 ? "s" : ""}
-              </td>
+              <td>{dayCount} Day{dayCount > 1 ? "s" : ""}</td>
             </tr>
-
             <tr>
-              <td
-                style={{
-                  padding: "6px 0",
-                  fontWeight: "700",
-                  color: "#374151",
-                }}
-              >
+              <td style={{ padding: "6px 0", fontWeight: "700", color: "#374151" }}>
                 Total Stops
               </td>
-              <td>
-                {totalStops} Stop{totalStops !== 1 ? "s" : ""}
-              </td>
+              <td>{totalStops} Stop{totalStops !== 1 ? "s" : ""}</td>
             </tr>
-
             <tr>
-              <td
-                style={{
-                  padding: "6px 0",
-                  fontWeight: "700",
-                  color: "#374151",
-                }}
-              >
+              <td style={{ padding: "6px 0", fontWeight: "700", color: "#374151" }}>
                 Destination
               </td>
               <td>Lanao del Sur, Philippines</td>
@@ -859,13 +815,7 @@ function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops, sta
         const dayNote = notes[dayKey] || "";
 
         return (
-          <div
-            key={dayKey}
-            style={{
-              marginBottom: "26px",
-              pageBreakInside: "avoid",
-            }}
-          >
+          <div key={dayKey} style={{ marginBottom: "26px", pageBreakInside: "avoid" }}>
             <div
               style={{
                 backgroundColor: "#2563eb",
@@ -890,105 +840,26 @@ function ItineraryPDFTemplate({ tripName, days, notes, dayCount, totalStops, sta
             >
               <thead>
                 <tr style={{ backgroundColor: "#f9fafb" }}>
-                  <th
-                    style={{
-                      border: "1px solid #d1d5db",
-                      padding: "8px",
-                      width: "70px",
-                      textAlign: "left",
-                    }}
-                  >
-                    Time
-                  </th>
-
-                  <th
-                    style={{
-                      border: "1px solid #d1d5db",
-                      padding: "8px",
-                      textAlign: "left",
-                    }}
-                  >
-                    Destination
-                  </th>
-
-                  <th
-                    style={{
-                      border: "1px solid #d1d5db",
-                      padding: "8px",
-                      width: "120px",
-                      textAlign: "left",
-                    }}
-                  >
-                    Category
-                  </th>
-
-                  <th
-                    style={{
-                      border: "1px solid #d1d5db",
-                      padding: "8px",
-                      width: "120px",
-                      textAlign: "left",
-                    }}
-                  >
-                    Municipality
-                  </th>
+                  <th style={{ border: "1px solid #d1d5db", padding: "8px", width: "70px", textAlign: "left" }}>Time</th>
+                  <th style={{ border: "1px solid #d1d5db", padding: "8px", textAlign: "left" }}>Destination</th>
+                  <th style={{ border: "1px solid #d1d5db", padding: "8px", width: "120px", textAlign: "left" }}>Category</th>
+                  <th style={{ border: "1px solid #d1d5db", padding: "8px", width: "120px", textAlign: "left" }}>Municipality</th>
                 </tr>
               </thead>
-
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="4"
-                      style={{
-                        padding: "14px",
-                        textAlign: "center",
-                        color: "#9ca3af",
-                        border: "1px solid #d1d5db",
-                      }}
-                    >
+                    <td colSpan="4" style={{ padding: "14px", textAlign: "center", color: "#9ca3af", border: "1px solid #d1d5db" }}>
                       No destinations added.
                     </td>
                   </tr>
                 ) : (
                   items.map((place, i) => (
                     <tr key={i}>
-                      <td
-                        style={{
-                          border: "1px solid #d1d5db",
-                          padding: "8px",
-                        }}
-                      >
-                        {place.time || "--"}
-                      </td>
-
-                      <td
-                        style={{
-                          border: "1px solid #d1d5db",
-                          padding: "8px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        {place.name || place.title}
-                      </td>
-
-                      <td
-                        style={{
-                          border: "1px solid #d1d5db",
-                          padding: "8px",
-                        }}
-                      >
-                        {formatCategoryLabel(place.category)}
-                      </td>
-
-                      <td
-                        style={{
-                          border: "1px solid #d1d5db",
-                          padding: "8px",
-                        }}
-                      >
-                        {place.location?.municipality || "-"}
-                      </td>
+                      <td style={{ border: "1px solid #d1d5db", padding: "8px" }}>{place.time || "--"}</td>
+                      <td style={{ border: "1px solid #d1d5db", padding: "8px", fontWeight: "700" }}>{place.name || place.title}</td>
+                      <td style={{ border: "1px solid #d1d5db", padding: "8px" }}>{formatCategoryLabel(place.category)}</td>
+                      <td style={{ border: "1px solid #d1d5db", padding: "8px" }}>{place.location?.municipality || "-"}</td>
                     </tr>
                   ))
                 )}
@@ -1166,16 +1037,7 @@ function Itinerary() {
       setCurrentTripId(activeId);
       persistPlanner(updatedTrips, activeId, immediateCloud);
     },
-    [
-      currentTripId,
-      trips,
-      tripName,
-      dayCount,
-      days,
-      notes,
-      tripStartDate,
-      persistPlanner,
-    ]
+    [currentTripId, trips, tripName, dayCount, days, notes, tripStartDate, persistPlanner]
   );
 
   const handleUpdateTripDate = (tripId, dateValue) => {
@@ -1185,9 +1047,7 @@ function Itinerary() {
         : trip
     );
     setTrips(updatedTrips);
-    if (tripId === currentTripId) {
-      setTripStartDate(dateValue);
-    }
+    if (tripId === currentTripId) setTripStartDate(dateValue);
     persistPlanner(updatedTrips, currentTripId, true);
   };
 
@@ -1196,9 +1056,7 @@ function Itinerary() {
 
     const options = {
       margin: [4, 4, 4, 4],
-      filename: `Lakbay-Lanao-${sanitizeFileName(tripName)}-${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`,
+      filename: `Lakbay-Lanao-${sanitizeFileName(tripName)}-${new Date().toISOString().slice(0, 10)}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2pdf: { scale: 1.5 },
       html2canvas: { useCORS: true, logging: false, letterRendering: true, scale: 1.5 },
@@ -1216,23 +1074,13 @@ function Itinerary() {
     setDays(freshDays);
     setNotes(freshNotes);
     setTripStartDate("");
-
-    persistActiveTrip(
-      {
-        dayCount: 3,
-        days: freshDays,
-        notes: freshNotes,
-        startDate: "",
-      },
-      true
-    );
+    persistActiveTrip({ dayCount: 3, days: freshDays, notes: freshNotes, startDate: "" }, true);
   };
 
   const handleCreateTrip = () => {
     const newTripNumber = trips.length + 1;
     const newTrip = createDefaultTrip(`Trip ${newTripNumber}`);
     const updatedTrips = [newTrip, ...trips];
-
     setTrips(updatedTrips);
     applyTripToEditor(newTrip);
     persistPlanner(updatedTrips, newTrip.id, true);
@@ -1241,16 +1089,12 @@ function Itinerary() {
   const handleSelectTrip = (tripId) => {
     const selectedTrip = trips.find((trip) => trip.id === tripId);
     if (!selectedTrip) return;
-
     setEditingTripId(null);
     setEditingTripName("");
     applyTripToEditor(selectedTrip);
-
     const updatedPlanner = buildPlannerPayload(trips, tripId);
     writeLocalPlanner(updatedPlanner, uid);
-    if (uid) {
-      syncToCloud(updatedPlanner, false);
-    }
+    if (uid) syncToCloud(updatedPlanner, false);
   };
 
   const handleDeleteTrip = (tripId) => {
@@ -1258,14 +1102,11 @@ function Itinerary() {
       showRuleNotice("At least one trip is required.");
       return;
     }
-
     const updatedTrips = trips.filter((trip) => trip.id !== tripId);
     const nextActiveTrip =
       tripId === currentTripId
         ? updatedTrips[0]
-        : updatedTrips.find((trip) => trip.id === currentTripId) ||
-          updatedTrips[0];
-
+        : updatedTrips.find((trip) => trip.id === currentTripId) || updatedTrips[0];
     setEditingTripId(null);
     setEditingTripName("");
     setTrips(updatedTrips);
@@ -1285,11 +1126,8 @@ function Itinerary() {
         ? { ...trip, name: finalName, updatedAt: new Date().toISOString() }
         : trip
     );
-
     setTrips(updatedTrips);
-    if (tripId === currentTripId) {
-      setTripName(finalName);
-    }
+    if (tripId === currentTripId) setTripName(finalName);
     setEditingTripId(null);
     setEditingTripName("");
     persistPlanner(updatedTrips, currentTripId, true);
@@ -1319,22 +1157,12 @@ function Itinerary() {
               localPlanner && isLocalNewer(localPlanner, cloudPlanner)
                 ? localPlanner
                 : cloudPlanner;
-
-            const normalized =
-              normalizePlanner(chosenPlanner) || getDefaultPlanner();
-
+            const normalized = normalizePlanner(chosenPlanner) || getDefaultPlanner();
             setTrips(normalized.trips);
             applyTripToEditor(
-              normalized.trips.find(
-                (trip) => trip.id === normalized.currentTripId
-              ) || normalized.trips[0]
+              normalized.trips.find((trip) => trip.id === normalized.currentTripId) || normalized.trips[0]
             );
-
-            writeLocalPlanner(
-              { ...normalized, updatedAt: new Date().toISOString() },
-              uid
-            );
-
+            writeLocalPlanner({ ...normalized, updatedAt: new Date().toISOString() }, uid);
             if (localPlanner && isLocalNewer(localPlanner, cloudPlanner)) {
               await setDoc(doc(db, "users", uid, "itinerary", "plan"), {
                 ...localPlanner,
@@ -1342,16 +1170,11 @@ function Itinerary() {
               });
             }
           } else if (localPlanner) {
-            const normalized =
-              normalizePlanner(localPlanner) || getDefaultPlanner();
-
+            const normalized = normalizePlanner(localPlanner) || getDefaultPlanner();
             setTrips(normalized.trips);
             applyTripToEditor(
-              normalized.trips.find(
-                (trip) => trip.id === normalized.currentTripId
-              ) || normalized.trips[0]
+              normalized.trips.find((trip) => trip.id === normalized.currentTripId) || normalized.trips[0]
             );
-
             await setDoc(doc(db, "users", uid, "itinerary", "plan"), {
               ...normalized,
               updatedAt: new Date().toISOString(),
@@ -1364,14 +1187,10 @@ function Itinerary() {
           }
         } else {
           if (localPlanner) {
-            const normalized =
-              normalizePlanner(localPlanner) || getDefaultPlanner();
-
+            const normalized = normalizePlanner(localPlanner) || getDefaultPlanner();
             setTrips(normalized.trips);
             applyTripToEditor(
-              normalized.trips.find(
-                (trip) => trip.id === normalized.currentTripId
-              ) || normalized.trips[0]
+              normalized.trips.find((trip) => trip.id === normalized.currentTripId) || normalized.trips[0]
             );
           } else {
             const freshPlanner = getDefaultPlanner();
@@ -1397,7 +1216,6 @@ function Itinerary() {
     const handleBeforeUnload = () => {
       const activeId = currentTripId || trips[0]?.id;
       if (!activeId) return;
-
       const updatedTrips = trips.map((trip) =>
         trip.id === activeId
           ? {
@@ -1411,23 +1229,13 @@ function Itinerary() {
             }
           : trip
       );
-
       const payload = buildPlannerPayload(updatedTrips, activeId);
       writeLocalPlanner(payload, auth.currentUser?.uid || null);
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [
-    currentTripId,
-    trips,
-    tripName,
-    dayCount,
-    days,
-    notes,
-    tripStartDate,
-    buildPlannerPayload,
-  ]);
+  }, [currentTripId, trips, tripName, dayCount, days, notes, tripStartDate, buildPlannerPayload]);
 
   useEffect(() => {
     return () => {
@@ -1438,17 +1246,9 @@ function Itinerary() {
   const handleDayChange = (delta) => {
     const next = Math.min(14, Math.max(1, dayCount + delta));
     const updatedDays = buildDays(next, days);
-
     setDayCount(next);
     setDays(updatedDays);
-
-    persistActiveTrip(
-      {
-        dayCount: next,
-        days: updatedDays,
-      },
-      true
-    );
+    persistActiveTrip({ dayCount: next, days: updatedDays }, true);
   };
 
   const handleDragEnd = (result) => {
@@ -1458,23 +1258,16 @@ function Itinerary() {
     if (source.droppableId === "places") {
       const place = places.find((p) => String(p.id) === draggableId);
       if (!place) return;
-
       const destDay = destination.droppableId;
       if (!days[destDay]) return;
-
-      const alreadyExists = days[destDay].some(
-        (item) => String(item.id) === String(place.id)
-      );
-
+      const alreadyExists = days[destDay].some((item) => String(item.id) === String(place.id));
       if (alreadyExists) {
         showRuleNotice("This destination is already added to this day.");
         return;
       }
-
       const newItem = { ...place, time: "" };
       const updated = [...days[destDay]];
       updated.splice(destination.index, 0, newItem);
-
       const updatedDays = { ...days, [destDay]: updated };
       setDays(updatedDays);
       persistActiveTrip({ days: updatedDays }, true);
@@ -1487,7 +1280,6 @@ function Itinerary() {
         ...days,
         [dayKey]: reorder(days[dayKey], source.index, destination.index),
       };
-
       setDays(updatedDays);
       persistActiveTrip({ days: updatedDays }, true);
       return;
@@ -1501,23 +1293,14 @@ function Itinerary() {
     const dstItems = [...days[dstKey]];
     const [moved] = srcItems.splice(source.index, 1);
 
-    const alreadyExistsInTargetDay = dstItems.some(
-      (item) => String(item.id) === String(moved.id)
-    );
-
+    const alreadyExistsInTargetDay = dstItems.some((item) => String(item.id) === String(moved.id));
     if (alreadyExistsInTargetDay) {
       showRuleNotice("This destination already exists in the target day.");
       return;
     }
 
     dstItems.splice(destination.index, 0, moved);
-
-    const updatedDays = {
-      ...days,
-      [srcKey]: srcItems,
-      [dstKey]: dstItems,
-    };
-
+    const updatedDays = { ...days, [srcKey]: srcItems, [dstKey]: dstItems };
     setDays(updatedDays);
     persistActiveTrip({ days: updatedDays }, true);
   };
@@ -1525,7 +1308,6 @@ function Itinerary() {
   const removePlace = (dayKey, idx) => {
     const updated = [...days[dayKey]];
     updated.splice(idx, 1);
-
     const updatedDays = { ...days, [dayKey]: updated };
     setDays(updatedDays);
     persistActiveTrip({ days: updatedDays }, true);
@@ -1534,7 +1316,6 @@ function Itinerary() {
   const updateTime = (dayKey, idx, value) => {
     const updated = [...days[dayKey]];
     updated[idx] = { ...updated[idx], time: value };
-
     const updatedDays = { ...days, [dayKey]: updated };
     setDays(updatedDays);
     persistActiveTrip({ days: updatedDays }, false);
@@ -1551,9 +1332,10 @@ function Itinerary() {
   }
 
   return (
-    <div className="font-sans min-h-screen bg-[#f3f9ff] pb-24 text-gray-900">
+    <div className="font-sans min-h-screen flex flex-col bg-[#f3f9ff] text-gray-900">
       <Navbar />
 
+      {/* Hidden PDF template */}
       <div className="fixed left-[-9999px] top-0">
         <div ref={pdfRef}>
           <ItineraryPDFTemplate
@@ -1589,20 +1371,12 @@ function Itinerary() {
 
             <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
               <div className="rounded-[18px] border border-white/30 bg-white/15 px-4 py-2.5 text-center shadow-sm backdrop-blur-[2px] sm:rounded-2xl sm:px-5 sm:py-3">
-                <p className="text-xl font-bold text-white sm:text-2xl">
-                  {trips.length}
-                </p>
-                <p className="mt-0.5 text-[11px] text-white/80 sm:text-xs">
-                  Trips
-                </p>
+                <p className="text-xl font-bold text-white sm:text-2xl">{trips.length}</p>
+                <p className="mt-0.5 text-[11px] text-white/80 sm:text-xs">Trips</p>
               </div>
               <div className="rounded-[18px] border border-white/30 bg-white/15 px-4 py-2.5 text-center shadow-sm backdrop-blur-[2px] sm:rounded-2xl sm:px-5 sm:py-3">
-                <p className="text-xl font-bold text-white sm:text-2xl">
-                  {totalStops}
-                </p>
-                <p className="mt-0.5 text-[11px] text-white/80 sm:text-xs">
-                  Stops
-                </p>
+                <p className="text-xl font-bold text-white sm:text-2xl">{totalStops}</p>
+                <p className="mt-0.5 text-[11px] text-white/80 sm:text-xs">Stops</p>
               </div>
             </div>
           </div>
@@ -1619,7 +1393,7 @@ function Itinerary() {
             {tripStartDate && (
               <p className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                 <FiCalendar className="text-[#2563eb]" />
-                Starts: {new Date(tripStartDate).toLocaleDateString("en-PH", { year: 'numeric', month: 'short', day: 'numeric' })}
+                Starts: {new Date(tripStartDate).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })}
               </p>
             )}
           </div>
@@ -1680,7 +1454,7 @@ function Itinerary() {
       </div>
 
       {/* MAIN CONTENT */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-10">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 pt-8 sm:px-6 lg:px-10">
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr] lg:gap-7">
             {/* LEFT SIDEBAR */}
@@ -1709,9 +1483,7 @@ function Itinerary() {
                     <div className="border-b border-blue-50 px-5 pb-4 pt-5">
                       <div className="mb-1 flex items-center gap-2">
                         <FiMapPin className="text-base text-[#2563eb]" />
-                        <h2 className="text-base font-bold text-[#2563eb]">
-                          Saved Places
-                        </h2>
+                        <h2 className="text-base font-bold text-[#2563eb]">Saved Places</h2>
                       </div>
                       <p className="text-xs leading-relaxed text-gray-500">
                         Drag any place into a day on the right.
@@ -1744,11 +1516,7 @@ function Itinerary() {
                         </div>
                       ) : (
                         places.map((place, index) => (
-                          <PlaceCard
-                            key={place.id}
-                            place={place}
-                            index={index}
-                          />
+                          <PlaceCard key={place.id} place={place} index={index} />
                         ))
                       )}
                       {provided.placeholder}
@@ -1783,17 +1551,19 @@ function Itinerary() {
             </div>
           </div>
         </DragDropContext>
-      </section>
 
-      {!uid && loaded && (
-        <div className="mx-auto -mt-14 max-w-7xl px-4 pb-20 sm:px-6 lg:px-10">
-          <div className="flex items-start gap-3 rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-4 text-xs leading-relaxed text-amber-700 shadow-sm sm:px-6 sm:text-sm">
-            <FiInfo className="mt-0.5 flex-shrink-0 text-amber-500" />
-            You are currently signed out. Your itineraries are still saved on
-            this device. Sign in anytime to keep them in the cloud too.
+        {!uid && loaded && (
+          <div className="mt-8">
+            <div className="flex items-start gap-3 rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-4 text-xs leading-relaxed text-amber-700 shadow-sm sm:px-6 sm:text-sm">
+              <FiInfo className="mt-0.5 flex-shrink-0 text-amber-500" />
+              You are currently signed out. Your itineraries are still saved on
+              this device. Sign in anytime to keep them in the cloud too.
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 }
