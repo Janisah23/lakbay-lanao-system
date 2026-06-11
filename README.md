@@ -22,11 +22,7 @@
 
 </div>
 
-<p align="center">
-  🌐 Cloud Hosted via <b>Firebase Hosting</b> · 🤖 AI-Powered Tourism Platform · 🗺️ Built for Lanao del Sur
-</p>
 
----
 
 ## 🗺️ What is LAKBAY LANAO?
 
