@@ -127,7 +127,7 @@ function Footer() {
           </ul>
 
           <p className="mt-7 max-w-sm text-sm leading-6 text-gray-500">
-            Department of Tourism · BARMM · Province of Lanao del Sur
+            Department of Tourism · BARMM · DICT
           </p>
 
           {/* LOGOS UNDER CONTACT */}

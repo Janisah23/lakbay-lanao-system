@@ -266,34 +266,37 @@ function Favorites() {
       </section>
 
       {/* SUMMARY BAR */}
-      <div className="relative z-10 mx-auto -mt-5 max-w-7xl px-4 sm:px-6 lg:px-10">
-        <div className="flex flex-col items-start justify-between gap-5 rounded-[24px] border border-white/80 bg-white/95 px-4 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[26px] sm:px-7 lg:flex-row lg:items-center">
-          <div>
+      <div className="relative z-10 mx-auto -mt-5 w-full max-w-7xl px-4 sm:px-6 lg:px-10">
+        <div className="flex flex-col items-start justify-between w-full gap-5 rounded-[24px] border border-white/80 bg-white/95 px-4 py-5 shadow-[0_8px_24px_rgba(37,99,235,0.06)] ring-1 ring-white/60 backdrop-blur-[6px] sm:rounded-[26px] sm:px-7 lg:flex-row lg:items-center">
+          
+          {/* Left Side: Text */}
+          <div className="w-full lg:w-auto">
             <h2 className="text-base font-bold text-blue-600 sm:text-lg">
               Saved Collection
             </h2>
-
             <p className="mt-0.5 text-xs leading-relaxed text-gray-600 sm:text-sm">
               Browse your saved items by category and open them anytime.
             </p>
           </div>
 
+          {/* Right Side: Category Pills */}
           <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto lg:flex lg:flex-wrap lg:gap-3">
-            <div className="flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-2 text-xs font-medium text-gray-600 sm:text-sm">
+            <div className="flex w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-2 text-xs font-medium text-gray-600 sm:text-sm lg:w-auto">
               <FiBookmark className="text-[#2563eb]" />
               {destinationCount} destinations
             </div>
 
-            <div className="flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-2 text-xs font-medium text-gray-600 sm:text-sm">
+            <div className="flex w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-2 text-xs font-medium text-gray-600 sm:text-sm lg:w-auto">
               <FiCalendar className="text-[#2563eb]" />
               {eventCount} events
             </div>
 
-            <div className="flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-2 text-xs font-medium text-gray-600 sm:text-sm">
+            <div className="flex w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-[#f8fbff] px-3 py-2 text-xs font-medium text-gray-600 sm:text-sm lg:w-auto">
               <FiGrid className="text-[#2563eb]" />
               {articleCount} articles
             </div>
           </div>
+          
         </div>
       </div>
 
