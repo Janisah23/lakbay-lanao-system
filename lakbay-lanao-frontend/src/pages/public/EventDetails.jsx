@@ -13,6 +13,7 @@ import {
   FiChevronRight,
   FiAlertCircle,
   FiX,
+  FiLock,
 } from "react-icons/fi";
 import { MdOutlineBookmarkAdd, MdBookmarkAdded } from "react-icons/md";
 import { FaTwitter, FaFacebookF, FaLink } from "react-icons/fa";
@@ -48,9 +49,8 @@ const EventDetails = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state for guest UI handling
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Gallery and Swiper States
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [mainSwiper, setMainSwiper] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -73,7 +73,7 @@ const EventDetails = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setIsLoggedIn(!!user); // Sync overall logged-in status
+      setIsLoggedIn(!!user);
       if (user && id) {
         try {
           const reviewRef = doc(db, "tourismContent", id, "reviews", user.uid);
@@ -235,16 +235,13 @@ const EventDetails = () => {
   const safeDate = (value) => {
     if (!value) return null;
     if (value?.toDate) return value.toDate();
-
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
   const formatEventDate = (value) => {
     const date = safeDate(value);
-
     if (!date) return "TBA";
-
     return date.toLocaleDateString(undefined, {
       weekday: "long",
       year: "numeric",
@@ -255,13 +252,10 @@ const EventDetails = () => {
 
   const getEventLocation = (event) => {
     if (!event?.location) return "Lanao del Sur";
-
     if (typeof event.location === "string") return event.location;
-
     if (event.location?.municipality && event.location?.province) {
       return `${event.location.municipality}, ${event.location.province}`;
     }
-
     return event.location?.municipality || "Lanao del Sur";
   };
 
@@ -280,14 +274,8 @@ const EventDetails = () => {
     );
   }
 
-  const galleryImages = [
-    ...(eventDetail.imageURLs || []),
-  ];
-
-  if (
-    eventDetail.imageURL &&
-    !galleryImages.includes(eventDetail.imageURL)
-  ) {
+  const galleryImages = [...(eventDetail.imageURLs || [])];
+  if (eventDetail.imageURL && !galleryImages.includes(eventDetail.imageURL)) {
     galleryImages.unshift(eventDetail.imageURL);
   }
 
@@ -453,7 +441,6 @@ const EventDetails = () => {
               )}
             </div>
 
-            {/* ADD TO FAVORITE HEADER BUTTON (ONLY FOR SIGNED-IN USERS) */}
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(eventDetail)}
@@ -471,7 +458,7 @@ const EventDetails = () => {
         </div>
       </section>
 
-      {/* GALLERY (SWIPER MAIN PREVIEW) */}
+      {/* GALLERY */}
       <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 md:mb-16 lg:px-10">
         <div className="group relative w-full h-[240px] sm:h-[320px] md:h-[460px] lg:h-[540px] cursor-zoom-in overflow-hidden rounded-[20px] border border-blue-100 bg-white p-1.5 shadow-[0_10px_28px_rgba(37,99,235,0.08)] sm:rounded-[24px] sm:p-2 lg:rounded-[28px]">
           <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-blue-50 sm:rounded-[20px] lg:rounded-[24px]">
@@ -507,10 +494,8 @@ const EventDetails = () => {
               )}
             </Swiper>
 
-            {/* Gradient Overlay for bottom elements (Thumbnails) */}
             <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-            {/* View fullscreen button */}
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
@@ -519,7 +504,6 @@ const EventDetails = () => {
               View fullscreen
             </button>
 
-            {/* Navigation Arrows (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <>
                 <button
@@ -543,7 +527,6 @@ const EventDetails = () => {
               </>
             )}
 
-            {/* THUMBNAILS embedded at the bottom of the image (Visible only on hover) */}
             {galleryImages.length > 1 && (
               <div className="absolute bottom-4 left-0 z-20 w-full px-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:bottom-6 sm:px-6">
                 <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 justify-center">
@@ -576,7 +559,7 @@ const EventDetails = () => {
         </div>
       </section>
 
-      {/* LIGHTBOX (FULLSCREEN VIEW) */}
+      {/* LIGHTBOX */}
       {lightboxOpen && (
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black p-0"
@@ -668,28 +651,20 @@ const EventDetails = () => {
             </div>
           </div>
 
+          {/* RIGHT SIDEBAR */}
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm sm:rounded-[28px] sm:p-6">
               <h3 className="mb-5 font-bold text-[#2563eb]">Key Details</h3>
 
               <div className="space-y-4">
                 {[
-                  {
-                    icon: <FiCalendar />,
-                    label: "Date",
-                    value: formattedDate,
-                  },
-                  {
-                    icon: <FiMapPin />,
-                    label: "Location",
-                    value: locationStr,
-                  },
+                  { icon: <FiCalendar />, label: "Date", value: formattedDate },
+                  { icon: <FiMapPin />, label: "Location", value: locationStr },
                 ].map(({ icon, label, value }) => (
                   <div key={label} className="flex items-start gap-4">
                     <span className="mt-0.5 flex-shrink-0 text-lg text-[#2563eb]">
                       {icon}
                     </span>
-
                     <div>
                       <p className="text-xs font-semibold text-gray-900">
                         {label}
@@ -703,105 +678,116 @@ const EventDetails = () => {
               </div>
             </div>
 
-            {/* RATING / FEEDBACK CARD (HIDE COMPLETELY IF GUEST USER IS NOT LOGGED IN) */}
-            {isLoggedIn && (
-              <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
-                {showPopup && (
-                  <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
-                    ✔ Rating submitted!
-                  </div>
-                )}
+            {/* RATING CARD — always visible, locked for guests */}
+            <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-sm ring-1 ring-white/60 backdrop-blur-[2px] sm:rounded-[28px] sm:p-6">
+              {showPopup && (
+                <div className="absolute -top-12 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gray-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                  <span className="text-lg leading-none text-green-400">✔</span>
+                  Rating submitted!
+                </div>
+              )}
 
-                <div className="mb-5">
-                  <h3 className="font-bold text-[#2563eb]">
-                    Rate your experience
-                  </h3>
+              <div className="mb-5">
+                <h3 className="font-bold text-gray-700">Rate your experience</h3>
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                  Share your feedback with other travelers.
+                </p>
+              </div>
 
-                  <p className="mt-1 text-sm leading-relaxed text-gray-400">
-                    Share your feedback with other travelers.
-                  </p>
+              <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
+                <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      onClick={() => {
+                        if (isLoggedIn && !isSubmitted) {
+                          setUserRating(star);
+                          setShowLoginNotice(false);
+                        }
+                      }}
+                      className={`transition-all duration-200 ${
+                        star <= userRating
+                          ? "scale-110 text-yellow-400"
+                          : "text-gray-200 hover:text-yellow-200"
+                      } ${
+                        !isLoggedIn || isSubmitted
+                          ? "cursor-default"
+                          : "cursor-pointer hover:scale-110"
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
                 </div>
 
-                {showLoginNotice && (
-                  <div className="mb-5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
-                        <FiAlertCircle className="text-lg" />
-                      </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {!isLoggedIn
+                    ? "Sign in to rate this event"
+                    : userRating > 0
+                    ? `${userRating} out of 5 stars`
+                    : "Select a rating"}
+                </p>
+              </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-red-700">
-                              Login required
-                            </p>
-
-                            <p className="mt-1 text-xs leading-relaxed text-red-500">
-                              Please log in first before submitting your rating.
-                            </p>
+              {!isLoggedIn ? (
+                <div className="mt-4 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-400">
+                  <FiLock className="text-base" />
+                  Sign in to submit a rating
+                </div>
+              ) : (
+                <>
+                  {showLoginNotice && (
+                    <div className="mb-4 mt-4 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                          <FiAlertCircle className="text-lg" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-red-700">
+                                Login required
+                              </p>
+                              <p className="mt-1 text-xs leading-relaxed text-red-500">
+                                Please log in first before submitting your rating.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowLoginNotice(false)}
+                              className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
+                            >
+                              <FiX />
+                            </button>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setShowLoginNotice(false)}
-                            className="rounded-full p-1 text-red-400 transition hover:bg-white hover:text-red-600"
-                          >
-                            <FiX />
-                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div className="flex flex-col items-center rounded-[22px] border border-blue-50 bg-[#f8fbff] p-5 shadow-sm">
-                  <div className="mb-2 flex gap-1.5 text-3xl sm:gap-2 sm:text-4xl">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        onClick={() => {
-                          if (!isSubmitted) {
-                            setUserRating(star);
-                            setShowLoginNotice(false);
-                          }
-                        }}
-                        className={`transition-all duration-200 ${
-                          star <= userRating
-                            ? "scale-110 text-yellow-400"
-                            : "text-gray-200 hover:text-yellow-200"
-                        } ${
-                          isSubmitted
-                            ? "cursor-default"
-                            : "cursor-pointer hover:scale-110"
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                    {userRating > 0
-                      ? `${userRating} out of 5 stars`
-                      : "Select a rating"}
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleRating}
-                  disabled={userRating === 0 || isSubmitted}
-                  className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition-all duration-300 ${
-                    isSubmitted
-                      ? "cursor-default border border-green-100 bg-green-50 text-green-700"
-                      : userRating > 0
-                      ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
-                      : "cursor-not-allowed bg-gray-100 text-gray-400"
-                  }`}
-                >
-                  {isSubmitted ? "Rating Submitted" : "Submit Rating"}
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={handleRating}
+                    disabled={userRating === 0 || isSubmitted}
+                    className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+                      isSubmitted
+                        ? "cursor-default border border-green-200 bg-green-50 text-green-700"
+                        : userRating > 0
+                        ? "bg-[#2563eb] text-white shadow-sm hover:bg-blue-700"
+                        : "cursor-not-allowed bg-gray-100 text-gray-400"
+                    }`}
+                  >
+                    {isSubmitted ? (
+                      <>
+                        <span className="text-lg leading-none text-green-600">✔</span>
+                        Rating Submitted
+                      </>
+                    ) : (
+                      "Submit Rating"
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
