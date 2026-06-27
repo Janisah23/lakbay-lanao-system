@@ -116,13 +116,12 @@ function AIKnowledge() {
     }
   };
 
-  // REDESIGNED: Execute the deletion after the custom modal confirms it
   const executeDelete = async () => {
     if (!documentToDelete) return;
     
     const name = documentToDelete;
-    setDocumentToDelete(null); // Close modal immediately
-    setDeletingName(name); // Show loading spinner on the specific item
+    setDocumentToDelete(null); 
+    setDeletingName(name); 
 
     try {
       const res = await fetch(`${API}/documents/${encodeURIComponent(name)}`, {
@@ -215,7 +214,7 @@ function AIKnowledge() {
           </p>
         </section>
 
-        {/* REDESIGNED TOAST NOTIFICATION */}
+        {/* TOAST NOTIFICATION */}
         {toast && (
           <div
             className={`mb-6 overflow-hidden rounded-[20px] border shadow-sm transition-all duration-300 ${
