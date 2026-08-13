@@ -214,7 +214,7 @@ function AIKnowledge() {
           </p>
         </section>
 
-        {/* TOAST NOTIFICATION */}
+        {/* REDESIGNED TOAST NOTIFICATION */}
         {toast && (
           <div
             className={`mb-6 overflow-hidden rounded-[20px] border shadow-sm transition-all duration-300 ${
